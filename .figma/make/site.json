@@ -1,0 +1,10 @@
+{
+  "description": "Streamline export-import operations with a B2B matching platform that offers trade data analysis, personalized dashboards, and intelligent matching for users and administrators.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

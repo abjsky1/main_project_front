@@ -1,0 +1,131 @@
+import { useState } from 'react';
+import macrossLogo from '../assets/main-reference.png';
+
+const DEMO_ACCOUNTS = [
+  { label: '🔑 관리자', email: 'admin@macross.com', password: 'admin123', desc: 'admin123' },
+  { label: '🏭 수출입기업', email: 'user@macross.com', password: 'user123', desc: 'user123' },
+  { label: '🚢 물류업체', email: 'logistics@macross.com', password: 'logistics123', desc: 'logistics123' },
+];
+
+interface LoginModalProps {
+  onLogin: (email: string, password: string) => string | null;
+  onClose: () => void;
+  onSignupClick: () => void;
+}
+
+export default function LoginModal({ onLogin, onClose, onSignupClick }: LoginModalProps) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '10px 14px',
+    borderRadius: 12,
+    border: '1px solid #eaeaf2',
+    fontSize: 13,
+    color: '#1a1a2e',
+    background: '#f9f9fc',
+    outline: 'none',
+    fontFamily: 'Plus Jakarta Sans, sans-serif',
+    transition: 'border-color 0.15s',
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const err = onLogin(email, password);
+    if (err) setError(err);
+  };
+
+  const fillDemo = (account: (typeof DEMO_ACCOUNTS)[0]) => {
+    setEmail(account.email);
+    setPassword(account.password);
+    setError('');
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        className="w-full max-w-sm rounded-3xl p-8"
+        style={{ background: '#ffffff', boxShadow: '0 32px 80px rgba(0,0,0,0.18)' }}
+      >
+        <div className="flex flex-col items-center mb-7">
+          <img src={macrossLogo} alt="MACROSS" className="h-11 w-auto mb-3" />
+          <h2 className="text-xl font-bold" style={{ color: '#1a1a2e' }}>로그인</h2>
+          <p className="text-xs mt-1" style={{ color: '#9090a8' }}>B2B 무역 & 물류 플랫폼</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#5e5e7a' }}>이메일</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setError(''); }}
+              placeholder="name@company.com"
+              style={inputStyle}
+              onFocus={(e) => { e.currentTarget.style.borderColor = '#9333ea'; e.currentTarget.style.background = '#fff'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = '#eaeaf2'; e.currentTarget.style.background = '#f9f9fc'; }}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: '#5e5e7a' }}>비밀번호</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setError(''); }}
+              placeholder="••••••••"
+              style={inputStyle}
+              onFocus={(e) => { e.currentTarget.style.borderColor = '#9333ea'; e.currentTarget.style.background = '#fff'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = '#eaeaf2'; e.currentTarget.style.background = '#f9f9fc'; }}
+              required
+            />
+          </div>
+          {error && <p className="text-xs px-3 py-2 rounded-lg" style={{ color: '#d93025', background: 'rgba(217,48,37,0.06)' }}>{error}</p>}
+          <button
+            type="submit"
+            className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg, #9333ea, #06b6d4)' }}
+          >
+            로그인
+          </button>
+        </form>
+
+        {/* Demo accounts */}
+        <div className="mt-5 pt-5" style={{ borderTop: '1px solid #f0f0f8' }}>
+          <p className="text-xs text-center mb-3" style={{ color: '#9090a8' }}>테스트 계정으로 빠른 로그인</p>
+          <div className="grid grid-cols-3 gap-1.5">
+            {DEMO_ACCOUNTS.map((account) => (
+              <button
+                key={account.email}
+                onClick={() => fillDemo(account)}
+                className="py-2 px-2 rounded-xl text-[11px] font-semibold transition-all text-center"
+                style={{
+                  background: 'rgba(100,50,220,0.04)',
+                  color: '#9333ea',
+                  border: '1px solid rgba(100,50,220,0.12)',
+                }}
+              >
+                {account.label}
+                <span className="block text-[10px] font-normal" style={{ color: '#9090a8' }}>{account.desc}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Signup link */}
+        <p className="text-center text-xs mt-5" style={{ color: '#9090a8' }}>
+          계정이 없으신가요?{' '}
+          <button onClick={onSignupClick} className="font-bold underline" style={{ color: '#9333ea' }}>
+            회원가입
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+}
