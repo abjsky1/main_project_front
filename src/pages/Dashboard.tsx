@@ -153,11 +153,11 @@ export default function Dashboard({ user, matchingCountries }: DashboardProps) {
       </div>
 
       {/* 4 KPI stat cards */}
-      <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: '#9090a8' }}>2025년 누적 무역 현황</p>
+      <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: '#9090a8' }}>2026년 누적 무역 현황</p>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         <StatCard label="총 수출액" value="7,535" unit="억 달러" change={4.2} sublabel="2025년 누적" accent="#9333ea" />
         <StatCard label="총 수입액" value="6,568" unit="억 달러" change={3.8} sublabel="2025년 누적" accent="#7c3aed" />
-        <StatCard label="무역 수지" value="+967" unit="억 달러" change={8.1} sublabel="수출 – 수입" accent="#06b6d4" />
+        <StatCard label="무역 수지" value="+967" unit="억 달러" change={8.1} sublabel="수출 & 수입" accent="#06b6d4" />
         <StatCard label="당일 환율" value="1,318" unit="원/USD" change={-0.3} sublabel="2025-12-31 기준" accent="#06b6d4" />
       </div>
 
@@ -169,7 +169,7 @@ export default function Dashboard({ user, matchingCountries }: DashboardProps) {
               Trade Trend
             </p>
             <h2 className="text-lg font-bold" style={{ color: '#1a1a2e' }}>
-              수출입 추이 (2025)
+              수출입 추이 (2026)
             </h2>
             <p className="text-xs mt-0.5" style={{ color: '#9090a8' }}>단위: 억 달러</p>
           </div>
