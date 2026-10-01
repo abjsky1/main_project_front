@@ -7,7 +7,7 @@ interface SystemAdminProps {
 }
 
 type Section = 'users' | 'logs';
-type UserStatus = '활성' | '비활성' | '잠김';
+type UserStatus = '활성' | '비활성';
 type SortDir = 'asc' | 'desc' | null;
 
 interface SystemUser {
@@ -35,7 +35,7 @@ const INITIAL_USERS: SystemUser[] = [
   { id: 3, name: '박영업', email: 'park.sales@macross.com', role: '일반사용자', lastLogin: '2025-12-30 17:33', status: '활성' },
   { id: 4, name: '최분석', email: 'choi.analyst@macross.com', role: '일반사용자', lastLogin: '2025-12-29 11:22', status: '활성' },
   { id: 5, name: '정물류', email: 'jung.logistics@macross.com', role: '일반사용자', lastLogin: '2025-12-28 15:10', status: '비활성' },
-  { id: 6, name: '강테스트', email: 'kang.test@macross.com', role: '일반사용자', lastLogin: '2025-12-01 10:05', status: '잠김' },
+  { id: 6, name: '강테스트', email: 'kang.test@macross.com', role: '일반사용자', lastLogin: '2025-12-01 10:05', status: '비활성' },
 ];
 
 const AUDIT_LOGS: AuditLog[] = [
@@ -50,7 +50,7 @@ const AUDIT_LOGS: AuditLog[] = [
   { id: 9, timestamp: '2025-12-30 14:18:02', user: '강테스트', action: '로그인 시도', target: '시스템', ip: '203.0.113.45', result: '실패' },
   { id: 10, timestamp: '2025-12-29 16:10:44', user: '이사용자', action: '엑셀 다운로드', target: '환율 데이터 (USD 2025)', ip: '192.168.1.105', result: '성공' },
   { id: 11, timestamp: '2025-12-29 11:45:19', user: '최분석', action: '데이터 조회', target: 'HS 코드 8517.12 (중국)', ip: '192.168.1.108', result: '성공' },
-  { id: 12, timestamp: '2025-12-28 09:30:00', user: '김관리자', action: '사용자 권한 변경', target: '강테스트 → 잠김 처리', ip: '192.168.1.101', result: '성공' },
+  { id: 12, timestamp: '2025-12-28 09:30:00', user: '김관리자', action: '사용자 권한 변경', target: '강테스트 → 비활성화 처리', ip: '192.168.1.101', result: '성공' },
 ];
 
 const actionColors: Record<string, { bg: string; text: string }> = {
@@ -138,8 +138,7 @@ export default function SystemAdmin({ user, onLoginClick }: SystemAdminProps) {
 
   const statusColors: Record<UserStatus, { bg: string; text: string }> = {
     '활성': { bg: '#dcfce7', text: '#166534' },
-    '비활성': { bg: '#f3f4f6', text: '#6b7280' },
-    '잠김': { bg: '#fee2e2', text: '#991b1b' },
+    '비활성': { bg: '#fee2e2', text: '#991b1b' }
   };
 
   // Filter & sort users
@@ -216,7 +215,7 @@ export default function SystemAdmin({ user, onLoginClick }: SystemAdminProps) {
             {[
               { label: '전체 사용자', value: users.length, color: '#1a1a2e' },
               { label: '활성 사용자', value: users.filter((u) => u.status === '활성').length, color: '#1a9e5c' },
-              { label: '잠김/비활성', value: users.filter((u) => u.status !== '활성').length, color: '#d93025' },
+              { label: '비활성', value: users.filter((u) => u.status !== '활성').length, color: '#d93025' },
             ].map((stat) => (
               <div key={stat.label} className="rounded-2xl p-4 text-center" style={{ background: 'rgba(100,50,220,0.035)', border: '1px solid rgba(100,50,220,0.12)' }}>
                 <p className="text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
@@ -268,7 +267,6 @@ export default function SystemAdmin({ user, onLoginClick }: SystemAdminProps) {
                   <option value="all">전체</option>
                   <option value="활성">활성</option>
                   <option value="비활성">비활성</option>
-                  <option value="잠김">잠김</option>
                 </select>
               </div>
               <div>
@@ -312,7 +310,7 @@ export default function SystemAdmin({ user, onLoginClick }: SystemAdminProps) {
                   return (
                     <tr key={u.id} style={{ borderBottom: '1px solid #f2f2f8' }} className="hover:bg-purple-50 transition-colors">
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-2.5">erStatus
                           <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: u.role === '관리자' ? 'linear-gradient(135deg, #9333ea, #06b6d4)' : '#d1d5db' }}>
                             {u.name.charAt(0)}
                           </div>
@@ -333,7 +331,7 @@ export default function SystemAdmin({ user, onLoginClick }: SystemAdminProps) {
                           className="text-xs font-semibold px-2 py-1 rounded-full cursor-pointer outline-none appearance-none text-center"
                           style={{ background: sc.bg, color: sc.text, border: 'none' }}
                         >
-                          {(['활성', '비활성', '잠김'] as UserStatus[]).map((s) => <option key={s} value={s}>{s}</option>)}
+                          {(['활성', '비활성'] as UserStatus[]).map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                       </td>
                       <td className="px-4 py-3">
