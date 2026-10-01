@@ -9,7 +9,7 @@ type Currency = 'USD' | 'EUR' | 'CNH' | 'JPY';
 type SortField = 'exportAmt' | 'importAmt' | 'balance' | null;
 type SortDir = 'asc' | 'desc';
 
-const EXTRA_CURRENCIES = ['AED','AUD','BHD','BND','CAD','CHF','DKK','GBP','HKD','IDR','KWD','MYR','NOK','NZD','SAR','SEK','SGD','THB'];
+const EXTRA_CURRENCIES = ['AED','AUD','BHD','BND','CAD','CHF','DKK','GBP','HKD','IDR','KWD','MYR','NOK','NZD','SAR','SEK','SGD','THB','XOF'];
 
 const START_YEAR = 2000;
 const END_YEAR = 2026;
@@ -158,7 +158,7 @@ export default function TradeAnalysis() {
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [activeCurrency, setActiveCurrency] = useState<string>('USD');
-  const [selectedYear, setSelectedYear] = useState(2025);
+  const [selectedYear, setSelectedYear] = useState(2026);
 
   const handleSearch = () => {
     const filtered = TRADE_RESULTS.filter((r) => {
@@ -337,10 +337,10 @@ export default function TradeAnalysis() {
         </div>
       )}
 
-      {/* ─── Exchange rate tab ─── */}
+      {/* ─── 환율 동향 & 실거래가 ─── */}
       {activeTab === 'exchange' && (
         <div>
-          {/* Year selector */}
+          {/* 연도 선택 */}
           <div className="mb-7 flex items-center gap-3">
             <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#5e5e7a' }}>연도</label>
             <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="px-4 py-2 rounded-xl text-sm font-semibold outline-none"
@@ -349,7 +349,7 @@ export default function TradeAnalysis() {
             </select>
           </div>
 
-          {/* All 22 currencies — 4 main large, 18 extra small */}
+          {/* 주요 4개국 통화 카드 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             {mainCurrencies.map((c) => {
               const info = CURRENCY_INFO[c];
@@ -375,7 +375,7 @@ export default function TradeAnalysis() {
             })}
           </div>
 
-          {/* 18 extra currencies */}
+          {/* 19개국 통화 버튼 */}
           <div className="mb-6 flex items-center gap-2 flex-wrap">
             {EXTRA_CURRENCIES.map((c) => (
               <button key={c} onClick={() => setActiveCurrency(c)}
@@ -386,7 +386,7 @@ export default function TradeAnalysis() {
             ))}
           </div>
 
-          {/* Chart */}
+          {/* 환율 그래프 */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-1">
               <p className="text-base font-bold" style={{ color: '#1a1a2e' }}>{activeCurrency} · {selectedYear}년 월별 환율 추이</p>
@@ -404,7 +404,7 @@ export default function TradeAnalysis() {
             </ResponsiveContainer>
           </div>
 
-          {/* Monthly average prices for selected currency */}
+          {/* 월 평균 환율 */}
           <div className="rounded-2xl p-5" style={{ background: 'rgba(100,50,220,0.035)', border: '1px solid rgba(100,50,220,0.12)' }}>
             <p className="font-bold mb-3" style={{ color: '#1a1a2e' }}>{activeCurrency} — {CURRENCY_INFO[activeCurrency]?.name ?? activeCurrency} · {selectedYear}년 월 평균</p>
             <div className="grid grid-cols-6 gap-2">
