@@ -29,18 +29,27 @@ interface MatchRequest {
 interface LogisticsOffer {
   country: string; transport: 'SEA' | 'AIR'; departure: string; destination: string;
   regularRoute: boolean; directRoute: boolean; leadTime: number; availableDate: string;
-  maxCapacity: number; general: boolean; refrigeration: boolean; hazmat: boolean; heavy: boolean; special: boolean;
+  availableCapacity: number; general: boolean; refrigeration: boolean; hazmat: boolean; heavy: boolean; special: boolean;
   hsCode: string; experience: number;
 }
 
 interface MatchItem {
   id: number;
   createdAt: string;
-  matchScore: number;
+
+  routeScore: number;
+  capacityScore: number;
+  itemScore: number;
+  scheduleScore: number;
+  experienceScore: number;
+  totalScore: number;
+
   matchFactors: string[];
+
   adminStatus: AdminStatus;
   adminRejectReason?: string;
   finalStatus: FinalStatus;
+
   shipper: Party;
   logistics: Party;
   request: MatchRequest;
@@ -51,40 +60,40 @@ const REJECT_REASONS = ['일정 불일치', '물량 초과', '노선 변경 불�
 
 const INITIAL_MATCHES: MatchItem[] = [
   {
-    id: 1, createdAt: '2025-12-31 10:00', matchScore: 96,
+    id: 1, createdAt: '2025-12-31 10:00', routeScore: 30, capacityScore: 25, itemScore: 14, scheduleScore: 13, experienceScore: 10, totalScore: 92,
     matchFactors: ['HS코드 일치 (3304.99)', '서비스 국가 일치 (미국)', '운송방식 일치 (해상)', '물량 여유 (12.5t / 50t)', '일정 부합', '냉동 처리 불필요 (공통)'],
     adminStatus: 'pending', finalStatus: 'pending',
     shipper: { companyName: '(주)코리아뷰티', contactName: '김수출', bizNumber: '123-45-67890', phone: '010-1234-5678', address: '서울시 강남구 테헤란로 123', response: 'waiting' },
     logistics: { companyName: 'Global Logistics Inc.', contactName: 'John Smith', bizNumber: '98-7654321', phone: '+1-555-234-5678', address: '1234 Harbor Blvd, Los Angeles, CA 90001', response: 'waiting' },
-    request: { country: '미국', hsCode: '3304.99', tradeType: '수출', transport: '해상', departure: '부산항', destination: 'LA항', volume: 12.5, schedule: '2026-03', cargoType: '일반', refrigeration: false, hazmat: false, heavy: false, special: false },
-    offer: { country: '미국', transport: 'SEA', departure: '부산', destination: 'LA', regularRoute: true, directRoute: true, leadTime: 14, availableDate: '2026-03-01', maxCapacity: 50, general: true, refrigeration: false, hazmat: false, heavy: false, special: false, hsCode: '3304.99', experience: 24 },
+    request: { country: '미국', hsCode: '3304.99', tradeType: '수출', transport: '해상', departure: '부산항', destination: 'LA항', volume: 12.5, schedule: '2026-03-10', cargoType: '일반', refrigeration: false, hazmat: false, heavy: false, special: false },
+    offer: { country: '미국', transport: 'SEA', departure: '부산', destination: 'LA', regularRoute: true, directRoute: true, leadTime: 14, availableDate: '2026-03-01', availableCapacity: 50, general: true, refrigeration: false, hazmat: false, heavy: false, special: false, hsCode: '3304.99', experience: 24 },
   },
   {
-    id: 2, createdAt: '2025-12-30 15:30', matchScore: 89,
+    id: 2, createdAt: '2025-12-30 15:30', routeScore: 30, capacityScore: 25, itemScore: 14, scheduleScore: 12, experienceScore: 8, totalScore: 89,
     matchFactors: ['HS코드 부합 (8541.10)', '일본 직항 운항', '운송방식 일치 (SEA)', '물량 가용', '위험물 미해당'],
     adminStatus: 'approved', finalStatus: 'pending',
     shipper: { companyName: '(주)한국전자부품', contactName: '박전자', bizNumber: '234-56-78901', phone: '010-2345-6789', address: '경기도 수원시 영통구 삼성로 200', response: 'accepted' },
     logistics: { companyName: 'Yamamoto Trading Co.', contactName: 'Taro Yamamoto', bizNumber: '345-67-89', phone: '+81-3-1234-5678', address: '1-1 Shibaura, Minato-ku, Tokyo', response: 'waiting' },
-    request: { country: '일본', hsCode: '8541.10', tradeType: '수출', transport: '해상', departure: '인천항', destination: '도쿄항', volume: 8.0, schedule: '2026-02', cargoType: '일반', refrigeration: false, hazmat: false, heavy: false, special: false },
-    offer: { country: '일본', transport: 'SEA', departure: '인천', destination: '도쿄', regularRoute: true, directRoute: true, leadTime: 5, availableDate: '2026-02-10', maxCapacity: 30, general: true, refrigeration: false, hazmat: false, heavy: true, special: false, hsCode: '8541.10', experience: 18 },
+    request: { country: '일본', hsCode: '8541.10', tradeType: '수출', transport: '해상', departure: '인천항', destination: '도쿄항', volume: 8.0, schedule: '2026-02-20', cargoType: '일반', refrigeration: false, hazmat: false, heavy: false, special: false },
+    offer: { country: '일본', transport: 'SEA', departure: '인천', destination: '도쿄', regularRoute: true, directRoute: true, leadTime: 5, availableDate: '2026-02-10', availableCapacity: 30, general: true, refrigeration: false, hazmat: false, heavy: true, special: false, hsCode: '8541.10', experience: 18 },
   },
   {
-    id: 3, createdAt: '2025-12-29 09:00', matchScore: 82,
+    id: 3, createdAt: '2025-12-29 09:00', routeScore: 25, capacityScore: 25, itemScore: 14, scheduleScore: 11, experienceScore: 7, totalScore: 82,
     matchFactors: ['HS코드 부합 (0304.89)', '냉동화물 취급 가능', '출발/도착지 일치', '정기노선 운항'],
     adminStatus: 'approved', finalStatus: 'completed',
     shipper: { companyName: '(주)부산수산', contactName: '최수산', bizNumber: '345-67-89012', phone: '010-3456-7890', address: '부산시 남구 수산물시장 45', response: 'accepted' },
     logistics: { companyName: 'FastFreight GmbH', contactName: 'Hans Mueller', bizNumber: '456-78-90', phone: '+49-40-1234-5678', address: 'Speicherstadt 12, 20457 Hamburg, Germany', response: 'accepted' },
-    request: { country: '독일', hsCode: '0304.89', tradeType: '수출', transport: '해상', departure: '부산항', destination: '함부르크항', volume: 5.0, schedule: '2026-01', cargoType: '특수', refrigeration: true, hazmat: false, heavy: false, special: false },
-    offer: { country: '독일', transport: 'SEA', departure: '부산', destination: '함부르크', regularRoute: true, directRoute: false, leadTime: 28, availableDate: '2026-01-15', maxCapacity: 20, general: true, refrigeration: true, hazmat: false, heavy: false, special: true, hsCode: '0304.89', experience: 12 },
+    request: { country: '독일', hsCode: '0304.89', tradeType: '수출', transport: '해상', departure: '부산항', destination: '함부르크항', volume: 5.0, schedule: '2026-01-25', cargoType: '특수', refrigeration: true, hazmat: false, heavy: false, special: false },
+    offer: { country: '독일', transport: 'SEA', departure: '부산', destination: '함부르크', regularRoute: true, directRoute: false, leadTime: 28, availableDate: '2026-01-15', availableCapacity: 20, general: true, refrigeration: true, hazmat: false, heavy: false, special: true, hsCode: '0304.89', experience: 12 },
   },
   {
-    id: 4, createdAt: '2025-12-28 14:00', matchScore: 75,
+    id: 4, createdAt: '2025-12-28 14:00', routeScore: 25, capacityScore: 20, itemScore: 14, scheduleScore: 10, experienceScore: 6, totalScore: 75,
     matchFactors: ['항공 운송 일치 (AIR)', 'HS코드 부합', '빠른 리드타임 (2일)'],
     adminStatus: 'approved', finalStatus: 'failed',
     shipper: { companyName: '(주)코리아뷰티', contactName: '김수출', bizNumber: '123-45-67890', phone: '010-1234-5678', address: '서울시 강남구 테헤란로 123', response: 'accepted' },
     logistics: { companyName: 'AirLink Express', contactName: 'Sarah Kim', bizNumber: '567-89-01', phone: '+1-310-567-8901', address: '8000 Air Express Pkwy, Los Angeles, CA', response: 'rejected', rejectReason: '단가 협의 실패' },
-    request: { country: '미국', hsCode: '3305.90', tradeType: '수출', transport: '항공', departure: '인천공항', destination: 'LAX', volume: 0.5, schedule: '2025-12', cargoType: '일반', refrigeration: false, hazmat: false, heavy: false, special: false },
-    offer: { country: '미국', transport: 'AIR', departure: '인천', destination: 'LA', regularRoute: true, directRoute: true, leadTime: 2, availableDate: '2025-12-20', maxCapacity: 5, general: true, refrigeration: false, hazmat: false, heavy: false, special: false, hsCode: '3305.90', experience: 8 },
+    request: { country: '미국', hsCode: '3305.90', tradeType: '수출', transport: '항공', departure: '인천공항', destination: 'LAX', volume: 0.5, schedule: '2025-12-30', cargoType: '일반', refrigeration: false, hazmat: false, heavy: false, special: false },
+    offer: { country: '미국', transport: 'AIR', departure: '인천', destination: 'LA', regularRoute: true, directRoute: true, leadTime: 2, availableDate: '2025-12-20', availableCapacity: 5, general: true, refrigeration: false, hazmat: false, heavy: false, special: false, hsCode: '3305.90', experience: 8 },
   },
 ];
 
@@ -166,11 +175,23 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
     }
   };
 
-  const filteredMatches = matches.filter((m) => {
-    if (statusFilter === 'all') return true;
-    if (statusFilter === 'completed') return m.finalStatus === 'completed';
-    if (statusFilter === 'failed') return m.finalStatus === 'failed';
-    return m.adminStatus === statusFilter;
+const filteredMatches = matches.filter((m) => {
+  if (statusFilter === 'all') return true;
+  if (statusFilter === 'pending') {
+    return m.adminStatus === 'pending'
+      && m.finalStatus === 'pending';
+  }
+  if (statusFilter === 'approved') {
+    return m.adminStatus === 'approved'
+      && m.finalStatus === 'pending';
+  }
+  if (statusFilter === 'completed') {
+    return m.finalStatus === 'completed';
+  }
+  if (statusFilter === 'failed') {
+    return m.finalStatus === 'failed';
+  }
+  return false;
   });
 
   const counts = {
@@ -249,7 +270,7 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
               >
                 {/* Score */}
                 <div className="shrink-0 w-14 h-14 rounded-2xl flex flex-col items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(147,51,234,0.08), rgba(6,182,212,0.08))' }}>
-                  <span className="text-xl font-bold" style={{ color: '#9333ea' }}>{match.matchScore}</span>
+                  <span className="text-xl font-bold" style={{ color: '#9333ea' }}>{match.totalScore}</span>
                   <span className="text-[9px] font-semibold uppercase tracking-wide" style={{ color: '#9090a8' }}>점수</span>
                 </div>
 
@@ -292,6 +313,28 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
                     <div className="flex flex-wrap gap-2">
                       {match.matchFactors.map((f, i) => (
                         <span key={i} className="text-xs px-3 py-1 rounded-full font-semibold" style={{ background: 'rgba(100,50,220,0.06)', color: '#7c3aed', border: '1px solid rgba(100,50,220,0.12)' }}>✓ {f}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 세부 점수: 샘플 값이며 실제 연동 시 서버 점수를 사용합니다. */}
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9090a8' }}>매칭 세부 점수</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                      {[
+                        { label: '노선', score: match.routeScore, max: 30 },
+                        { label: '가용 물량', score: match.capacityScore, max: 25 },
+                        { label: 'HS코드', score: match.itemScore, max: 20 },
+                        { label: '일정', score: match.scheduleScore, max: 15 },
+                        { label: '경험', score: match.experienceScore, max: 10 },
+                      ].map((item) => (
+                        <div key={item.label} className="rounded-xl p-3 text-center" style={{ background: '#f9f9fc', border: '1px solid #eaeaf2' }}>
+                          <p className="text-[11px] font-semibold mb-1" style={{ color: '#9090a8' }}>{item.label}</p>
+                          <p className="text-lg font-bold" style={{ color: '#9333ea' }}>
+                            {item.score}
+                            <span className="text-xs font-normal" style={{ color: '#9090a8' }}>{' '}/ {item.max}</span>
+                          </p>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -345,7 +388,7 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
                             ['직항', match.offer.directRoute ? 'O' : 'X', null],
                             ['리드타임', `${match.offer.leadTime}일`, null],
                             ['가용 일정', match.offer.availableDate, null],
-                            ['최대 물량', `${match.offer.maxCapacity}t`, match.offer.maxCapacity >= match.request.volume],
+                            ['가용 물량', `${match.offer.availableCapacity}t`, match.offer.availableCapacity >= match.request.volume],
                             ['냉장/냉동 취급', match.offer.refrigeration ? 'O' : 'X', match.offer.refrigeration === match.request.refrigeration],
                             ['위험물 취급', match.offer.hazmat ? 'O' : 'X', match.offer.hazmat === match.request.hazmat],
                             ['중량물 취급', match.offer.heavy ? 'O' : 'X', null],
