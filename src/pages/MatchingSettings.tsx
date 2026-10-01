@@ -244,7 +244,7 @@ export interface LogisticsCondition {
   directRoute: boolean;
   leadTime: string;
   availableDate: string;
-  maxCapacity: string;
+  availableCapacity: string;
   general: boolean;
   refrigeration: boolean;
   hazmat: boolean;
@@ -265,7 +265,7 @@ const emptyLogistics = (): Omit<LogisticsCondition, 'id'> => ({
   countries: [], tradeType: '수출', transport: '해상',
   departure: '', departurePortType: '한국 해상', destination: '', destinationPortType: '해외 해상',
   regularRoute: false, directRoute: false, leadTime: '', availableDate: '',
-  maxCapacity: '', general: true, refrigeration: false, hazmat: false, heavy: false, special: false,
+  availableCapacity: '', general: true, refrigeration: false, hazmat: false, heavy: false, special: false,
   hsCode: '', experience: '',
 });
 
@@ -458,8 +458,8 @@ export default function MatchingSettings({ user, onLoginClick, onMatchingUpdate,
                   <FormField label="물량 (톤)">
                     <input type="number" value={shipperForm.volume} onChange={(e) => setSF('volume', e.target.value)} placeholder="예: 12.5" style={inputCls} />
                   </FormField>
-                  <FormField label="희망 일정 (월)">
-                    <input type="month" value={shipperForm.schedule} onChange={(e) => setSF('schedule', e.target.value)} style={inputCls} />
+                  <FormField label="희망 일정">
+                    <input type="date" value={shipperForm.schedule} onChange={(e) => setSF('schedule', e.target.value)} style={inputCls} />
                   </FormField>
                 </div>
 
@@ -571,8 +571,8 @@ export default function MatchingSettings({ user, onLoginClick, onMatchingUpdate,
                   <FormField label="운송 가능일">
                     <input type="date" value={logisticsForm.availableDate} onChange={(e) => setLF('availableDate', e.target.value)} style={inputCls} />
                   </FormField>
-                  <FormField label="최대 가용 물량 (톤)">
-                    <input type="number" value={logisticsForm.maxCapacity} onChange={(e) => setLF('maxCapacity', e.target.value)} placeholder="예: 50" style={inputCls} />
+                  <FormField label="가용 물량 (톤)">
+                    <input type="number" value={logisticsForm.availableCapacity} onChange={(e) => setLF('availableCapacity', e.target.value)} placeholder="예: 50" style={inputCls} />
                   </FormField>
                   <FormField label="타겟 HS코드">
                     <input value={logisticsForm.hsCode} onChange={(e) => setLF('hsCode', e.target.value)} placeholder="예: 3304.99" style={inputCls} />
@@ -647,7 +647,7 @@ export default function MatchingSettings({ user, onLoginClick, onMatchingUpdate,
                             <td className="px-3 py-2.5" style={{ color: '#5e5e7a' }}>{row.destination}</td>
                             <td className="px-3 py-2.5 font-mono">{row.leadTime}일</td>
                             <td className="px-3 py-2.5 font-mono">{row.availableDate}</td>
-                            <td className="px-3 py-2.5 font-mono">{row.maxCapacity}</td>
+                            <td className="px-3 py-2.5 font-mono">{row.availableCapacity}</td>
                             <td className="px-3 py-2.5">{bool(row.regularRoute)}</td>
                             <td className="px-3 py-2.5">{bool(row.directRoute)}</td>
                             <td className="px-3 py-2.5">{bool(row.general)}</td>
