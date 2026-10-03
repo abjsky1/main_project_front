@@ -1,0 +1,234 @@
+/* =====================================================================
+   공통 스타일 — 여러 페이지에서 같이 쓰는 클래스
+   (색상/글자 크기 변수는 src/index.css 의 :root 참고)
+   ===================================================================== */
+
+/* ---------- 앱 전체 틀 (App.tsx) ---------- */
+.app-root {
+  min-height: 100vh;
+  background: #fff;
+}
+
+/* 상단 고정 헤더(56px) 높이만큼 내용을 아래로 */
+.app-main {
+  min-height: 100vh;
+  padding-top: 56px;
+}
+
+/* ---------- 페이지 레이아웃 ---------- */
+.page-container {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 40px 24px;
+}
+
+/* ---------- 페이지 제목 영역 (components/common/PageHeader) ---------- */
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-header--compact {
+  margin-bottom: 28px;
+}
+
+.page-header .eyebrow {
+  margin-bottom: 4px;
+}
+
+/* 제목 위의 작은 영문 라벨 (예: Overview, Admin) — 섹션 제목에도 사용 */
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+}
+
+.page-subtitle {
+  margin-top: 6px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+
+/* ---------- 탭 (무역 데이터 분석 / 시스템 관리) ---------- */
+.tab-group {
+  display: flex;
+  gap: 4px;
+  width: fit-content;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(100, 50, 220, 0.06);
+  border: 1px solid rgba(100, 50, 220, 0.1);
+}
+
+.tab-btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  background: transparent;
+  color: var(--text-muted);
+  transition: all 150ms var(--ease);
+}
+
+.tab-btn.is-active {
+  background: #fff;
+  color: var(--text-primary);
+}
+
+/* ---------- 폼 라벨 ---------- */
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  color: var(--text-secondary);
+}
+
+/* ---------- 필터 (components/common/FilterButton) ---------- */
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  background: var(--input-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--clean-border);
+  transition: all 150ms var(--ease);
+}
+
+.filter-btn.is-active {
+  background: rgba(100, 50, 220, 0.08);
+  color: var(--brand-purple);
+  border: 1px solid rgba(100, 50, 220, 0.2);
+}
+
+/* "필터 초기화" 버튼 */
+.filter-reset-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 500;
+  color: var(--danger);
+  background: rgba(217, 48, 37, 0.06);
+  border: 1px solid rgba(217, 48, 37, 0.15);
+}
+
+/* 필터 버튼을 누르면 열리는 회색 패널 (열 개수는 각 페이지 CSS에서 지정) */
+.filter-panel {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--clean-border);
+}
+
+/* 필터 패널 안의 입력칸 / 셀렉트 */
+.filter-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  outline: none;
+  border: 1px solid var(--clean-border);
+  background: #fff;
+  color: var(--text-primary);
+}
+
+/* 필터 패널 안의 선택 버튼 (정렬, 결과 등) */
+.option-btn {
+  border-radius: 12px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  background: #fff;
+  color: var(--text-secondary);
+  border: 1px solid var(--clean-border);
+  transition: all 150ms var(--ease);
+}
+
+.option-btn.is-active {
+  background: rgba(100, 50, 220, 0.08);
+  color: var(--brand-purple);
+  border: 1px solid rgba(100, 50, 220, 0.2);
+}
+
+/* ---------- 접근 제한 안내 (components/common/AccessGuard) ---------- */
+.access-guard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  min-height: 60vh;
+}
+
+.access-guard--short {
+  min-height: 50vh;
+}
+
+.access-guard__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 9999px;
+  background: rgba(100, 50, 220, 0.07);
+}
+
+.access-guard__icon--gradient {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(6, 182, 212, 0.1));
+}
+
+.access-guard__text {
+  text-align: center;
+}
+
+.access-guard__title {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.access-guard__desc {
+  margin-top: 4px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+
+.access-guard__button {
+  padding: 10px 24px;
+  border-radius: 9999px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand-gradient);
+}
+
+.access-guard__button:hover {
+  opacity: 0.9;
+}

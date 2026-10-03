@@ -16,7 +16,7 @@ body {
   color: #1a1a2e;
 }
 
-/* Design tokens */
+/* Design tokens — 모든 CSS 파일에서 var(--이름) 으로 사용 */
 :root {
   --tint-bg: rgba(100, 50, 220, 0.035);
   --tint-border: rgba(100, 50, 220, 0.12);
@@ -26,6 +26,29 @@ body {
   --text-primary: #1a1a2e;
   --text-secondary: #5e5e7a;
   --text-muted: #9090a8;
+
+  /* 브랜드 / 상태 색상 */
+  --brand-purple: #9333ea;
+  --brand-cyan: #06b6d4;
+  --brand-gradient: linear-gradient(135deg, #9333ea, #06b6d4);
+  --danger: #d93025;
+  --success: #1a9e5c;
+  --input-bg: #f9f9fc;
+  --divider: #f0f0f8;
+
+  /* 숫자/코드용 고정폭 글꼴 */
+  --font-code: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+  /* 글자 크기 + 줄 높이 세트 (font-size / line-height) */
+  --fs-xs: 12px;   --lh-xs: calc(16 / 12);
+  --fs-sm: 14px;   --lh-sm: calc(20 / 14);
+  --fs-base: 16px; --lh-base: 1.5;
+  --fs-lg: 18px;   --lh-lg: calc(28 / 18);
+  --fs-xl: 20px;   --lh-xl: calc(28 / 20);
+  --fs-2xl: 24px;  --lh-2xl: calc(32 / 24);
+
+  /* 애니메이션 기본 곡선 */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Tinted card — brand lavender wash */

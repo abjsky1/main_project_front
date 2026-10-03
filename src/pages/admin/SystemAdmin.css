@@ -1,0 +1,317 @@
+/* =====================================================================
+   시스템 관리 (SystemAdmin.tsx 와 components/ 폴더)
+   ===================================================================== */
+
+/* ---------- 탭 ---------- */
+.admin-tabs {
+  margin-bottom: 28px;
+}
+
+.admin-tabs .tab-btn {
+  font-weight: 500;
+  box-shadow: none;
+}
+
+.admin-tabs .tab-btn.is-active {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ---------- 사용자 요약 카드 ---------- */
+.admin-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admin-summary__card {
+  padding: 16px;
+  border-radius: 16px;
+  text-align: center;
+  background: rgba(100, 50, 220, 0.035);
+  border: 1px solid rgba(100, 50, 220, 0.12);
+}
+
+.admin-summary__value {
+  font-size: var(--fs-2xl);
+  line-height: var(--lh-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.admin-summary__value--active {
+  color: var(--success);
+}
+
+.admin-summary__value--inactive {
+  color: var(--danger);
+}
+
+.admin-summary__label {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+/* ---------- 표 위 제목줄 (목록 이름 + 개수 + 필터) ---------- */
+.admin-list-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.admin-list-bar__left,
+.admin-list-bar__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-count {
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  background: rgba(100, 50, 220, 0.08);
+  color: var(--brand-purple);
+}
+
+/* ---------- 필터 패널 ---------- */
+.admin-filter-panel {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-filter-options {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-filter-options .option-btn {
+  flex: 1 1 0%;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* ---------- 표 공통 ---------- */
+.admin-table-wrap {
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--clean-border);
+}
+
+.admin-table {
+  width: 100%;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.admin-table thead tr {
+  background: rgba(100, 50, 220, 0.02);
+  border-bottom: 1px solid var(--clean-border);
+}
+
+.admin-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.admin-table .cell-mono {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-family: var(--font-code);
+  color: var(--text-muted);
+}
+
+.admin-table .cell-empty {
+  padding: 32px 0;
+  text-align: center;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+
+/* ---------- 사용자 목록 표 (UserManagement.tsx) ---------- */
+.user-row {
+  border-bottom: 1px solid var(--row-sep);
+  transition: color 150ms var(--ease), background-color 150ms var(--ease), border-color 150ms var(--ease);
+}
+
+.user-row:hover {
+  background-color: oklch(97.7% 0.014 308.299);
+}
+
+.user-row td {
+  padding: 12px 16px;
+}
+
+.user-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-name__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  color: #fff;
+  background: #d1d5db;
+}
+
+.user-name__avatar.is-admin {
+  background: var(--brand-gradient);
+}
+
+.user-name__text {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* 역할 배지 (관리자 / 일반사용자) */
+.role-badge {
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.role-badge.is-admin {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(6, 182, 212, 0.1));
+  color: var(--brand-purple);
+}
+
+/* 상태 선택 (활성 / 비활성) */
+.status-select {
+  padding: 4px 8px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  border: none;
+}
+
+.status-select--active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-select--inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* 관리자 지정 / 권한 해제 버튼 */
+.role-toggle-btn {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(6, 182, 212, 0.1));
+  color: var(--brand-purple);
+  border: 1px solid var(--clean-border);
+  transition: all 150ms var(--ease);
+}
+
+.role-toggle-btn.is-admin {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.role-toggle-btn:hover {
+  opacity: 0.8;
+}
+
+/* ---------- 감사 로그 표 (AuditLogSection.tsx) ---------- */
+.log-row {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  background: #fff;
+  transition: color 150ms var(--ease), background-color 150ms var(--ease), border-color 150ms var(--ease);
+}
+
+.log-row--odd {
+  background: #fafafa;
+}
+
+.log-row--failed {
+  background: rgba(220, 38, 38, 0.03);
+}
+
+.log-row td {
+  padding: 10px 16px;
+}
+
+.log-row .cell-time {
+  white-space: nowrap;
+}
+
+.log-row .cell-user {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.log-row .cell-target {
+  max-width: 200px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-secondary);
+}
+
+/* 작업 유형 배지 */
+.action-badge {
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f5f5f7;
+  color: #6b7280;
+}
+
+.action-badge--login { background: #eff6ff; color: #1e40af; }
+.action-badge--login-try { background: #fef3c7; color: #92400e; }
+.action-badge--download { background: #f0fdf4; color: #166534; }
+.action-badge--view { background: #f5f3ff; color: #5b21b6; }
+.action-badge--delete { background: #fff1f2; color: #9f1239; }
+.action-badge--permission { background: #ecfdf5; color: #065f46; }
+
+/* 결과 배지 (성공 / 실패) */
+.result-badge {
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #dcfce7;
+  color: #166534;
+}
+
+.result-badge.is-failed {
+  background: #fee2e2;
+  color: #991b1b;
+}

@@ -1,0 +1,169 @@
+/* =====================================================================
+   상단 고정 헤더 (Header.tsx)
+   ===================================================================== */
+
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border-bottom: 1px solid rgba(100, 50, 220, 0.1);
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1280px;
+  height: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+/* ---------- 로고 ---------- */
+.site-header__logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.site-header__logo img {
+  width: auto;
+  height: 28px;
+}
+
+.site-header__logo-text {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--text-primary);
+}
+
+/* ---------- 가운데 메뉴 ---------- */
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.site-nav__item {
+  display: flex;
+  align-items: center;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 600;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 150ms var(--ease);
+}
+
+.site-nav__item:hover {
+  background: rgba(100, 50, 220, 0.06);
+}
+
+.site-nav__item.is-active {
+  background: var(--text-primary);
+  color: #fff;
+}
+
+/* ---------- 오른쪽 로그인/사용자 영역 ---------- */
+.site-header__auth {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-box__profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-box__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand-gradient);
+}
+
+.user-box__info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.user-box__name {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ADMIN / LOGISTICS / USER 표시 */
+.user-box__role {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  color: var(--brand-cyan);
+}
+
+.user-box__role.is-admin {
+  color: var(--brand-purple);
+}
+
+.logout-btn {
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+  transition: color 150ms var(--ease), background-color 150ms var(--ease), border-color 150ms var(--ease);
+}
+
+.logout-btn:hover {
+  color: var(--text-primary);
+}
+
+.login-btn {
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 700;
+  color: #fff;
+  background: var(--text-primary);
+  transition: all 150ms var(--ease);
+}
+
+.login-btn:hover {
+  opacity: 0.9;
+}

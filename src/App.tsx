@@ -1,30 +1,18 @@
 import { useState } from 'react';
-import Header from './components/Header';
-import LoginModal from './components/LoginModal';
-import SignupModal from './components/SignupModal';
-import Dashboard from './pages/Dashboard';
-import TradeAnalysis from './pages/TradeAnalysis';
-import MatchingSettings, { type ShipperCondition, type LogisticsCondition } from './pages/MatchingSettings';
-import SmartMatching from './pages/SmartMatching';
-import SystemAdmin from './pages/SystemAdmin';
 import axios from 'axios';
+import type { CompanyType, Page, User } from './types/user';
+import Header from './components/layout/Header';
+import LoginModal from './components/auth/LoginModal';
+import SignupModal from './components/auth/SignupModal';
+import Dashboard from './pages/dashboard/Dashboard';
+import TradeAnalysis from './pages/trade/TradeAnalysis';
+import MatchingSettings from './pages/matching-settings/MatchingSettings';
+import type { ShipperCondition, LogisticsCondition } from './pages/matching-settings/matchingTypes';
+import SmartMatching from './pages/smart-matching/SmartMatching';
+import SystemAdmin from './pages/admin/SystemAdmin';
 
-export type Page = 'dashboard' | 'trade' | 'matching-settings' | 'matching' | 'admin';
-export type UserRole = 'admin' | 'user';
-export type CompanyType = '수출입기업' | '물류업체';
-
-export interface User {
-  memberId?: string;   // 추가
-
-  name: string;
-  email: string;
-  role: UserRole;
-  companyType?: CompanyType;
-  companyName?: string;
-  businessNumber?: string;
-  phone?: string;
-  address?: string;
-}
+// 다른 파일에서 '../App' 으로 타입을 가져오던 코드와의 호환용
+export type { Page, UserRole, CompanyType, User } from './types/user';
 
 const DEMO_USERS: User[] = [
 
@@ -190,7 +178,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="app-root">
       <Header
         currentPage={currentPage}
         onNavigate={setCurrentPage}
@@ -198,7 +186,7 @@ export default function App() {
         onLoginClick={() => setShowLogin(true)}
         onLogout={handleLogout}
       />
-      <main className="pt-14 min-h-screen">{renderPage()}</main>
+      <main className="app-main">{renderPage()}</main>
 
       {showLogin && (
         <LoginModal

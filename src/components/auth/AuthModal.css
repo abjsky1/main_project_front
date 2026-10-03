@@ -1,0 +1,364 @@
+/* =====================================================================
+   로그인 / 회원가입 모달 (LoginModal.tsx, SignupModal.tsx)
+   ===================================================================== */
+
+/* ---------- 모달 배경 + 카드 ---------- */
+.auth-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.auth-backdrop--scroll {
+  overflow-y: auto;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 384px;
+  padding: 32px;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.18);
+}
+
+.auth-card--wide {
+  max-width: 512px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+/* ---------- 입력칸 ---------- */
+.auth-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--clean-border);
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.auth-input:focus {
+  border-color: var(--brand-purple);
+  background: #fff;
+}
+
+textarea.auth-input {
+  resize: none;
+}
+
+.auth-field-error {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--danger);
+}
+
+/* ---------- 버튼 ---------- */
+.auth-primary-btn {
+  width: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-radius: 12px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand-gradient);
+}
+
+.auth-primary-btn:hover {
+  opacity: 0.9;
+}
+
+.auth-primary-btn.is-loading {
+  opacity: 0.6;
+}
+
+/* 하단 "계정이 없으신가요? 회원가입" */
+.auth-footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+.auth-footer button {
+  font-weight: 700;
+  text-decoration-line: underline;
+  color: var(--brand-purple);
+}
+
+/* =====================================================================
+   로그인 모달
+   ===================================================================== */
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.login-brand img {
+  width: auto;
+  height: 44px;
+  margin-bottom: 12px;
+}
+
+.login-brand h2 {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.login-brand p {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+.login-form > :not(:last-child) {
+  margin-bottom: 12px;
+}
+
+.login-error {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--danger);
+  background: rgba(217, 48, 37, 0.06);
+}
+
+.login-submit {
+  transition: opacity 150ms var(--ease);
+}
+
+/* 테스트 계정 빠른 로그인 */
+.demo-accounts {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--divider);
+}
+
+.demo-accounts__title {
+  margin-bottom: 12px;
+  text-align: center;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+.demo-accounts__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.demo-accounts__btn {
+  padding: 8px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(100, 50, 220, 0.04);
+  color: var(--brand-purple);
+  border: 1px solid rgba(100, 50, 220, 0.12);
+  transition: all 150ms var(--ease);
+}
+
+.demo-accounts__btn span {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* =====================================================================
+   회원가입 모달
+   ===================================================================== */
+.signup-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.signup-brand img {
+  width: auto;
+  height: 32px;
+}
+
+.signup-brand h2 {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.signup-brand p {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+/* ---------- 단계 표시 (1 계정 정보 — 2 기업 정보) ---------- */
+.signup-steps {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.signup-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.signup-step__num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  background: var(--divider);
+  color: var(--text-muted);
+}
+
+.signup-step__label {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.signup-step.is-reached .signup-step__num {
+  background: var(--brand-gradient);
+  color: #fff;
+}
+
+.signup-step.is-reached .signup-step__label {
+  color: var(--text-primary);
+}
+
+.signup-step__line {
+  width: 32px;
+  height: 1px;
+  background: var(--clean-border);
+}
+
+.signup-step__line.is-done {
+  background: var(--brand-purple);
+}
+
+/* ---------- 입력 단계 ---------- */
+.signup-fields > :not(:last-child) {
+  margin-bottom: 16px;
+}
+
+.signup-type-label {
+  margin-bottom: 8px;
+}
+
+.signup-type-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.signup-type-btn {
+  padding: 12px;
+  border-radius: 12px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 600;
+  background: var(--input-bg);
+  border: 1px solid var(--clean-border);
+  color: var(--text-secondary);
+  transition: all 150ms var(--ease);
+}
+
+.signup-type-btn.is-active {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.08), rgba(6, 182, 212, 0.08));
+  border: 1.5px solid rgba(147, 51, 234, 0.3);
+  color: var(--brand-purple);
+}
+
+.signup-next-btn {
+  margin-top: 8px;
+}
+
+.signup-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.signup-actions button {
+  flex: 1 1 0%;
+}
+
+.signup-prev-btn {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-radius: 12px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 600;
+  background: var(--input-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--clean-border);
+  transition: all 150ms var(--ease);
+}
+
+/* ---------- 가입 완료 ---------- */
+.signup-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+  text-align: center;
+}
+
+.signup-done__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 9999px;
+  background: rgba(26, 158, 92, 0.1);
+}
+
+.signup-done h3 {
+  margin-bottom: 4px;
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.signup-done p {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
