@@ -31,19 +31,52 @@ react(),
       },
     },
     server: {
+      proxy: {
+        // Spring REST API
+        '/api': {
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+        },
+        // 국가 CSV
+        '/country': {
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+        },
+        // 항구 / 공항 CSV
+        '/route': {
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+        },
+
+      },
       host: process.env.FIGMA_DEV_SERVER_HOST || '0.0.0.0',
       port: parseInt(process.env.PORT || '8443'),
       strictPort: true,
       watch: {
         ignored: [
           '**/.figma/**',
-],
+        ],
       },
     },
     preview: {
-      host: process.env.FIGMA_DEV_SERVER_HOST || '0.0.0.0',
-      port: parseInt(process.env.PORT || '8443'),
+
+  proxy: {
+    '/api': {
+      target: 'http://localhost:8080',
+      changeOrigin: true,
     },
+    '/country': {
+      target: 'http://localhost:8080',
+      changeOrigin: true,
+    },
+    '/route': {
+      target: 'http://localhost:8080',
+      changeOrigin: true,
+    },
+  },
+  host: process.env.FIGMA_DEV_SERVER_HOST || '0.0.0.0',
+  port: parseInt(process.env.PORT || '8443'),
+},
   }
 })
 
@@ -359,3 +392,5 @@ function figmaMakeKitPlugin(options: { storiesGlob: string | string[] }): Plugin
     },
   }
 }
+
+
