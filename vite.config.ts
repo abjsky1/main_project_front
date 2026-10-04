@@ -36,6 +36,7 @@ react(),
         '/api': {
           target: 'http://localhost:8080',
           changeOrigin: true,
+          xfwd: true,   // 실제 접속 IP를 X-Forwarded-For 헤더로 전달 (감사 로그 IP 기록용)
         },
         // 국가 CSV
         '/country': {
@@ -64,6 +65,7 @@ react(),
     '/api': {
       target: 'http://localhost:8080',
       changeOrigin: true,
+      xfwd: true,   // 실제 접속 IP를 X-Forwarded-For 헤더로 전달 (감사 로그 IP 기록용)
     },
     '/country': {
       target: 'http://localhost:8080',

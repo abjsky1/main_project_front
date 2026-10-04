@@ -11,9 +11,12 @@ const RESULT_OPTIONS: { val: LogResultFilter; label: string }[] = [
 // "감사 로그 (Audit Log)" 탭
 export default function AuditLogSection({ state }: { state: AuditLogState }) {
   const {
-    filteredLogs, filterOpen, setFilterOpen, filterUser, setFilterUser,
+    filteredLogs, loading, loadError, filterOpen, setFilterOpen, filterUser, setFilterUser,
     filterAction, setFilterAction, filterResult, setFilterResult, filtersActive, resetFilters,
   } = state;
+
+  // 표가 비었을 때 안내 문구
+  const emptyMessage = loading ? '감사 로그를 불러오는 중입니다...' : loadError || '해당 조건의 로그가 없습니다.';
 
   // 줄 배경: 실패한 기록은 붉게, 나머지는 한 줄씩 번갈아 회색
   const rowClass = (result: string, index: number) => {
@@ -73,7 +76,7 @@ export default function AuditLogSection({ state }: { state: AuditLogState }) {
                 <td className="cell-mono cell-time">{log.timestamp}</td>
                 <td className="cell-user">{log.user}</td>
                 <td>
-                  <span className={`action-badge ${ACTION_BADGE_CLASS[log.action] ?? ''}`.trim()}>{log.action}</span>
+                  <span className={`action-badge ${ACTION_BADGE_CLASS[log.actionId] ?? ''}`.trim()}>{log.action}</span>
                 </td>
                 <td className="cell-target">{log.target}</td>
                 <td className="cell-mono">{log.ip}</td>
@@ -83,7 +86,7 @@ export default function AuditLogSection({ state }: { state: AuditLogState }) {
               </tr>
             ))}
             {filteredLogs.length === 0 && (
-              <tr><td colSpan={6} className="cell-empty">해당 조건의 로그가 없습니다.</td></tr>
+              <tr><td colSpan={6} className="cell-empty">{emptyMessage}</td></tr>
             )}
           </tbody>
         </table>
