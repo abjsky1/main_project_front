@@ -143,7 +143,7 @@ export default function Header({ currentPage, onNavigate, user, onLoginClick, on
       if (user?.companyType === '수출입기업') {
 
         response = await axios.post(
-          `/api/matching/shipper/accept/${matchingId}`
+          `/api/matching/shipper/accept/${matchingId}?memberId=${user.memberId}` 
         );
 
       }
@@ -152,7 +152,7 @@ export default function Header({ currentPage, onNavigate, user, onLoginClick, on
       else if (user?.companyType === '물류업체') {
 
         response = await axios.post(
-          `/api/matching/logistics/accept/${matchingId}`
+          `/api/matching/logistics/accept/${matchingId}?memberId=${user.memberId}`
         );
 
       } else {
@@ -203,7 +203,7 @@ export default function Header({ currentPage, onNavigate, user, onLoginClick, on
       if (user?.companyType === '수출입기업') {
 
         response = await axios.post(
-          `/api/matching/shipper/reject/${matchingId}`
+          `/api/matching/shipper/reject/${matchingId}?memberId=${user.memberId}`
         );
 
       }
@@ -212,7 +212,7 @@ export default function Header({ currentPage, onNavigate, user, onLoginClick, on
       else if (user?.companyType === '물류업체') {
 
         response = await axios.post(
-          `/api/matching/logistics/reject/${matchingId}`
+          `/api/matching/logistics/reject/${matchingId}?memberId=${user.memberId}`
         );
 
       } else {
