@@ -1,15 +1,15 @@
-import type { MatchItem, PartyKey, PartyResponse } from '../matchTypes';
+import type { MatchItem, PartyResponse } from '../matchTypes';
 
 const RESPONSE_LABEL: Record<PartyResponse, string> = { accepted: '수락', rejected: '거절', waiting: '대기 중' };
 
 interface PartyResponsesProps {
   match: MatchItem;
-  onAccept: (party: PartyKey) => void;
-  onReject: (party: PartyKey) => void;   // 거절 사유 모달 열기
+  // onAccept: (party: PartyKey) => void;
+  // onReject: (party: PartyKey) => void;   // 거절 사유 모달 열기
 }
 
 // 관리자 승인 후: 화주사 / 물류업체의 수락 현황
-export default function PartyResponses({ match, onAccept, onReject }: PartyResponsesProps) {
+export default function PartyResponses({ match }: PartyResponsesProps) {
   return (
     <div>
       <p className="match-detail__title">쌍방 수락 현황</p>
@@ -29,12 +29,12 @@ export default function PartyResponses({ match, onAccept, onReject }: PartyRespo
               {p.response === 'rejected' && p.rejectReason && (
                 <p className="party-card__reason">거절 사유: {p.rejectReason}</p>
               )}
-              {p.response === 'waiting' && match.finalStatus === 'pending' && (
+              {/* {p.response === 'waiting' && match.finalStatus === 'pending' && (
                 <div className="party-card__actions">
                   <button onClick={() => onAccept(party)} className="party-accept-btn">수락</button>
                   <button onClick={() => onReject(party)} className="party-reject-btn">거절</button>
                 </div>
-              )}
+              )} */}
             </div>
           );
         })}

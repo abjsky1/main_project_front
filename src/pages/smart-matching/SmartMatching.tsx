@@ -6,8 +6,9 @@ import MatchStats from './components/MatchStats';
 import MatchCard from './components/MatchCard';
 import RejectReasonModal from './components/RejectReasonModal';
 import { loadMatchItems } from './matchMapper';
-import type { MatchItem, PartyKey, PartyResponse, StatusFilter } from './matchTypes';
+import type { MatchItem, StatusFilter } from './matchTypes';
 import './SmartMatching.css';
+import axios from 'axios';
 
 interface SmartMatchingProps {
   user: User | null;
@@ -18,8 +19,8 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
   const [matches, setMatches] = useState<MatchItem[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [rejectModalId, setRejectModalId] = useState<{ matchId: number; party: PartyKey } | null>(null);
-  const [rejectReason, setRejectReason] = useState('');
+  
+  
   const [adminRejectModalId, setAdminRejectModalId] = useState<number | null>(null);
   const [adminRejectReason, setAdminRejectReason] = useState('');
   const [toast, setToast] = useState<string | null>(null);
@@ -65,37 +66,88 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 4000); };
 
   /* ---------- 관리자 승인 / 반려 ---------- */
-  // TODO: 백엔드 연결 시 승인/반려 API 호출 추가 (현재는 화면 상태만 변경)
-  const approveByAdmin = (id: number) => {
-    setMatches((p) => p.map((m) => (m.id === id ? { ...m, adminStatus: 'approved' } : m)));
-    showToast('✓ 매칭 승인 완료. 화주사 및 물류업체에 알림이 발송되었습니다.');
-  };
+  const approveByAdmin = async (id: number) => {
 
-  const rejectByAdmin = (id: number) => {
-    setMatches((p) => p.map((m) => (m.id === id ? { ...m, adminStatus: 'rejected', adminRejectReason } : m)));
-    setAdminRejectModalId(null);
-    setAdminRejectReason('');
-    showToast('매칭이 반려되었습니다.');
-  };
+    try {
 
-  /* ---------- 화주사 / 물류업체 수락·거절 ---------- */
-  const respondAsParty = (matchId: number, party: PartyKey, response: PartyResponse, reason?: string) => {
-    setMatches((p) => p.map((m) => {
-      if (m.id !== matchId) return m;
-      const updated = { ...m, [party]: { ...m[party], response, rejectReason: reason } };
-      const shipperAccepted = party === 'shipper' ? response === 'accepted' : m.shipper.response === 'accepted';
-      const logisticsAccepted = party === 'logistics' ? response === 'accepted' : m.logistics.response === 'accepted';
-      const shipperRejected = party === 'shipper' ? response === 'rejected' : m.shipper.response === 'rejected';
-      const logisticsRejected = party === 'logistics' ? response === 'rejected' : m.logistics.response === 'rejected';
-      if (shipperAccepted && logisticsAccepted) updated.finalStatus = 'completed';
-      else if (shipperRejected || logisticsRejected) updated.finalStatus = 'failed';
-      return updated;
-    }));
-    if (response === 'rejected') {
-      setRejectModalId(null);
-      setRejectReason('');
+      const response = await axios.post(
+        `/api/matching/approve/${id}`
+      );
+
+      if (response.data === true) {
+
+        // DB 저장 성공 후 화면 상태 변경
+        setMatches((p) =>
+          p.map((m) =>
+            m.id === id
+              ? { ...m, adminStatus: 'approved' }
+              : m
+          )
+        );
+
+        showToast('✓ 매칭이 승인되었습니다.');
+
+      } else {
+
+        showToast('매칭 승인에 실패했습니다.');
+
+      }
+
+    } catch (error) {
+
+      console.log('매칭 승인 실패 : ', error);
+      showToast('매칭 승인 중 오류가 발생했습니다.');
+
     }
+
   };
+
+
+  // 관리자 매칭 반려
+  const rejectByAdmin = async (id: number) => {
+
+    try {
+
+      const response = await axios.post(
+        `/api/matching/reject/${id}`
+      );
+
+      if (response.data === true) {
+
+        // DB 저장 성공 후 화면 상태 변경
+        setMatches((p) =>
+          p.map((m) =>
+            m.id === id
+              ? {
+                  ...m,
+                  adminStatus: 'rejected',
+                  finalStatus: 'failed',
+                  adminRejectReason: adminRejectReason
+                }
+              : m
+          )
+        );
+
+        setAdminRejectModalId(null);
+        setAdminRejectReason('');
+
+        showToast('매칭이 반려되었습니다.');
+
+      } else {
+
+        showToast('매칭 반려에 실패했습니다.');
+
+      }
+
+    } catch (error) {
+
+      console.log('매칭 반려 실패 : ', error);
+      showToast('매칭 반려 중 오류가 발생했습니다.');
+
+    }
+
+  };
+  
 
   /* ---------- 상태 필터 ---------- */
   const filteredMatches = matches.filter((m) => {
@@ -135,8 +187,7 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
             onToggle={() => setExpandedId(expandedId === match.id ? null : match.id)}
             onApprove={() => approveByAdmin(match.id)}
             onAdminReject={() => setAdminRejectModalId(match.id)}
-            onPartyAccept={(party) => respondAsParty(match.id, party, 'accepted')}
-            onPartyReject={(party) => setRejectModalId({ matchId: match.id, party })}
+            
           />
         ))}
 
@@ -160,18 +211,7 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
         />
       )}
 
-      {/* 화주사/물류업체 거절 모달 */}
-      {rejectModalId !== null && (
-        <RejectReasonModal
-          title={<>{rejectModalId.party === 'shipper' ? '화주사' : '물류업체'} 거절</>}
-          description="거절 사유를 선택하세요"
-          confirmLabel="거절 확인"
-          selected={rejectReason}
-          onSelect={setRejectReason}
-          onCancel={() => { setRejectModalId(null); setRejectReason(''); }}
-          onConfirm={() => rejectModalId && respondAsParty(rejectModalId.matchId, rejectModalId.party, 'rejected', rejectReason)}
-        />
-      )}
+      
     </div>
   );
 }

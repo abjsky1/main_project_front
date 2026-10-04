@@ -1,4 +1,4 @@
-import type { MatchItem, PartyKey } from '../matchTypes';
+import type { MatchItem } from '../matchTypes';
 import MatchDetail from './MatchDetail';
 
 // 진행 상태 배지 (글자 + CSS 클래스)
@@ -16,12 +16,11 @@ interface MatchCardProps {
   onToggle: () => void;
   onApprove: () => void;
   onAdminReject: () => void;
-  onPartyAccept: (party: PartyKey) => void;
-  onPartyReject: (party: PartyKey) => void;
+  
 }
 
 // 매칭 결과 카드 1개 (클릭하면 상세 펼침)
-export default function MatchCard({ match, expanded, onToggle, onApprove, onAdminReject, onPartyAccept, onPartyReject }: MatchCardProps) {
+export default function MatchCard({ match, expanded, onToggle, onApprove, onAdminReject }: MatchCardProps) {
   const badge = getStatusBadge(match);
 
   return (
@@ -70,8 +69,7 @@ export default function MatchCard({ match, expanded, onToggle, onApprove, onAdmi
           match={match}
           onApprove={onApprove}
           onAdminReject={onAdminReject}
-          onPartyAccept={onPartyAccept}
-          onPartyReject={onPartyReject}
+
         />
       )}
     </div>

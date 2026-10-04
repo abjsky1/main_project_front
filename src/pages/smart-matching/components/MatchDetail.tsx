@@ -1,4 +1,4 @@
-import type { MatchItem, PartyKey } from '../matchTypes';
+import type { MatchItem } from '../matchTypes';
 import PartyResponses from './PartyResponses';
 
 // 일치(✓) / 부분 일치(⚠) 표시
@@ -12,12 +12,11 @@ interface MatchDetailProps {
   match: MatchItem;
   onApprove: () => void;
   onAdminReject: () => void;                 // 관리자 반려 모달 열기
-  onPartyAccept: (party: PartyKey) => void;
-  onPartyReject: (party: PartyKey) => void;  // 당사자 거절 모달 열기
+  
 }
 
 // 매칭 카드를 펼쳤을 때 보이는 상세 내용
-export default function MatchDetail({ match, onApprove, onAdminReject, onPartyAccept, onPartyReject }: MatchDetailProps) {
+export default function MatchDetail({ match, onApprove, onAdminReject }: MatchDetailProps) {
   const { request, offer } = match;
 
   const scores = [
@@ -152,7 +151,7 @@ export default function MatchDetail({ match, onApprove, onAdminReject, onPartyAc
               <span className="notice-sent__sub">회사명 · 담당자 · 사업자번호 · 연락처 · 주소 · 매칭 노선 정보 전달됨</span>
             </div>
           </div>
-          <PartyResponses match={match} onAccept={onPartyAccept} onReject={onPartyReject} />
+          <PartyResponses match={match} />
         </div>
       )}
 
