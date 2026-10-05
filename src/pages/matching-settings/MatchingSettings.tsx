@@ -284,7 +284,7 @@ export default function MatchingSettings({ user, onLoginClick, onMatchingUpdate,
         </div>
       )}
 
-      {(consented || shipperRows.length > 0 || logisticsRows.length > 0) && (
+      {consented&& (consented || shipperRows.length > 0 || logisticsRows.length > 0) && (
         <>
           {/* 수출입기업 화면 */}
           {isShipper && (
