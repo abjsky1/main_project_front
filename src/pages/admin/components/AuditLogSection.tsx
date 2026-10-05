@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from 'react';
 import FilterButton from '../../../components/common/FilterButton';
 import { ACTION_BADGE_CLASS } from '../adminData';
 import type { AuditLogState, LogResultFilter } from '../useAuditLogs';
@@ -11,9 +12,17 @@ const RESULT_OPTIONS: { val: LogResultFilter; label: string }[] = [
 // "감사 로그 (Audit Log)" 탭
 export default function AuditLogSection({ state }: { state: AuditLogState }) {
   const {
-    filteredLogs, filterOpen, setFilterOpen, filterUser, setFilterUser,
-    filterAction, setFilterAction, filterResult, setFilterResult, filtersActive, resetFilters,
+    logs, loading, loadError, filterOpen, setFilterOpen, filterUser, setFilterUser,
+    filterAction, setFilterAction, filterResult, setFilterResult, filtersActive, search, resetFilters,
   } = state;
+
+  // 표가 비었을 때 안내 문구
+  const emptyMessage = loading ? '감사 로그를 불러오는 중입니다...' : loadError || '해당 조건의 로그가 없습니다.';
+
+  // 입력칸에서 Enter = [검색]
+  const searchOnEnter = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') search();
+  };
 
   // 줄 배경: 실패한 기록은 붉게, 나머지는 한 줄씩 번갈아 회색
   const rowClass = (result: string, index: number) => {
@@ -27,7 +36,7 @@ export default function AuditLogSection({ state }: { state: AuditLogState }) {
       <div className="admin-list-bar">
         <div className="admin-list-bar__left">
           <p className="eyebrow">감사 로그</p>
-          <span className="admin-count">{filteredLogs.length}건</span>
+          <span className="admin-count">{logs.length}건</span>
         </div>
         <div className="admin-list-bar__right">
           {filtersActive && <button onClick={resetFilters} className="filter-reset-btn">필터 초기화</button>}
@@ -35,16 +44,16 @@ export default function AuditLogSection({ state }: { state: AuditLogState }) {
         </div>
       </div>
 
-      {/* 필터 패널 */}
+      {/* 필터 패널 — [검색] 또는 Enter 를 눌러야 DB 에서 조회 */}
       {filterOpen && (
         <div className="filter-panel admin-filter-panel">
           <div>
             <label className="form-label">사용자</label>
-            <input value={filterUser} onChange={(e) => setFilterUser(e.target.value)} placeholder="이름 검색..." className="filter-input" />
+            <input value={filterUser} onChange={(e) => setFilterUser(e.target.value)} onKeyDown={searchOnEnter} placeholder="이메일 · 이름 검색..." className="filter-input" />
           </div>
           <div>
             <label className="form-label">작업 유형</label>
-            <input value={filterAction} onChange={(e) => setFilterAction(e.target.value)} placeholder="작업명 검색..." className="filter-input" />
+            <input value={filterAction} onChange={(e) => setFilterAction(e.target.value)} onKeyDown={searchOnEnter} placeholder="작업명 검색..." className="filter-input" />
           </div>
           <div>
             <label className="form-label">결과</label>
@@ -56,6 +65,9 @@ export default function AuditLogSection({ state }: { state: AuditLogState }) {
               ))}
             </div>
           </div>
+          <div className="admin-filter-actions">
+            <button onClick={search} className="admin-search-btn">검색</button>
+          </div>
         </div>
       )}
 
@@ -64,16 +76,18 @@ export default function AuditLogSection({ state }: { state: AuditLogState }) {
         <table className="admin-table">
           <thead>
             <tr>
-              {['일시', '사용자', '작업 유형', '대상', 'IP 주소', '결과'].map((h) => <th key={h}>{h}</th>)}
+              {['일시', '회원 유형', '사용자', '작업 유형', '대상', 'IP 주소', '결과'].map((h) => <th key={h}>{h}</th>)}
             </tr>
           </thead>
           <tbody>
-            {filteredLogs.map((log, i) => (
+            {logs.map((log, i) => (
               <tr key={log.id} className={rowClass(log.result, i)}>
                 <td className="cell-mono cell-time">{log.timestamp}</td>
-                <td className="cell-user">{log.user}</td>
+                <td className="cell-type">{log.memberType}</td>
+                {/* 비회원은 공통 계정 이메일이라 '-' 로 표시 */}
+                <td className="cell-user">{log.memberType === '비회원' ? '-' : log.email}</td>
                 <td>
-                  <span className={`action-badge ${ACTION_BADGE_CLASS[log.action] ?? ''}`.trim()}>{log.action}</span>
+                  <span className={`action-badge ${ACTION_BADGE_CLASS[log.actionId] ?? ''}`.trim()}>{log.action}</span>
                 </td>
                 <td className="cell-target">{log.target}</td>
                 <td className="cell-mono">{log.ip}</td>
@@ -82,8 +96,8 @@ export default function AuditLogSection({ state }: { state: AuditLogState }) {
                 </td>
               </tr>
             ))}
-            {filteredLogs.length === 0 && (
-              <tr><td colSpan={6} className="cell-empty">해당 조건의 로그가 없습니다.</td></tr>
+            {logs.length === 0 && (
+              <tr><td colSpan={7} className="cell-empty">{emptyMessage}</td></tr>
             )}
           </tbody>
         </table>
