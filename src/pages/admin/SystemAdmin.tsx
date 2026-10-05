@@ -27,6 +27,12 @@ export default function SystemAdmin({ user, onLoginClick }: SystemAdminProps) {
   const userState = useUserManagement();
   const logState = useAuditLogs();
 
+  // 탭 열기 — 감사 로그 탭은 열 때마다 다시 조회 (방금 한 활동이 바로 보이게)
+  const openTab = (id: Section) => {
+    setSection(id);
+    if (id === 'logs') logState.reload();
+  };
+
   // 관리자만 접근 가능
   if (!user || user.role !== 'admin') {
     return (
@@ -53,7 +59,7 @@ export default function SystemAdmin({ user, onLoginClick }: SystemAdminProps) {
         {TABS.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setSection(tab.id)}
+            onClick={() => openTab(tab.id)}
             className={section === tab.id ? 'tab-btn is-active' : 'tab-btn'}
           >
             {tab.label}
@@ -61,7 +67,7 @@ export default function SystemAdmin({ user, onLoginClick }: SystemAdminProps) {
         ))}
       </div>
 
-      {section === 'users' && <UserManagement state={userState} />}
+      {section === 'users' && <UserManagement state={userState} currentMemberId={user.memberId} />}
       {section === 'logs' && <AuditLogSection state={logState} />}
     </div>
   );

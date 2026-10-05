@@ -95,9 +95,31 @@
   padding-bottom: 8px;
 }
 
+/* 필터 패널 맨 아래 줄 : [검색] 버튼 (오른쪽 정렬) */
+.admin-filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.admin-search-btn {
+  padding: 8px 24px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand-gradient);
+}
+
+.admin-search-btn:hover {
+  opacity: 0.9;
+}
+
 /* ---------- 표 공통 ---------- */
 .admin-table-wrap {
-  overflow: hidden;
+  overflow-x: auto;     /* 창이 좁으면 마지막 칸이 잘리지 않고 가로 스크롤 */
+  overflow-y: hidden;
   border-radius: 16px;
   border: 1px solid var(--clean-border);
 }
@@ -246,6 +268,13 @@
   opacity: 0.8;
 }
 
+/* 본인 행 / 변경 요청 중에는 누를 수 없게 흐리게 */
+.status-select:disabled,
+.role-toggle-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* ---------- 감사 로그 표 (AuditLogSection.tsx) ---------- */
 .log-row {
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
@@ -274,6 +303,14 @@
   line-height: var(--lh-xs);
   font-weight: 600;
   color: var(--text-primary);
+}
+
+/* 회원 유형 칸 (관리자 / 수출입기업 / 물류업체 / 비회원) */
+.log-row .cell-type {
+  white-space: nowrap;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-secondary);
 }
 
 .log-row .cell-target {
@@ -305,6 +342,7 @@
 .result-badge {
   padding: 2px 8px;
   border-radius: 9999px;
+  white-space: nowrap;
   font-size: 11px;
   font-weight: 700;
   background: #dcfce7;

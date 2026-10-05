@@ -7,30 +7,36 @@ const SORT_OPTIONS: { val: LoginSort; label: string }[] = [
   { val: 'desc', label: '내림차순 ↓' },
 ];
 
+interface UserManagementProps {
+  state: UserManagementState;
+  currentMemberId?: string;   // 로그인한 관리자 본인 (본인 권한/상태는 바꿀 수 없게)
+}
+
 // "사용자 권한 관리" 탭
-export default function UserManagement({ state }: { state: UserManagementState }) {
+export default function UserManagement({ state, currentMemberId }: UserManagementProps) {
   const {
-    users, filteredUsers, toggleRole, changeStatus,
+    users, summary, loading, loadError, busyId, toggleRole, changeStatus,
     filterOpen, setFilterOpen, filterRole, setFilterRole, filterStatus, setFilterStatus,
-    loginSort, setLoginSort, filtersActive, resetFilters,
+    loginSort, setLoginSort, filtersActive, search, resetFilters,
   } = state;
 
-  const activeCount = users.filter((u) => u.status === '활성').length;
+  // 표가 비었을 때 안내 문구
+  const emptyMessage = loading ? '사용자 목록을 불러오는 중입니다...' : loadError || '해당 조건의 사용자가 없습니다.';
 
   return (
     <div>
-      {/* 요약 카드 */}
+      {/* 요약 카드 (필터와 상관없이 전체 기준) */}
       <div className="admin-summary">
         <div className="admin-summary__card">
-          <p className="admin-summary__value">{users.length}</p>
+          <p className="admin-summary__value">{summary.all}</p>
           <p className="admin-summary__label">전체 사용자</p>
         </div>
         <div className="admin-summary__card">
-          <p className="admin-summary__value admin-summary__value--active">{activeCount}</p>
+          <p className="admin-summary__value admin-summary__value--active">{summary.active}</p>
           <p className="admin-summary__label">활성 사용자</p>
         </div>
         <div className="admin-summary__card">
-          <p className="admin-summary__value admin-summary__value--inactive">{users.length - activeCount}</p>
+          <p className="admin-summary__value admin-summary__value--inactive">{summary.inactive}</p>
           <p className="admin-summary__label">비활성</p>
         </div>
       </div>
@@ -39,7 +45,7 @@ export default function UserManagement({ state }: { state: UserManagementState }
       <div className="admin-list-bar">
         <div className="admin-list-bar__left">
           <p className="eyebrow">사용자 목록</p>
-          <span className="admin-count">{filteredUsers.length}명</span>
+          <span className="admin-count">{users.length}명</span>
         </div>
         <div className="admin-list-bar__right">
           {filtersActive && <button onClick={resetFilters} className="filter-reset-btn">필터 초기화</button>}
@@ -47,7 +53,7 @@ export default function UserManagement({ state }: { state: UserManagementState }
         </div>
       </div>
 
-      {/* 필터 패널 */}
+      {/* 필터 패널 — 역할/상태는 [검색]을 눌러야 DB 에서 조회 , 정렬은 바로 화면에서만 */}
       {filterOpen && (
         <div className="filter-panel admin-filter-panel">
           <div>
@@ -80,6 +86,9 @@ export default function UserManagement({ state }: { state: UserManagementState }
               ))}
             </div>
           </div>
+          <div className="admin-filter-actions">
+            <button onClick={search} className="admin-search-btn">검색</button>
+          </div>
         </div>
       )}
 
@@ -92,8 +101,9 @@ export default function UserManagement({ state }: { state: UserManagementState }
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map((u) => {
+            {users.map((u) => {
               const isAdmin = u.role === '관리자';
+              const locked = u.id === currentMemberId || busyId !== null;   // 본인 행 , 다른 변경 요청 중
               return (
                 <tr key={u.id} className="user-row">
                   <td>
@@ -108,8 +118,11 @@ export default function UserManagement({ state }: { state: UserManagementState }
                   </td>
                   <td className="cell-mono">{u.lastLogin}</td>
                   <td>
+                    {/* 상태 스위치 : 활성 ↔ 비활성 (DB 저장) */}
                     <select
                       value={u.status}
+                      disabled={locked}
+                      title={u.id === currentMemberId ? '본인 상태는 변경할 수 없습니다' : undefined}
                       onChange={(e) => changeStatus(u.id, e.target.value as UserStatus)}
                       className={u.status === '활성' ? 'status-select status-select--active' : 'status-select status-select--inactive'}
                     >
@@ -117,13 +130,22 @@ export default function UserManagement({ state }: { state: UserManagementState }
                     </select>
                   </td>
                   <td>
-                    <button onClick={() => toggleRole(u.id)} className={isAdmin ? 'role-toggle-btn is-admin' : 'role-toggle-btn'}>
+                    {/* 권한 스위치 : 관리자 ↔ 일반사용자 (DB 저장) */}
+                    <button
+                      onClick={() => toggleRole(u.id)}
+                      disabled={locked}
+                      title={u.id === currentMemberId ? '본인 권한은 변경할 수 없습니다' : undefined}
+                      className={isAdmin ? 'role-toggle-btn is-admin' : 'role-toggle-btn'}
+                    >
                       {isAdmin ? '권한 해제' : '관리자 지정'}
                     </button>
                   </td>
                 </tr>
               );
             })}
+            {users.length === 0 && (
+              <tr><td colSpan={6} className="cell-empty">{emptyMessage}</td></tr>
+            )}
           </tbody>
         </table>
       </div>
