@@ -1,26 +1,53 @@
 import type { CSSProperties } from 'react';
 import type { KpiStat } from '../dashboardData';
 
-// 대시보드 상단 KPI 카드 1개
-export default function StatCard({ label, value, unit, change, sublabel, accent = '#9333ea' }: KpiStat) {
-  const isPositive = change > 0;
+export default function StatCard({
+  label,
+  value,
+  unit,
+  change,
+  changeLabel,
+  accent,
+}: KpiStat) {
+  let badgeClass = 'change-badge';
+  let changeText = '—';
+
+  if (change !== null) {
+    if (change > 0) {
+      badgeClass += ' is-up';
+      changeText = `▲ ${change.toFixed(2)}%`;
+    } else if (change < 0) {
+      badgeClass += ' is-down';
+      changeText = `▼ ${Math.abs(change).toFixed(2)}%`;
+    } else {
+      changeText = '0.00%';
+    }
+  }
+
   return (
     <div className="stat-card">
-      {/* 위쪽 강조선 — 카드마다 색이 달라서 CSS 변수(--accent)로 전달 */}
-      <div className="stat-card__accent" style={{ '--accent': accent } as CSSProperties} />
+      <div
+        className="stat-card__accent"
+        style={{ '--accent': accent } as CSSProperties}
+      />
+
       <p className="eyebrow">{label}</p>
-      <div>
-        <p className="stat-card__value">
-          {value}
-          <span className="stat-card__unit">{unit}</span>
-        </p>
-        <p className="stat-card__sublabel">{sublabel}</p>
-      </div>
+
+      <p className="stat-card__value">
+        {value}
+        <span className="stat-card__unit">{unit}</span>
+      </p>
+
       <div className="stat-card__change">
-        <span className={isPositive ? 'change-badge is-up' : 'change-badge is-down'}>
-          {isPositive ? '▲' : '▼'} {Math.abs(change)}%
+        <span className={badgeClass}>
+          {changeText}
         </span>
-        <span className="stat-card__change-text">전월 대비</span>
+
+        <span className="stat-card__change-text">
+          {change === null
+            ? '비교 데이터 없음'
+            : changeLabel}
+        </span>
       </div>
     </div>
   );
