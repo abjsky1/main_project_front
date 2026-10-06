@@ -1,6 +1,14 @@
+/* =====================================================================
+   App : 모든 페이지의 부모 컴포넌트
+   - 로그인한 회원 정보(user)를 보관하고, 로그인/회원가입 모달을 띄움
+   - <Routes> 로 주소에 맞는 페이지를 보여줌 (주소 목록은 routes.ts)
+   - 여러 페이지가 같이 쓰는 값(매칭 조건 목록 등)도 여기서 보관해서 props 로 내려줌
+   ===================================================================== */
 import { useState } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import type { CompanyType, Page, User } from './types/user';
+import type { CompanyType, User } from './types/user';
+import { PAGE_PATHS, pathToPage } from './routes';
 import Header from './components/layout/Header';
 import LoginModal from './components/auth/LoginModal';
 import SignupModal from './components/auth/SignupModal';
@@ -14,6 +22,9 @@ import SystemAdmin from './pages/admin/SystemAdmin';
 // 다른 파일에서 '../App' 으로 타입을 가져오던 코드와의 호환용
 export type { Page, UserRole, CompanyType, User } from './types/user';
 
+// 예전 화면 테스트용 회원 목록 (실제 로그인은 Spring /api/login 사용)
+// 지금은 회원가입 모달의 "이미 등록된 이메일" 검사에만 쓰임
+// [TS] User[] : User 모양 객체들의 배열 (User 는 types/user.ts 에 정의)
 const DEMO_USERS: User[] = [
 
   {
@@ -49,6 +60,8 @@ const DEMO_USERS: User[] = [
 
 ];
 
+// 예전 테스트용 비밀번호 (이메일 → 비밀번호). 현재 로그인에는 쓰이지 않음
+// [TS] Record<string, string> : 키도 글자, 값도 글자인 객체 (가이드 2-8)
 const DEMO_PASSWORDS: Record<string, string> = {
   'admin@macross.com': 'admin123',
   'user@macross.com': 'user123',
@@ -56,16 +69,25 @@ const DEMO_PASSWORDS: Record<string, string> = {
 };
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+  // 현재 페이지는 주소(path)에서 결정 → 새로고침해도 같은 화면 유지
+  const location = useLocation();
+  const navigate = useNavigate();
+  const currentPage = pathToPage(location.pathname);
+  // [TS] useState<User | null>(null) : User 객체 또는 null 을 담는 state (처음엔 null = 비로그인)
   const [user, setUser] = useState<User | null>(null);
-  const [showLogin, setShowLogin] = useState(false);
-  const [showSignup, setShowSignup] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);     // 로그인 모달 열림 여부
+  const [showSignup, setShowSignup] = useState(false);   // 회원가입 모달 열림 여부
   const [registeredUsers, setRegisteredUsers] = useState<User[]>(DEMO_USERS);
   const [registeredPasswords, setRegisteredPasswords] = useState<Record<string, string>>(DEMO_PASSWORDS);
+  // 매칭 조건에 등록한 국가 목록 (MatchingSettings 가 채우고 → Dashboard 맞춤 인사이트가 사용)
   const [matchingCountries, setMatchingCountries] = useState<string[]>([]);
+  // 내 매칭 조건 목록 (MatchingSettings 화면의 표)
   const [shipperRows, setShipperRows] = useState<ShipperCondition[]>([]);
   const [logisticsRows, setLogisticsRows] = useState<LogisticsCondition[]>([]);
 
+  // 로그인 (LoginModal 에서 호출)
+  // 돌려주는 값 : 실패하면 오류 문구(글자), 성공하면 null → LoginModal 이 오류 문구를 화면에 표시
+  // [TS] Promise<string | null> : async 함수가 나중에 돌려줄 값이 "글자 또는 null" 이라는 표시
   const handleLogin =
   async (
     email: string,
@@ -97,6 +119,7 @@ export default function App() {
       console.log('로그인 회원 정보 : ', member);
 
       // signupId 또는 signupType 둘 다 대응
+      // a ?? b : a 가 없으면(null/undefined) b 사용 / ?. : 앞 값이 없으면 에러 대신 undefined
       const signupId =
         member.signupId ??
         member.signupEntity?.signupId;
@@ -121,7 +144,7 @@ export default function App() {
       ) {
         companyType = '물류업체';
       }
-      // 5. React User 저장
+      // 5. React User 저장 (백엔드 필드 이름 → 화면에서 쓰는 User 모양으로 바꿔 담기)
       setUser({
         memberId: member.memberId,
 
@@ -153,41 +176,47 @@ export default function App() {
     }
   };
 
+  // 회원가입 (SignupModal 에서 호출) — 현재는 화면 안의 목록에만 추가 (서버 저장 X)
+  // (prev) => [...prev, newUser] : 이전 목록을 복사하고 끝에 새 회원 추가
   const handleSignup = (newUser: User, password: string) => {
     setRegisteredUsers((prev) => [...prev, newUser]);
     setRegisteredPasswords((prev) => ({ ...prev, [newUser.email]: password }));
   };
 
+  // 로그아웃 : 회원 관련 값 비우기 → 대시보드(/)로 이동
   const handleLogout = () => {
     setShipperRows([]);
     setLogisticsRows([]);
     setMatchingCountries([]);
     setUser(null);
-    setCurrentPage('dashboard');
-  };
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'dashboard': return <Dashboard user={user} matchingCountries={matchingCountries} />;
-      case 'trade': return <TradeAnalysis />;
-      case 'matching-settings': return <MatchingSettings key={user?.memberId ?? user?.email ?? 'guest'} user={user} onLoginClick={() => setShowLogin(true)} onMatchingUpdate={setMatchingCountries} shipperRows={shipperRows} logisticsRows={logisticsRows} onShipperRowsChange={setShipperRows} onLogisticsRowsChange={setLogisticsRows} />;
-      case 'matching': return <SmartMatching user={user} onLoginClick={() => setShowLogin(true)} />;
-      case 'admin': return <SystemAdmin user={user} onLoginClick={() => setShowLogin(true)} />;
-      default: return <Dashboard user={user} matchingCountries={matchingCountries} />;
-    }
+    navigate(PAGE_PATHS.dashboard);
   };
 
   return (
     <div className="app-root">
+      {/* 상단 메뉴 : 메뉴를 누르면 onNavigate(페이지 이름) → 그 페이지 주소로 이동 */}
       <Header
         currentPage={currentPage}
-        onNavigate={setCurrentPage}
+        onNavigate={(page) => navigate(PAGE_PATHS[page])}
         user={user}
         onLoginClick={() => setShowLogin(true)}
         onLogout={handleLogout}
       />
-      <main className="app-main">{renderPage()}</main>
+      {/* 주소별 페이지 (B_react 의 <Routes><Route path element /></Routes> 와 같은 방식) */}
+      {/* MatchingSettings 의 key : 로그인한 회원이 바뀌면 key 가 바뀌어서 페이지를 새로 만듦 (이전 회원 입력값 초기화) */}
+      <main className="app-main">
+        <Routes>
+          <Route path={PAGE_PATHS.dashboard} element={<Dashboard user={user} matchingCountries={matchingCountries} />} />
+          <Route path={PAGE_PATHS.trade} element={<TradeAnalysis />} />
+          <Route path={PAGE_PATHS['matching-settings']} element={<MatchingSettings key={user?.memberId ?? user?.email ?? 'guest'} user={user} onLoginClick={() => setShowLogin(true)} onMatchingUpdate={setMatchingCountries} shipperRows={shipperRows} logisticsRows={logisticsRows} onShipperRowsChange={setShipperRows} onLogisticsRowsChange={setLogisticsRows} />} />
+          <Route path={PAGE_PATHS.matching} element={<SmartMatching user={user} onLoginClick={() => setShowLogin(true)} />} />
+          <Route path={PAGE_PATHS.admin} element={<SystemAdmin user={user} onLoginClick={() => setShowLogin(true)} />} />
+          {/* 없는 주소는 대시보드로 */}
+          <Route path="*" element={<Navigate to={PAGE_PATHS.dashboard} replace />} />
+        </Routes>
+      </main>
 
+      {/* 로그인 / 회원가입 모달 (showLogin, showSignup 이 true 일 때만 표시) */}
       {showLogin && (
         <LoginModal
           onLogin={handleLogin}
@@ -200,6 +229,7 @@ export default function App() {
           onSignup={handleSignup}
           onClose={() => setShowSignup(false)}
           onLoginClick={() => { setShowSignup(false); setShowLogin(true); }}
+          // 회원 목록에서 이메일만 뽑은 배열 (중복 가입 검사용)
           existingEmails={registeredUsers.map((u) => u.email)}
         />
       )}

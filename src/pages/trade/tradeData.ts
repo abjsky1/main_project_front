@@ -1,8 +1,9 @@
 // ⚠️ 더미 데이터 — 백엔드 API 연결 시 이 파일의 값/함수를 서버 응답으로 교체하세요.
 
+// [TS] 'a' | 'b' : 이 글자들 중 하나만 들어갈 수 있는 타입 (가이드 2-3)
 export type Currency = 'USD' | 'EUR' | 'CNH' | 'JPY';
-export type SortField = 'exportAmt' | 'importAmt' | 'balance' | null;
-export type SortDir = 'asc' | 'desc';
+export type SortField = 'exportAmt' | 'importAmt' | 'balance' | null;   // 정렬 기준 열 (null = 정렬 안 함)
+export type SortDir = 'asc' | 'desc';                                   // asc = 오름차순, desc = 내림차순
 
 /* ───────────── 환율 ───────────── */
 
@@ -14,28 +15,43 @@ export const EXTRA_CURRENCIES = ['AED','AUD','BHD','BND','CAD','CHF','DKK','GBP'
 
 export const START_YEAR = 2000;
 export const END_YEAR = 2026;
-export const YEARS = Array.from({ length: END_YEAR - START_YEAR + 1 }, (_, i) => START_YEAR + i);
+
+// 연도 선택 목록 [2000, 2001, ... , 2026]
+export const YEARS: number[] = [];
+for (let year = START_YEAR; year <= END_YEAR; year++) {
+  YEARS.push(year);
+}
 
 export const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 
+// seed(씨앗 숫자)가 같으면 항상 같은 순서의 가짜 난수를 만드는 함수 (dashboardData.ts 의 seededRng 와 같음)
+// 계산식은 난수 공식이라 몰라도 됩니다. rng() 를 부를 때마다 0~1 사이 숫자가 나옵니다.
 function seededRandom(seed: number) {
   let s = seed;
   return () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
 }
 
 // 통화별 가짜 월별 환율 (2000년 1월 ~ 2025년 12월)
+// base : 시작 환율 , currency : 통화 코드 (글자 코드 합을 seed 로 써서 통화마다 다른 그래프)
 function genRates(base: number, currency: string): number[] {
-  const rng = seededRandom(currency.split('').reduce((a, c) => a + c.charCodeAt(0), 0));
+  // seed = 통화 코드 글자들의 문자 코드 합 (예: 'USD' → 85 + 83 + 68)
+  let seed = 0;
+  for (let i = 0; i < currency.length; i++) {
+    seed = seed + currency.charCodeAt(i);
+  }
+  const rng = seededRandom(seed);
   const data: number[] = [];
   let val = base;
   const years = END_YEAR - START_YEAR;
   for (let i = 0; i < years * 12; i++) {
-    val = val * (1 + (rng() - 0.49) * 0.015);
-    data.push(Math.round(val * 100) / 100);
+    val = val * (1 + (rng() - 0.49) * 0.015);   // 매달 조금씩 오르내림
+    data.push(Math.round(val * 100) / 100);     // 소수점 2자리로 반올림
   }
   return data;
 }
 
+// 통화 코드 → 월별 환율 배열
+// [TS] Record<string, number[]> : 키는 글자, 값은 숫자 배열인 객체 (가이드 2-8)
 const RATE_DATA: Record<string, number[]> = {
   USD: genRates(1180, 'USD'), EUR: genRates(1320, 'EUR'),
   CNH: genRates(160, 'CNH'), JPY: genRates(9.2, 'JPY'),
@@ -51,11 +67,15 @@ const RATE_DATA: Record<string, number[]> = {
 };
 
 // 특정 통화의 특정 연도 12개월 환율
+// 배열은 2000년 1월부터 차례로 들어 있으므로, (연도 - 2000) × 12 번째부터 12개를 잘라냄
+// 데이터가 없는 통화(XOF 등)는 0 이 12개인 배열
+// 데이터 범위(2000~2025년)를 벗어난 연도(예: 2026)는 잘라낼 게 없어서 빈 배열 [] 이 됨
 export function getRatesForYear(currency: string, year: number): number[] {
   const offset = (year - START_YEAR) * 12;
   return RATE_DATA[currency]?.slice(offset, offset + 12) ?? Array(12).fill(0);
 }
 
+// 통화별 표시 정보 (이름, 국기, 단위)
 export const CURRENCY_INFO: Record<string, { name: string; flag: string; unit: string }> = {
   USD: { name: '미국 달러', flag: '🇺🇸', unit: '원/USD' },
   EUR: { name: '유로', flag: '🇪🇺', unit: '원/EUR' },
@@ -83,6 +103,7 @@ export const CURRENCY_INFO: Record<string, { name: string; flag: string; unit: s
 
 /* ───────────── 조건 검색 ───────────── */
 
+// 국가 선택 목록 (맨 끝의 .sort() 로 가나다 순 정렬)
 export const SEARCH_COUNTRIES = [
   '가나','가봉','감비아','건지섬','과들루프','과테말라','괌','그레나다','그린란드','그리스',
   '기니','기니비사우','나미비아','나우루','나이지리아','남극','남수단','남아프리카 공화국',
@@ -119,6 +140,7 @@ export const SEARCH_COUNTRIES = [
   '영국령 인도양 지역',
 ].sort();
 
+// 검색 결과 표 한 줄
 export interface TradeResult {
   id: number;
   hsCode: string;

@@ -36,6 +36,11 @@ interface MonthlyChartData {
 }
 
 // 그래프에 마우스를 올렸을 때 표시하는 말풍선
+// Recharts 가 이 컴포넌트를 직접 불러서 props 를 넣어 줌
+//   active  : 마우스가 그래프 위에 있는지
+//   payload : 그 위치의 값들 배열 (수출, 수입, 무역수지 — 각각 name, value, color 를 가짐)
+//   label   : 그 위치의 x축 글자 (예: '3월')
+// [TS] any : 라이브러리가 넣어 주는 값이라 타입 검사를 생략 (가이드 2-8)
 const TrendTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload || !payload.length) {
     return null;
@@ -74,7 +79,9 @@ export default function TradeTrendChart({
   const [loadedYear, setLoadedYear] =
     useState<number | null>(null);
 
+  // year 가 바뀔 때마다 월별 데이터 다시 조회
   useEffect(() => {
+    // ignore : 화면을 떠났거나 year 가 바뀌어서 "이 응답은 이제 필요 없다"는 표시 (가이드 3-4)
     let ignore = false;
 
     async function fetchMonthlyTrade() {
@@ -82,6 +89,7 @@ export default function TradeTrendChart({
       setLoadedYear(null);
 
       try {
+        // { data } : 응답 객체에서 data 칸만 꺼내기 (구조분해 — response.data 와 같음)
         const { data } =
           await axios.get<MonthlyTradeResponse[]>(
             '/api/cumulative/monthly',
@@ -90,29 +98,28 @@ export default function TradeTrendChart({
             }
           );
 
-        // 응답을 월 번호로 찾을 수 있게 변환
-        const monthlyMap = new Map(
-          data.map((item) => [item.month, item])
-        );
+        // 응답에 존재하는 마지막 월까지 차트 구성 (예: 9월까지 있으면 1월 ~ 9월)
+        let lastMonth = 0;
+        for (const item of data) {
+          lastMonth = Math.max(lastMonth, item.month);
+        }
 
-        // 응답에 존재하는 마지막 월까지 차트 구성
-        const lastMonth = data.reduce(
-          (max, item) => Math.max(max, item.month),
-          0
-        );
+        const converted: MonthlyChartData[] = [];
+        for (let month = 1; month <= lastMonth; month++) {
+          // 이 달의 응답 찾기 (같은 달이 두 번 오면 뒤의 것을 사용, 없으면 undefined)
+          let item: MonthlyTradeResponse | undefined;
+          for (const d of data) {
+            if (d.month === month) item = d;
+          }
 
-        const converted: MonthlyChartData[] =
-          Array.from({ length: lastMonth }, (_, index) => {
-            const month = index + 1;
-            const item = monthlyMap.get(month);
-
-            return {
-              month: `${month}월`,
-              export: item?.expDlr ?? null,
-              import: item?.impDlr ?? null,
-              balance: item?.balPayments ?? null,
-            };
+          // 응답이 없는 달은 null → 그래프에서 빈칸으로 표시
+          converted.push({
+            month: `${month}월`,
+            export: item?.expDlr ?? null,
+            import: item?.impDlr ?? null,
+            balance: item?.balPayments ?? null,
           });
+        }
 
         if (!ignore) {
           setChartData(converted);
@@ -127,11 +134,13 @@ export default function TradeTrendChart({
 
     fetchMonthlyTrade();
 
+    // 정리 함수 : 화면을 떠나거나 year 가 바뀌면 이전 응답은 무시
     return () => {
       ignore = true;
     };
   }, [year]);
 
+  // 지금 year 의 데이터일 때만 그래프에 표시
   const visibleData = loadedYear === year ? chartData : [];
 
   return (
@@ -169,6 +178,11 @@ export default function TradeTrendChart({
 
       <div className="trend-section__accent" />
 
+      {/* Recharts 그래프
+          ResponsiveContainer : 부모 너비에 맞춰 그래프 크기 자동 조절
+          ComposedChart       : 막대(Bar) + 선(Line) 을 한 그래프에 같이 그림
+          dataKey             : data 배열의 각 객체에서 어떤 칸을 그릴지 (예: 'export' 칸 = 수출)
+          yAxisId             : 막대는 왼쪽 축(bar), 무역수지 선은 오른쪽 축(line) 기준 */}
       <ResponsiveContainer width="100%" height={280}>
         <ComposedChart
           data={visibleData}

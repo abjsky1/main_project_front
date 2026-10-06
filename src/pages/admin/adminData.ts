@@ -29,6 +29,8 @@ export interface AuditLog {
 }
 
 // signup 테이블 유형 이름 → 화면 표시 이름
+// [TS] Record<string, string> : 키도 글자, 값도 글자인 객체 (가이드 2-8)
+//      사용 예) MEMBER_TYPE_LABEL['물류운송업체'] → '물류업체'
 export const MEMBER_TYPE_LABEL: Record<string, string> = {
   '관리자': '관리자',
   '수출입기업': '수출입기업',

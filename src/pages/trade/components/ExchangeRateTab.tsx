@@ -12,11 +12,15 @@ interface ExchangeRateTabProps {
 }
 
 // 주요 통화 카드 1개 (12월 환율 + 전월 대비)
+// [TS] props 타입을 interface 대신 { ... } 로 바로 적은 것 (모양은 같음)
 function CurrencyCard({ currency, year, active, onClick }: { currency: string; year: number; active: boolean; onClick: () => void }) {
   const info = CURRENCY_INFO[currency];
   const rates = getRatesForYear(currency, year);
+  // 현재 = 12월(인덱스 11) 값 → 없으면 마지막 값 → 그것도 없으면 0
   const current = rates[11] ?? rates[rates.length - 1] ?? 0;
+  // 전월 = 11월(인덱스 10) 값 → 없으면 현재 값
   const prev = rates[10] ?? current;
+  // 전월 대비 변화율(%) 소수점 2자리 글자 (prev 가 0 이면 나눌 수 없으니 '0.00')
   const change = prev ? ((current - prev) / prev * 100).toFixed(2) : '0.00';
   const isUp = current >= prev;
 
@@ -35,8 +39,10 @@ function CurrencyCard({ currency, year, active, onClick }: { currency: string; y
 }
 
 // "환율 동향 & 실거래가" 탭
+// 고른 통화/연도는 부모(TradeAnalysis)가 보관 → 탭을 바꿔도 유지
 export default function ExchangeRateTab({ activeCurrency, onCurrencyChange, selectedYear, onYearChange }: ExchangeRateTabProps) {
   const yearRates = getRatesForYear(activeCurrency, selectedYear);
+  // 그래프용 데이터 [{ month: '1월', rate: 1180.5 }, ...] (값이 없는 달은 0)
   const rateChartData = MONTHS.map((month, i) => ({ month, rate: yearRates[i] ?? 0 }));
   const unit = CURRENCY_INFO[activeCurrency]?.unit ?? `원/${activeCurrency}`;
 
@@ -45,6 +51,7 @@ export default function ExchangeRateTab({ activeCurrency, onCurrencyChange, sele
       {/* 연도 선택 */}
       <div className="year-picker">
         <label>연도</label>
+        {/* select 의 값은 항상 글자라서 Number() 로 숫자로 바꿔서 전달 */}
         <select value={selectedYear} onChange={(e) => onYearChange(Number(e.target.value))}>
           {YEARS.map((y) => <option key={y} value={y}>{y}년</option>)}
         </select>
@@ -73,6 +80,7 @@ export default function ExchangeRateTab({ activeCurrency, onCurrencyChange, sele
         </div>
         <p className="rate-chart__unit">{unit}</p>
         <div className="rate-chart__accent" />
+        {/* Recharts 선 그래프 : data 배열의 month 를 x축, rate 를 선으로 그림 */}
         <ResponsiveContainer width="100%" height={240}>
           <LineChart data={rateChartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f8" />

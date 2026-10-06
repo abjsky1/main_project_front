@@ -2,7 +2,7 @@ import FilterButton from '../../../components/common/FilterButton';
 import { SEARCH_COUNTRIES, type SortField } from '../tradeData';
 import type { TradeSearchState } from '../useTradeSearch';
 
-// 정렬 가능한 금액 열
+// 정렬 가능한 금액 열 (표 머리글과 필터 패널의 정렬 버튼 둘 다 이 배열로 그림)
 const SORT_COLUMNS: { field: SortField; label: string; header: string }[] = [
   { field: 'exportAmt', label: '수출액', header: '수출액 (백만$)' },
   { field: 'importAmt', label: '수입액', header: '수입액 (백만$)' },
@@ -15,6 +15,7 @@ interface TradeSearchTabProps {
 
 // "조건 검색 & 조회" 탭
 export default function TradeSearchTab({ search }: TradeSearchTabProps) {
+  // 객체 구조분해 : search.country, search.setCountry ... 를 짧은 이름으로 꺼내 쓰기
   const {
     country, setCountry, startDate, setStartDate, endDate, setEndDate, searched, handleSearch,
     colFilterOpen, setColFilterOpen, filterHs, setFilterHs, filterProduct, setFilterProduct,
@@ -22,6 +23,7 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
     colFiltersActive, resetColFilters, displayedResults,
   } = search;
 
+  // 정렬 화살표 : 지금 정렬 중인 열이면 방향(↑ 오름 / ↓ 내림), 아니면 ↕
   const sortArrow = (field: SortField) => (sortField === field ? (sortDir === 'asc' ? '↑' : '↓') : '↕');
 
   return (
@@ -96,6 +98,7 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
               <div className="trade-filter-panel__full">
                 <label className="form-label trade-sort-label">금액 정렬</label>
                 <div className="trade-sort-options">
+                  {/* [TS] s.field! : "field 는 null 이 아니야" 라는 표시 (key 에는 null 을 쓸 수 없어서 — 가이드 2-6) */}
                   {SORT_COLUMNS.map((s) => (
                     <button key={s.field!} onClick={() => toggleSort(s.field)} className={sortField === s.field ? 'option-btn is-active' : 'option-btn'}>
                       {s.label} {sortArrow(s.field)}
@@ -113,6 +116,7 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
               <thead>
                 <tr>
                   {['HS 코드', '품목명', '국가'].map((h) => <th key={h}>{h}</th>)}
+                  {/* ({ header, field }) : 배열의 객체에서 header, field 를 바로 꺼내 받기 (매개변수 구조분해) */}
                   {SORT_COLUMNS.map(({ header, field }) => (
                     <th key={header} onClick={() => toggleSort(field)} className={sortField === field ? 'is-sortable is-sorted' : 'is-sortable'}>
                       {header} <span className="sort-arrow">{sortArrow(field)}</span>
@@ -129,6 +133,7 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
                     <td className="cell-country">{row.country}</td>
                     <td className="cell-amount">{row.exportAmt.toLocaleString()}</td>
                     <td className="cell-amount">{row.importAmt.toLocaleString()}</td>
+                    {/* 무역수지 : 0 이상(흑자)이면 앞에 + 를 붙이고 색을 다르게 */}
                     <td className={row.balance >= 0 ? 'cell-balance is-surplus' : 'cell-balance'}>
                       {row.balance >= 0 ? '+' : ''}{row.balance.toLocaleString()}
                     </td>

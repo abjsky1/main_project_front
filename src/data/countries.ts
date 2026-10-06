@@ -1,3 +1,5 @@
+// ⚠️ 현재 미사용 — 국가 목록은 백엔드 country.csv 에서 받아옵니다 (api/referenceData.ts)
+//    (무역 분석 화면의 국가 목록은 pages/trade/tradeData.ts 의 SEARCH_COUNTRIES 사용)
 export const COUNTRIES_LIST: string[] = [
   '안도라', '아랍에미리트', '아프가니스탄', '앤티가 바부다', '앵귈라', '알바니아', '아르메니아',
   '앙골라', '남극', '아르헨티나', '아메리칸사모아', '오스트리아', '호주', '아루바', '아제르바이잔',

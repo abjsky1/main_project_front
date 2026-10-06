@@ -6,6 +6,8 @@ interface ToggleSwitchProps {
 }
 
 // "X ( ●) O" 모양의 On/Off 스위치
+// labelOn = 'O' : props 를 안 넘기면 기본값 'O' 사용 (구조분해 기본값)
+// 누르면 onChange(!value) → 현재 값의 반대(true ↔ false)를 부모에게 알림
 export default function ToggleSwitch({ value, onChange, labelOn = 'O', labelOff = 'X' }: ToggleSwitchProps) {
   return (
     <div className="toggle">

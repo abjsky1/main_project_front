@@ -9,23 +9,30 @@ interface CountrySelectProps {
 
 // 타겟 국가 선택 드롭다운 (한 개만 선택, 대한민국 제외)
 export default function CountrySelect({ value, onChange, countries }: CountrySelectProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);   // 목록이 열려 있는지
+  // 드롭다운 전체를 감싼 <div> 를 잡아 두는 ref (바깥 클릭 판단용 — 가이드 3-2)
+  // [TS] useRef<HTMLDivElement>(null) : "div 태그를 담을 ref, 처음엔 null"
   const ref = useRef<HTMLDivElement>(null);
 
-  // 바깥을 클릭하면 닫기
+  // 바깥을 클릭하면 닫기 (가이드 3-6)
   useEffect(() => {
-    const h = (e: MouseEvent) => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      // contains : 클릭한 곳(e.target)이 내 드롭다운 안쪽인지 검사
+      // [TS] e.target as Node : "클릭한 대상은 화면 요소(Node)야" 라는 표시
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
+    document.addEventListener('mousedown', handleOutsideClick);              // 화면 전체 클릭 감시 시작
+    return () => document.removeEventListener('mousedown', handleOutsideClick); // 화면에서 사라질 때 감시 해제
   }, []);
 
+  // 대한민국을 뺀 국가 이름들을 가나다 순으로
+  // filter(대한민국 빼기) → map(객체에서 이름만 꺼내기) → sort(가나다 정렬)
   const sorted = countries
     .filter((country) => country.countryId !== KOREA_ID)
     .map((country) => country.countryName)
     .sort((a, b) => a.localeCompare(b, 'ko'));
 
+  // 국가 클릭 : 이미 선택된 국가면 선택 해제([]), 아니면 그 국가 1개만 선택
   const toggle = (country: string) => {
     onChange(value.includes(country) ? [] : [country]);
     setOpen(false);

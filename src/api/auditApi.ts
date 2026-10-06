@@ -15,6 +15,7 @@ export interface AuditDto {
 }
 
 // 필터 조건 (값이 없으면 조건 없이 전체)
+// [TS] user?: string → 없어도 되는 칸. 값이 undefined 인 칸은 axios 가 주소에 붙이지 않음
 export interface AuditSearchParams {
   user?: string;      // 이메일 또는 이름에 포함된 글자
   action?: string;    // 작업 유형에 포함된 글자
@@ -22,5 +23,8 @@ export interface AuditSearchParams {
 }
 
 // 감사 로그 조회 (필터 조건으로 DB 에서 조회 , 최신순)
-export const getAuditLogs = (params: AuditSearchParams, signal?: AbortSignal) =>
-  axios.get<AuditDto[]>('/api/audit', { params, signal }).then((res) => res.data);
+// 예) params = { user: 'kim', result: true }  →  GET /api/audit?user=kim&result=true
+export async function getAuditLogs(params: AuditSearchParams, signal?: AbortSignal) {
+  const response = await axios.get<AuditDto[]>('/api/audit', { params, signal });
+  return response.data;
+}

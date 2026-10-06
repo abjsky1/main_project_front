@@ -25,7 +25,9 @@ This is the canonical project structure. Start with task-relevant files below. O
 
 ```
 src/
-├── App.tsx                 # 로그인 상태 + 페이지 전환
+├── App.tsx                 # 로그인 상태 + 라우트(<Routes>) 정의
+├── routes.ts               # 페이지 ↔ URL 매핑 (PAGE_PATHS) — /api, /country, /route 로 시작하는 주소 금지(프록시)
+│                           # (코드 읽는 법·TS 문법 설명: docs/CODE_GUIDE.md)
 ├── index.css               # 전역: Tailwind 초기화, 폰트, 색상/글자크기 변수(:root)
 ├── styles/
 │   ├── common.css          # 여러 페이지 공통 클래스 (page-container, eyebrow, filter-btn ...)

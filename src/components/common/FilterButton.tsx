@@ -3,7 +3,7 @@ interface FilterButtonProps {
   onClick: () => void;
 }
 
-// 표 위의 "필터" 토글 버튼
+// 표 위의 "필터" 토글 버튼 (열림 상태 active 는 부모가 보관)
 export default function FilterButton({ active, onClick }: FilterButtonProps) {
   return (
     <button onClick={onClick} className={active ? 'filter-btn is-active' : 'filter-btn'}>

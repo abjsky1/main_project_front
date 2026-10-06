@@ -1,3 +1,8 @@
+/* =====================================================================
+   매칭 관리 페이지 (주소: /matching , 관리자 전용)
+   - DB 에 저장된 매칭 결과를 카드 목록으로 보여주고, 관리자가 승인 / 반려
+   - 데이터 준비(여러 API 조회 + 화면용 변환)는 matchMapper.ts 가 담당
+   ===================================================================== */
 import { useEffect, useState } from 'react';
 import type { User } from '../../types/user';
 import AccessGuard from '../../components/common/AccessGuard';
@@ -10,23 +15,25 @@ import type { MatchItem, StatusFilter } from './matchTypes';
 import './SmartMatching.css';
 import axios from 'axios';
 
+// [TS] 이 컴포넌트가 받는 props 의 모양 (가이드 2-4)
 interface SmartMatchingProps {
-  user: User | null;
-  onLoginClick: () => void;
+  user: User | null;          // 로그인 안 했으면 null
+  onLoginClick: () => void;   // [TS] () => void : "아무것도 안 받고 아무것도 안 돌려주는 함수"
 }
 
 export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps) {
-  const [matches, setMatches] = useState<MatchItem[]>([]);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  
-  
-  const [adminRejectModalId, setAdminRejectModalId] = useState<number | null>(null);
-  const [adminRejectReason, setAdminRejectReason] = useState('');
-  const [toast, setToast] = useState<string | null>(null);
+  const [matches, setMatches] = useState<MatchItem[]>([]);                // 매칭 카드 목록
+  const [expandedId, setExpandedId] = useState<number | null>(null);      // 펼쳐진 카드 id (없으면 null)
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');  // 상단 상태 카드에서 고른 필터
+
+
+  const [adminRejectModalId, setAdminRejectModalId] = useState<number | null>(null);  // 반려 모달을 띄운 매칭 id
+  const [adminRejectReason, setAdminRejectReason] = useState('');                     // 모달에서 고른 반려 사유
+  const [toast, setToast] = useState<string | null>(null);                            // 잠깐 떴다 사라지는 알림 글자
 
   // DB에 저장된 매칭 결과를 불러오기 (관리자만)
   useEffect(() => {
+    // AbortController : 페이지를 떠나면 진행 중인 요청을 취소하는 도구 (가이드 3-4)
     const controller = new AbortController();
 
     if (!user || user.role !== 'admin') {
@@ -34,16 +41,21 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
       return () => controller.abort();
     }
 
-    loadMatchItems(controller.signal)
-      .then((rows) => {
+    const fetchMatches = async () => {
+      try {
+        const rows = await loadMatchItems(controller.signal);
+        // 취소되지 않았을 때만 화면에 반영 (이미 페이지를 떠났으면 무시)
         if (rows && !controller.signal.aborted) setMatches(rows);
-      })
-      .catch((error) => {
-        if (controller.signal.aborted) return;
+      } catch (error) {
+        if (controller.signal.aborted) return;   // 취소해서 난 오류는 무시
         console.log('매칭 결과 조회 실패 : ', error);
         setMatches([]);
-      });
+      }
+    };
 
+    fetchMatches();
+
+    // 정리 함수 : 페이지를 떠나거나 user 가 바뀌면 이전 요청 취소
     return () => controller.abort();
   }, [user]);
 
@@ -63,6 +75,7 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
     );
   }
 
+  // 알림 글자를 띄우고 4초(4000ms) 뒤에 자동으로 지우기
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 4000); };
 
   /* ---------- 관리자 승인 / 반려 ---------- */
@@ -77,6 +90,7 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
       if (response.data === true) {
 
         // DB 저장 성공 후 화면 상태 변경
+        // map 으로 목록을 새로 만들면서, 승인한 카드(id 가 같은 것)만 adminStatus 를 바꿈
         setMatches((p) =>
           p.map((m) =>
             m.id === id
@@ -128,6 +142,7 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
           )
         );
 
+        // 모달 닫고 고른 사유 초기화
         setAdminRejectModalId(null);
         setAdminRejectReason('');
 
@@ -147,9 +162,10 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
     }
 
   };
-  
+
 
   /* ---------- 상태 필터 ---------- */
+  // filter : 조건이 true 인 카드만 남긴 새 배열 (가이드 4)
   const filteredMatches = matches.filter((m) => {
     if (statusFilter === 'all') return true;
     if (statusFilter === 'pending') return m.adminStatus === 'pending' && m.finalStatus === 'pending';
@@ -184,10 +200,11 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
             key={match.id}
             match={match}
             expanded={expandedId === match.id}
+            // 이미 펼친 카드를 다시 누르면 접기(null), 아니면 이 카드 펼치기
             onToggle={() => setExpandedId(expandedId === match.id ? null : match.id)}
             onApprove={() => approveByAdmin(match.id)}
             onAdminReject={() => setAdminRejectModalId(match.id)}
-            
+
           />
         ))}
 
@@ -207,11 +224,13 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
           selected={adminRejectReason}
           onSelect={setAdminRejectReason}
           onCancel={() => { setAdminRejectModalId(null); setAdminRejectReason(''); }}
-          onConfirm={() => adminRejectModalId && rejectByAdmin(adminRejectModalId)}
+          onConfirm={() => {
+            if (adminRejectModalId) rejectByAdmin(adminRejectModalId);
+          }}
         />
       )}
 
-      
+
     </div>
   );
 }

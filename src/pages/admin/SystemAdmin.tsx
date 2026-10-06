@@ -1,3 +1,8 @@
+/* =====================================================================
+   시스템 관리 페이지 (주소: /admin , 관리자 전용)
+   - 탭 2개 : [사용자 권한 관리] UserManagement , [감사 로그] AuditLogSection
+   - 각 탭의 상태와 서버 호출은 커스텀 훅(useUserManagement, useAuditLogs)에 모여 있음
+   ===================================================================== */
 import { useState } from 'react';
 import type { User } from '../../types/user';
 import PageHeader from '../../components/common/PageHeader';
@@ -23,7 +28,8 @@ const TABS: { id: Section; label: string }[] = [
 export default function SystemAdmin({ user, onLoginClick }: SystemAdminProps) {
   const [section, setSection] = useState<Section>('users');
 
-  // 탭을 바꿔도 값이 유지되도록 상태는 여기(부모)에서 보관
+  // 탭을 바꿔도 값이 유지되도록 상태는 여기(부모)에서 보관 (가이드 3-1)
+  // userState / logState 에는 각 훅이 return 한 값과 함수들이 들어 있음 → 탭에 통째로 전달
   const userState = useUserManagement();
   const logState = useAuditLogs();
 

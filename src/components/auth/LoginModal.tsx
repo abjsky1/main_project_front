@@ -24,6 +24,7 @@ export default function LoginModal({ onLogin, onClose, onSignupClick }: LoginMod
   const [loading, setLoading] = useState(false);
 
   // 로그인 버튼
+  // [TS] e: React.FormEvent : form 의 onSubmit 이벤트 (B_react Login.jsx 의 handleSubmit(e) 와 같음)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -38,6 +39,7 @@ export default function LoginModal({ onLogin, onClose, onSignupClick }: LoginMod
   };
 
   // 테스트 계정 입력칸 자동 채우기
+  // [TS] (typeof DEMO_ACCOUNTS)[number] : DEMO_ACCOUNTS 배열 안의 객체 1개의 모양 ({ label, email, password, desc })
   const fillDemo = (account: (typeof DEMO_ACCOUNTS)[number]) => {
     setEmail(account.email);
     setPassword(account.password);
@@ -45,6 +47,8 @@ export default function LoginModal({ onLogin, onClose, onSignupClick }: LoginMod
   };
 
   return (
+    // 바깥 어두운 배경을 눌렀을 때만 닫기
+    // e.target = 실제로 누른 요소 , e.currentTarget = 이 배경 div → 둘이 같으면 배경을 직접 누른 것 (카드 안쪽 클릭은 무시)
     <div className="auth-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="auth-card">
         {/* 로고 */}

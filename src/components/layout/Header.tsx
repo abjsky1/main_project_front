@@ -1,12 +1,18 @@
+/* =====================================================================
+   상단 헤더 (모든 페이지 공통)
+   - 왼쪽 로고 / 가운데 메뉴 / 오른쪽 로그인 버튼 또는 회원 정보
+   - 일반 회원은 🔔 매칭 알림 (관리자가 승인한 매칭을 보고 수락 / 거절)
+   ===================================================================== */
 import type { Page, User } from '../../types/user';
 import macrossLogo from '../../assets/main-reference.png';
 import './Header.css';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 
+// App.tsx 에서 받는 props
 interface HeaderProps {
-  currentPage: Page;
-  onNavigate: (page: Page) => void;
+  currentPage: Page;                   // 지금 보고 있는 페이지 (메뉴 강조용)
+  onNavigate: (page: Page) => void;    // 메뉴 클릭 → App 이 그 페이지 주소로 이동
   user: User | null;
   onLoginClick: () => void;
   onLogout: () => void;
@@ -20,6 +26,7 @@ interface NavItem {
   userOnly?: boolean;      // 일반 회원만 보이는 메뉴
 }
 
+// 백엔드 GET /api/matching/member/{memberId} 응답 1건 (알림 1개)
 interface MatchingNotification {
   matchingId: number;
 
@@ -44,6 +51,7 @@ interface MatchingNotification {
 
 }
 
+// 메뉴 전체 목록 — 아래 visibleNavItems 에서 로그인 상태에 맞는 것만 골라서 보여줌
 const ALL_NAV_ITEMS: NavItem[] = [
   { id: 'dashboard', label: '대시보드' },
   { id: 'trade', label: '무역 데이터 분석' },
@@ -125,7 +133,7 @@ export default function Header({ currentPage, onNavigate, user, onLoginClick, on
   };
 
 
-  // 로그인 회원이 바뀌면 조회
+  // 로그인 회원이 바뀌면 조회 (로그인 / 로그아웃 / 다른 회원으로 로그인할 때)
   useEffect(() => {
 
     matchingRead();
@@ -244,6 +252,8 @@ export default function Header({ currentPage, onNavigate, user, onLoginClick, on
 
   };
 
+  // 지금 로그인 상태에서 보여줄 메뉴만 남기기 (filter : true 를 돌려준 항목만 남음)
+  // - 관리자 전용 메뉴 → 관리자만 / 회원 전용 메뉴 → 로그인한 일반 회원만 / 나머지 → 모두
   const visibleNavItems = ALL_NAV_ITEMS.filter((item) => {
     if (item.adminOnly) return isAdmin;
     if (item.userOnly) return !!user && !isAdmin;
@@ -251,6 +261,7 @@ export default function Header({ currentPage, onNavigate, user, onLoginClick, on
     return true;
   });
 
+  // 이름 아래 작은 역할 글자 : 관리자 → ADMIN , 물류업체 → LOGISTICS , 그 외 → USER
   const roleLabel = isAdmin ? 'ADMIN' : user?.companyType === '물류업체' ? 'LOGISTICS' : 'USER';
 
   return (
@@ -262,7 +273,7 @@ export default function Header({ currentPage, onNavigate, user, onLoginClick, on
           <span className="site-header__logo-text">MACROSS</span>
         </div>
 
-        {/* 가운데 메뉴 */}
+        {/* 가운데 메뉴 (지금 페이지 메뉴에는 is-active 클래스) */}
         <nav className="site-nav">
           {visibleNavItems.map((item) => (
             <button
@@ -283,7 +294,7 @@ export default function Header({ currentPage, onNavigate, user, onLoginClick, on
 
                 <div className="matching-notification">
 
-                  {/* 알림 벨 */}
+                  {/* 알림 벨 : 누를 때마다 팝업 열기 ↔ 닫기 , 응답할 알림이 있으면 숫자 표시 */}
                   <button
                     className="matching-bell"
                     onClick={() => setNotificationOpen(!notificationOpen)}>

@@ -1,5 +1,7 @@
 import type { MatchItem, PartyResponse } from '../matchTypes';
 
+// 응답 상태 → 화면 글자
+// [TS] Record<PartyResponse, string> = 키가 'accepted' | 'rejected' | 'waiting', 값이 글자인 객체 (가이드 2-8)
 const RESPONSE_LABEL: Record<PartyResponse, string> = { accepted: '수락', rejected: '거절', waiting: '대기 중' };
 
 interface PartyResponsesProps {
@@ -14,8 +16,10 @@ export default function PartyResponses({ match }: PartyResponsesProps) {
     <div>
       <p className="match-detail__title">쌍방 수락 현황</p>
       <div className="party-grid">
+        {/* 화주사 카드, 물류업체 카드를 같은 모양으로 2번 그리기 */}
+        {/* [TS] as const : 'shipper' / 'logistics' 글자를 정확히 기억시켜서 match[party] 를 안전하게 쓰게 함 (가이드 2-7) */}
         {(['shipper', 'logistics'] as const).map((party) => {
-          const p = match[party];
+          const p = match[party];   // match.shipper 또는 match.logistics
           const label = party === 'shipper' ? '화주사' : '물류업체';
           return (
             <div key={party} className="party-card">

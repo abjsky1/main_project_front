@@ -11,6 +11,7 @@ interface SignupModalProps {
   existingEmails: string[];
 }
 
+// 회원가입 단계 : 1(계정 정보) → 2(기업 정보) → 'done'(완료 화면)
 type Step = 1 | 2 | 'done';
 
 export default function SignupModal({ onSignup, onClose, onLoginClick, existingEmails }: SignupModalProps) {
@@ -24,8 +25,11 @@ export default function SignupModal({ onSignup, onClose, onLoginClick, existingE
   const [businessNumber, setBusinessNumber] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  // 칸별 오류 문구 { email: '유효한 이메일을...', password: '...' }
+  // [TS] Record<string, string> : 키도 글자, 값도 글자인 객체 (가이드 2-8)
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // 특정 칸(k)의 오류 문구만 지우기 — [k] 는 변수 k 의 값을 칸 이름으로 사용
   const clearError = (k: string) => setErrors((p) => ({ ...p, [k]: '' }));
 
   // 1단계: 계정 정보 검사
@@ -36,6 +40,7 @@ export default function SignupModal({ onSignup, onClose, onLoginClick, existingE
     if (password.length < 6) e.password = '비밀번호는 6자 이상이어야 합니다.';
     if (password !== passwordConfirm) e.passwordConfirm = '비밀번호가 일치하지 않습니다.';
     setErrors(e);
+    // Object.keys(e) : 오류가 담긴 칸 이름 배열 → 0개면 통과(true)
     return Object.keys(e).length === 0;
   };
 
@@ -93,6 +98,7 @@ export default function SignupModal({ onSignup, onClose, onLoginClick, existingE
         {/* 단계 표시 */}
         {step !== 'done' && (
           <div className="signup-steps">
+            {/* 단계 동그라미 2개 : 지금 단계 이상이면 is-reached 로 색칠 */}
             {[1, 2].map((s) => (
               <div key={s} className={step >= s ? 'signup-step is-reached' : 'signup-step'}>
                 <div className="signup-step__num">{s}</div>

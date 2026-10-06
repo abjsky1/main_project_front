@@ -1,3 +1,8 @@
+/* =====================================================================
+   대시보드 페이지 (주소: / , 누구나 볼 수 있음)
+   - 상단 대표 이미지 → 누적 무역 카드 4개 → 월별 수출입 차트 → (로그인 + 매칭 조건이 있으면) 맞춤 인사이트
+   - 누적 무역 카드는 Spring /api/cumulative/trade 에서 조회
+   ===================================================================== */
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
@@ -12,9 +17,10 @@ import PersonalInsights from './components/PersonalInsights';
 import heroImage from '../../assets/macross_wide.png';   // 2560×1020 원본 → 1280×510 으로 표시 (고해상도 화면에서 선명)
 import './Dashboard.css';
 
+// [TS] App.tsx 에서 받는 props 의 모양 (가이드 2-4)
 interface DashboardProps {
-  user: User | null;
-  matchingCountries: string[];
+  user: User | null;             // 로그인 안 했으면 null
+  matchingCountries: string[];   // 매칭 조건에 등록한 국가 목록 (맞춤 인사이트용)
 }
 
 // Spring TradestatusDto 응답 구조
@@ -47,6 +53,7 @@ const EXCHANGE_CARD: KpiStat = {
 // Spring Service에서 이미 억 달러로 변환해서 반환
 const AMOUNT_UNIT = '억 달러';
 
+// 6932.34 → '6,932.3' (천 단위 쉼표 + 소수점 최대 1자리)
 function formatAmount(value: number): string {
   return value.toLocaleString('ko-KR', {
     maximumFractionDigits: 1,
@@ -57,11 +64,14 @@ export default function Dashboard({
   user,
   matchingCountries,
 }: DashboardProps) {
-  const greeting = user ? `${user.name}님, ` : '';
+  const greeting = user ? `${user.name}님, ` : '';   // 로그인했으면 제목 앞에 'OOO님, '
 
+  // 누적 무역 응답 (받기 전에는 null)
   const [trade, setTrade] = useState<TradestatusResponse | null>(null);
 
+  // 처음 화면에 들어올 때 한 번 조회 ([] = 최초 1번)
   useEffect(() => {
+  // ignore : 응답이 오기 전에 화면을 떠나면 true → 늦게 온 응답은 저장하지 않음 (가이드 3-4)
   let ignore = false;
 
   async function fetchTrade() {
@@ -94,6 +104,8 @@ export default function Dashboard({
   }, []);
 
   // 응답을 받기 전에도 카드가 표시되도록 구성
+  // trade 가 있으면 숫자, 없으면(아직 로딩 중) '—' 표시
+  // trade?.expDlrRate ?? null : trade 가 없거나 증감률이 없으면 null
   const cards: KpiStat[] = [
     {
       label: '총 수출액',
@@ -156,6 +168,7 @@ export default function Dashboard({
       
         {/* 로딩 여부와 관계없이 카드 4개 표시 */}
         <div className="dashboard-kpi-grid">
+          {/* {...card} : card 객체의 칸들을 props 로 한 번에 넘김 (label={card.label} value={card.value} ... 와 같음) */}
           {cards.map((card) => (
             <StatCard
               key={card.label}

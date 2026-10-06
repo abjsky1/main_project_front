@@ -20,9 +20,11 @@ function HsRankItem({ item, kind }: { item: TopHsItem; kind: 'export' | 'import'
 }
 
 // 로그인 + 매칭 조건이 있을 때만 보이는 맞춤 인사이트 영역
+// (그래프 값은 dashboardData.ts 의 더미 데이터 — API 연결 시 교체)
 export default function PersonalInsights({ countries }: PersonalInsightsProps) {
   const yearData = yearlyTradeData(countries);
-  const countryLabel = countries.slice(0, 3).join(', ') + (countries.length > 3 ? ` 외 ${countries.length - 3}개국` : '');
+  // 국가는 3개까지만 이름을 보여주고, 더 있으면 ' 외 N개국'
+  const countryLabel =countries.slice(0, 3).join(', ') + (countries.length > 3 ? ` 외 ${countries.length - 3}개국` : '');
 
   return (
     <div>
@@ -40,6 +42,7 @@ export default function PersonalInsights({ countries }: PersonalInsightsProps) {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(100,50,220,0.07)" vertical={false} />
                 <XAxis dataKey="year" tick={axisTick(10)} axisLine={false} tickLine={false} />
                 <YAxis tick={axisTick(9)} axisLine={false} tickLine={false} />
+                {/* formatter : 말풍선 글자 바꾸기. (값, 이름) 을 받아서 [보여줄 값, 보여줄 이름] 배열을 돌려줌 */}
                 <Tooltip contentStyle={tooltipBoxStyle()} formatter={(v: any, n: any) => [`${v?.toLocaleString()}백만$`, n === 'export' ? '수출' : '수입']} />
                 <Line type="monotone" dataKey="export" name="export" stroke="#9333ea" strokeWidth={2} dot={{ r: 3, fill: '#9333ea' }} activeDot={{ r: 5 }} />
                 <Line type="monotone" dataKey="import" name="import" stroke="#9090a8" strokeWidth={2} strokeDasharray="4 2" dot={{ r: 3, fill: '#9090a8' }} activeDot={{ r: 5 }} />
@@ -69,6 +72,8 @@ export default function PersonalInsights({ countries }: PersonalInsightsProps) {
                   name="무역수지"
                   stroke="#06b6d4"
                   strokeWidth={2.5}
+                  // dot : 점을 직접 그리는 함수. Recharts 가 점마다 위치(cx, cy)와 그 해의 데이터(payload)를 넣어 줌
+                  //       흑자(0 이상)면 빨간 점, 적자면 초록 점
                   dot={(props: any) => {
                     const { cx, cy, payload } = props;
                     return <circle key={cx} cx={cx} cy={cy} r={4} fill={payload.balance >= 0 ? '#d93025' : '#1a9e5c'} stroke="none" />;

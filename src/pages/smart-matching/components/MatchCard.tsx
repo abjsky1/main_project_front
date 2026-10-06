@@ -2,6 +2,7 @@ import type { MatchItem } from '../matchTypes';
 import MatchDetail from './MatchDetail';
 
 // 진행 상태 배지 (글자 + CSS 클래스)
+// 위에서부터 순서대로 검사해서 처음 맞는 상태를 돌려줌 (최종 결과 → 관리자 상태 순)
 function getStatusBadge(m: MatchItem) {
   if (m.finalStatus === 'completed') return { label: '매칭 성사', className: 'status-badge--completed' };
   if (m.finalStatus === 'failed') return { label: '매칭 실패', className: 'status-badge--failed' };
@@ -43,6 +44,7 @@ export default function MatchCard({ match, expanded, onToggle, onApprove, onAdmi
           <p className="match-card__brief">
             {match.request.country} · HS {match.request.hsCode} · {match.request.transport} · {match.request.volume}t · {match.request.schedule}
           </p>
+          {/* 분석 요소는 앞의 3개만 보여주고, 나머지는 +개수 로 표시 */}
           <div className="match-card__factors">
             {match.matchFactors.slice(0, 3).map((f, i) => (
               <span key={i} className="factor-chip">{f}</span>
@@ -56,6 +58,7 @@ export default function MatchCard({ match, expanded, onToggle, onApprove, onAdmi
         {/* 상태 / 날짜 / 펼치기 */}
         <div className="match-card__side">
           <span className={`status-badge ${badge.className}`}>{badge.label}</span>
+          {/* '2025-12-31 09:30' 을 공백으로 잘라 날짜 부분만 표시 */}
           <span className="match-card__date">{match.createdAt.split(' ')[0]}</span>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="match-card__chevron">
             <path d="M2 5l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

@@ -2,6 +2,7 @@ import FilterButton from '../../../components/common/FilterButton';
 import type { UserRoleLabel, UserStatus } from '../adminData';
 import type { LoginSort, UserManagementState } from '../useUserManagement';
 
+// 최근 로그인 정렬 버튼 2개
 const SORT_OPTIONS: { val: LoginSort; label: string }[] = [
   { val: 'asc', label: '오름차순 ↑' },
   { val: 'desc', label: '내림차순 ↓' },
@@ -14,6 +15,7 @@ interface UserManagementProps {
 
 // "사용자 권한 관리" 탭
 export default function UserManagement({ state, currentMemberId }: UserManagementProps) {
+  // state = useUserManagement() 가 돌려준 객체 → 필요한 값/함수를 구조분해로 꺼냄
   const {
     users, summary, loading, loadError, busyId, toggleRole, changeStatus,
     filterOpen, setFilterOpen, filterRole, setFilterRole, filterStatus, setFilterStatus,
@@ -58,6 +60,7 @@ export default function UserManagement({ state, currentMemberId }: UserManagemen
         <div className="filter-panel admin-filter-panel">
           <div>
             <label className="form-label">역할</label>
+            {/* [TS] as 'all' | UserRoleLabel : 고른 값이 이 글자들 중 하나라는 표시 (값은 그대로 — 가이드 2-6) */}
             <select value={filterRole} onChange={(e) => setFilterRole(e.target.value as 'all' | UserRoleLabel)} className="filter-input">
               <option value="all">전체</option>
               <option value="관리자">관리자</option>
@@ -75,6 +78,8 @@ export default function UserManagement({ state, currentMemberId }: UserManagemen
           <div>
             <label className="form-label">최근 로그인 정렬</label>
             <div className="admin-filter-options">
+              {/* 이미 고른 정렬을 다시 누르면 정렬 해제(null) */}
+              {/* [TS] s.val! : "val 은 null 이 아니야" 라는 표시 (key 에 null 을 쓸 수 없어서) */}
               {SORT_OPTIONS.map((s) => (
                 <button
                   key={s.val!}
@@ -103,6 +108,7 @@ export default function UserManagement({ state, currentMemberId }: UserManagemen
           <tbody>
             {users.map((u) => {
               const isAdmin = u.role === '관리자';
+              // 스위치 잠금 : 로그인한 관리자 본인의 줄이거나, 다른 회원의 변경 요청이 진행 중일 때
               const locked = u.id === currentMemberId || busyId !== null;   // 본인 행 , 다른 변경 요청 중
               return (
                 <tr key={u.id} className="user-row">
@@ -126,7 +132,8 @@ export default function UserManagement({ state, currentMemberId }: UserManagemen
                       onChange={(e) => changeStatus(u.id, e.target.value as UserStatus)}
                       className={u.status === '활성' ? 'status-select status-select--active' : 'status-select status-select--inactive'}
                     >
-                      {(['활성', '비활성'] as UserStatus[]).map((s) => <option key={s} value={s}>{s}</option>)}
+                      <option value="활성">활성</option>
+                      <option value="비활성">비활성</option>
                     </select>
                   </td>
                   <td>

@@ -1,3 +1,4 @@
+// [TS] short?: boolean → 없어도 되는 props. JSX 에서 <AccessGuard short /> 처럼 값 없이 쓰면 true
 interface AccessGuardProps {
   icon: 'lock' | 'users';
   title: string;

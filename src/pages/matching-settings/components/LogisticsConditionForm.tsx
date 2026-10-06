@@ -6,6 +6,8 @@ import FormField from './FormField';
 import PortPairSelector from './PortPairSelector';
 import ToggleSwitch from './ToggleSwitch';
 
+// 화물 취급 스위치 5개 — 같은 모양이라 배열로 만들어 map 으로 그림
+// [TS] as const : key 를 정확한 글자로 기억시켜서 아래 form[key] 를 안전하게 씀 (가이드 2-7)
 const CARGO_SWITCHES = [
   { key: 'general', label: '일반화물 취급' },
   { key: 'refrigeration', label: '냉장/냉동 취급' },
@@ -20,13 +22,13 @@ interface LogisticsConditionFormProps {
   routes: RouteData[];
   disabled: boolean;      // 폼 전체 비활성화 (동의 전, 저장 중 등)
   addDisabled: boolean;   // "+ 조건 추가" 버튼 비활성화
-  onFieldChange: (key: string, value: any) => void;
+  onFieldChange: (key: string, value: any) => void;   // (칸 이름, 새 값) → 부모가 폼 값을 바꿈
   onDepartureChange: (value: string, portType: PortType) => void;
   onDestinationChange: (value: string, portType: PortType) => void;
   onAdd: () => void;
 }
 
-// 물류업체 매칭 조건 입력폼
+// 물류업체 매칭 조건 입력폼 (구조는 ShipperConditionForm 과 같음)
 export default function LogisticsConditionForm({
   form, countries, routes, disabled, addDisabled, onFieldChange, onDepartureChange, onDestinationChange, onAdd,
 }: LogisticsConditionFormProps) {

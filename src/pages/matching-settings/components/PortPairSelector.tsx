@@ -26,10 +26,11 @@ export default function PortPairSelector({
     <div className="port-pair">
       <FormField label={`출발지 (${departurePortType})`}>
         <div className="port-pair__stack">
+          {/* 출발지 종류를 바꾸면: 출발지 선택을 비우고, 도착지 종류도 짝에 맞게 바꿈 (한국 해상 → 해외 해상) */}
           <select
             value={departurePortType}
             onChange={(e) => {
-              const pt = e.target.value as PortType;
+              const pt = e.target.value as PortType;   // [TS] as : 고른 값은 PortType 중 하나라는 표시
               onDepartureChange('', pt);
               onDestinationChange('', getCompatible(pt)[0]);
             }}
@@ -52,6 +53,7 @@ export default function PortPairSelector({
             }}
             className="ms-input"
           >
+            {/* 도착지 종류는 출발지와 짝이 맞는 것만 보여줌 */}
             {getCompatible(departurePortType).map((pt) => <option key={pt}>{pt}</option>)}
           </select>
           <PortSelect routes={routes} countryId={countryId} portType={destinationPortType} value={destination} onChange={onDestinationChange} placeholder="도착지 선택" />

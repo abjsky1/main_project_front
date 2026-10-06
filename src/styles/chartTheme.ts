@@ -4,6 +4,8 @@
 export const CHART_FONT = 'Plus Jakarta Sans';
 
 // 축 눈금 글자 스타일 (fontSize만 다르게 쓰는 경우가 많아서 함수로 제공)
+// (fontSize = 11, ...) : 값을 안 넘기면 기본값 11 사용 → axisTick() 또는 axisTick(10) 처럼 호출
+// => ({ ... }) : 객체를 바로 돌려주는 화살표 함수
 export const axisTick = (fontSize = 11, fontFamily = CHART_FONT) => ({
   fontSize,
   fill: '#9090a8',

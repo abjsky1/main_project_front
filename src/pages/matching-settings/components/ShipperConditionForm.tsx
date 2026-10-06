@@ -6,6 +6,9 @@ import FormField from './FormField';
 import PortPairSelector from './PortPairSelector';
 import ToggleSwitch from './ToggleSwitch';
 
+// 화물 특성 스위치 4개 — 같은 모양이라 배열로 만들어 map 으로 그림
+// key 는 입력폼(ShipperForm)의 칸 이름
+// [TS] as const : key 를 정확한 글자('refrigeration' ...)로 기억시켜서 아래 form[key] 를 안전하게 씀 (가이드 2-7)
 const CARGO_SWITCHES = [
   { key: 'refrigeration', label: '냉장/냉동 여부' },
   { key: 'hazmat', label: '위험물 여부' },
@@ -13,13 +16,14 @@ const CARGO_SWITCHES = [
   { key: 'special', label: '특수화물 여부' },
 ] as const;
 
+// 입력폼 값(form)과 바뀐 값을 알리는 함수들은 부모(MatchingSettings)가 내려줌
 interface ShipperConditionFormProps {
   form: ShipperForm;
   countries: CountryData[];
   routes: RouteData[];
   disabled: boolean;      // 폼 전체 비활성화 (동의 전, 저장 중 등)
   addDisabled: boolean;   // "+ 조건 추가" 버튼 비활성화
-  onFieldChange: (key: string, value: any) => void;
+  onFieldChange: (key: string, value: any) => void;   // (칸 이름, 새 값) → 부모가 폼 값을 바꿈
   onDepartureChange: (value: string, portType: PortType) => void;
   onDestinationChange: (value: string, portType: PortType) => void;
   onAdd: () => void;
@@ -30,6 +34,7 @@ export default function ShipperConditionForm({
   form, countries, routes, disabled, addDisabled, onFieldChange, onDepartureChange, onDestinationChange, onAdd,
 }: ShipperConditionFormProps) {
   return (
+    // <fieldset disabled> : 안에 있는 입력칸/버튼을 한 번에 모두 비활성화하는 HTML 태그
     <fieldset disabled={disabled} className="ms-form">
       <div className="ms-form-grid">
         <FormField label="타겟 국가">
@@ -58,6 +63,7 @@ export default function ShipperConditionForm({
       <div className="ms-port-row">
         <PortPairSelector
           routes={routes}
+          // 선택한 타겟 국가(첫 번째)의 id → 해외 항구 목록을 그 나라 것만 보여주기 위해
           countryId={getCountryId(countries, form.countries[0])}
           departurePortType={form.departurePortType}
           departure={form.departure}
@@ -71,6 +77,7 @@ export default function ShipperConditionForm({
       {/* 화물 유형 + 화물 특성 스위치 (한 줄) */}
       <div className="ms-switches ms-switches--spaced">
         <div className="ms-switch-grid">
+          {/* 화물 유형은 true/false 가 아니라 '일반'/'특수' 글자로 저장 → 스위치 켜짐 = '특수' */}
           <FormField label="화물 유형">
             <ToggleSwitch
               value={form.cargoType === '특수'}

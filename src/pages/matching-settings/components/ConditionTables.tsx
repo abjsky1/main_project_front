@@ -10,6 +10,7 @@ const TradeTypeBadge = ({ type }: { type: TradeType }) => (
 );
 
 // 표 카드 틀 (제목 + 가로 스크롤 표)
+// children : <ConditionTableCard> 여는 태그와 닫는 태그 사이에 넣은 내용 (여기서는 표의 <tr> 줄들)
 function ConditionTableCard({ count, headers, children }: { count: number; headers: string[]; children: ReactNode }) {
   return (
     <div className="condition-table-card">
@@ -30,6 +31,8 @@ function ConditionTableCard({ count, headers, children }: { count: number; heade
   );
 }
 
+// [TS] TableProps<T> : T 자리에 넣는 타입에 따라 rows 의 모양이 정해짐 (가이드 2-5)
+//      TableProps<ShipperCondition> → rows 는 수출입기업 조건 배열
 interface TableProps<T> {
   rows: T[];
   deleteDisabled: boolean;
@@ -42,6 +45,7 @@ export function ShipperConditionTable({ rows, deleteDisabled, onDelete }: TableP
     <ConditionTableCard count={rows.length} headers={['타겟국가','HS코드','구분','운송','출발지','도착지','물량(t)','일정','화물','냉동','위험','중량','특수','']}>
       {rows.map((row) => (
         <tr key={row.id}>
+          {/* 국가는 앞의 2개만 쉼표로 이어서 보여주고, 더 있으면 +개수 */}
           <td>{row.countries.slice(0, 2).join(', ')}{row.countries.length > 2 ? ` +${row.countries.length - 2}` : ''}</td>
           <td className="cell-mono cell-muted">{row.hsCode}</td>
           <td><TradeTypeBadge type={row.tradeType} /></td>

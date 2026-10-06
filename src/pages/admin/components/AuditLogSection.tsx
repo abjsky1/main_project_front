@@ -10,16 +10,18 @@ const RESULT_OPTIONS: { val: LogResultFilter; label: string }[] = [
 ];
 
 // "감사 로그 (Audit Log)" 탭
+// state = useAuditLogs() 가 돌려준 객체 (부모 SystemAdmin 이 보관) → 구조분해로 꺼내 씀
 export default function AuditLogSection({ state }: { state: AuditLogState }) {
   const {
     logs, loading, loadError, filterOpen, setFilterOpen, filterUser, setFilterUser,
     filterAction, setFilterAction, filterResult, setFilterResult, filtersActive, search, resetFilters,
   } = state;
 
-  // 표가 비었을 때 안내 문구
+  // 표가 비었을 때 안내 문구 : 불러오는 중 → 오류 문구(있으면) → 결과 없음
   const emptyMessage = loading ? '감사 로그를 불러오는 중입니다...' : loadError || '해당 조건의 로그가 없습니다.';
 
   // 입력칸에서 Enter = [검색]
+  // [TS] KeyboardEvent<HTMLInputElement> : input 칸에서 일어난 키보드 이벤트 e
   const searchOnEnter = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') search();
   };
@@ -87,6 +89,7 @@ export default function AuditLogSection({ state }: { state: AuditLogState }) {
                 {/* 비회원은 공통 계정 이메일이라 '-' 로 표시 */}
                 <td className="cell-user">{log.memberType === '비회원' ? '-' : log.email}</td>
                 <td>
+                  {/* 작업 번호에 맞는 배지 색 클래스 (없으면 '' → trim 으로 끝 공백 제거) */}
                   <span className={`action-badge ${ACTION_BADGE_CLASS[log.actionId] ?? ''}`.trim()}>{log.action}</span>
                 </td>
                 <td className="cell-target">{log.target}</td>

@@ -8,18 +8,26 @@ import type { AdminStatus, FinalStatus, MatchItem, PartyResponse } from './match
 
 /* =====================================================================
    백엔드 매칭 결과(DTO) → 화면용 MatchItem 변환
+   - 매칭 1건을 화면에 그리려면 여러 API 결과가 필요해서, 여기서 한꺼번에 조회하고 합칩니다.
+     · 매칭 결과(점수/상태)  · 화주 조건 1/2/3번  · 물류 조건 1/2/3번  · 국가/경로 CSV
+   - SmartMatching.tsx 에서 loadMatchItems() 하나만 호출하면 카드 목록이 완성됩니다.
    ===================================================================== */
 
+// 국가 id → 국가 이름 (CSV 에 없으면 '국가 #id')
+// find : 조건에 맞는 첫 번째 1개를 찾음 (없으면 undefined — 가이드 4)
 function getCountryName(countries: CountryData[], countryId: number) {
   const country = countries.find((item) => item.countryId === countryId);
   return country ? country.countryName : `국가 #${countryId}`;
 }
 
+// 경로 id → 항구/공항 이름 (CSV 에 없으면 '경로 #id')
 function getRouteName(routes: RouteData[], routeId: number) {
   const route = routes.find((item) => item.routeId === routeId);
   return route ? route.routeName : `경로 #${routeId}`;
 }
 
+// 서버 상태 글자(대문자) → 화면 상태 글자(소문자)
+// [TS] MatchingApiDto['adminStatus'] = MatchingApiDto 의 adminStatus 칸의 타입 ('PENDING' | 'APPROVED' | 'REJECTED')
 function toAdminStatus(status: MatchingApiDto['adminStatus']): AdminStatus {
   if (status === 'APPROVED') return 'approved';
   if (status === 'REJECTED') return 'rejected';
@@ -38,6 +46,7 @@ function toFinalStatus(status: MatchingApiDto['finalStatus']): FinalStatus {
   return 'pending';
 }
 
+// 긴 회원 id(UUID) 를 앞 8글자 + … 로 줄이기 (회사명이 없을 때 대신 표시)
 function shortMemberId(memberId: string) {
   if (!memberId) return '-';
   return memberId.length > 8 ? `${memberId.slice(0, 8)}…` : memberId;
@@ -74,8 +83,10 @@ function makeMatchFactors(
 }
 
 // DB에 저장된 매칭 결과를 MatchItem 목록으로 불러오기
+// 돌려주는 값: 카드 목록 , 또는 요청이 취소됐으면 null
 export async function loadMatchItems(signal: AbortSignal): Promise<MatchItem[] | null> {
   // 1. 매칭 + Cscore1 + Lscore1 + CSV 기준정보 전체 조회
+  // Promise.all : 5개 요청을 동시에 보내고 모두 끝날 때까지 기다림 → 결과는 넣은 순서대로 받음 (가이드 3-5)
   const [matchings, cscore1List, lscore1List, countries, routes] = await Promise.all([
     getMatchingList(signal),
     getCscore1List(undefined, signal),
@@ -86,6 +97,9 @@ export async function loadMatchItems(signal: AbortSignal): Promise<MatchItem[] |
 
   if (signal.aborted) return null;
 
+  // 매칭마다 상세 조회 → MatchItem 1개로 변환
+  // matchings.map(async ...) 는 "Promise 배열"을 만들고, Promise.all 로 전부 동시에 기다림
+  // 필요한 정보가 없는 매칭은 null 을 돌려서 아래에서 빼 버림
   const rows = await Promise.all(
     matchings.map(async (matching): Promise<MatchItem | null> => {
       const cscore1 = cscore1List.find((item) => item.cscore1Id === matching.cscore1Id);
@@ -126,14 +140,16 @@ export async function loadMatchItems(signal: AbortSignal): Promise<MatchItem[] |
         matchFactors: makeMatchFactors(cscore1, cscore2, cscore3, lscore1, lscore2, countryName),
 
         adminStatus: toAdminStatus(matching.adminStatus),
+        // 반려된 매칭이고 사유 글자가 있으면 그 사유, 아니면 undefined(표시 안 함)
         adminRejectReason:
           matching.adminStatus === 'REJECTED' && matching.warningMessage && matching.warningMessage !== '-'
             ? matching.warningMessage
             : undefined,
         finalStatus: toFinalStatus(matching.finalStatus),
 
+        // ?? : 왼쪽 값이 없으면(null/undefined) 오른쪽 값 사용
         shipper: {
-          companyName: matching.shipperCompanyName ?? `수출입기업 (${shortMemberId(cscore1.memberId)})`,
+          companyName: matching.shipperCompanyName ??`수출입기업 (${shortMemberId(cscore1.memberId)})`,
           contactName: matching.shipperContactName ?? '-',
           bizNumber: matching.shipperBizNumber ?? '-',
           phone: matching.shipperPhone ?? '-',
@@ -190,5 +206,10 @@ export async function loadMatchItems(signal: AbortSignal): Promise<MatchItem[] |
 
   if (signal.aborted) return null;
 
-  return rows.filter((row): row is MatchItem => row !== null);
+  // null(정보가 없어서 건너뛴 매칭)을 빼고 MatchItem 만 남기기
+  const result: MatchItem[] = [];
+  for (const row of rows) {
+    if (row !== null) result.push(row);
+  }
+  return result;
 }

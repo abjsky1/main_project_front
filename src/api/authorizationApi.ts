@@ -27,13 +27,20 @@ export interface UserSearchParams {
 }
 
 // GET /api/authorization?roleName=&status=  (필터 조건으로 DB 에서 조회)
-export const searchUsers = (params: UserSearchParams, signal?: AbortSignal) =>
-  axios.get<AuthorizationCountDto>('/api/authorization', { params, signal }).then((res) => res.data);
+export async function searchUsers(params: UserSearchParams, signal?: AbortSignal) {
+  const response = await axios.get<AuthorizationCountDto>('/api/authorization', { params, signal });
+  return response.data;
+}
 
 // PUT 권한 스위치 (관리자 ↔ 일반 사용자) , 성공하면 true
-export const toggleMemberRole = (memberId: string) =>
-  axios.put<boolean>(`/api/authorization/${encodeURIComponent(memberId)}/role`).then((res) => res.data);
+// encodeURIComponent : memberId 에 특수문자가 있어도 주소가 깨지지 않게 변환
+export async function toggleMemberRole(memberId: string) {
+  const response = await axios.put<boolean>(`/api/authorization/${encodeURIComponent(memberId)}/role`);
+  return response.data;
+}
 
 // PUT 상태 스위치 (활성 ↔ 비활성) , 성공하면 true
-export const toggleMemberStatus = (memberId: string) =>
-  axios.put<boolean>(`/api/authorization/${encodeURIComponent(memberId)}/status`).then((res) => res.data);
+export async function toggleMemberStatus(memberId: string) {
+  const response = await axios.put<boolean>(`/api/authorization/${encodeURIComponent(memberId)}/status`);
+  return response.data;
+}

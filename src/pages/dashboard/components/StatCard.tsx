@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
 import type { KpiStat } from '../dashboardData';
 
+// 대시보드의 누적 무역 카드 1개 (라벨 / 값 / 전년 대비 증감 배지)
+// props 의 모양은 dashboardData.ts 의 KpiStat 과 같음
 export default function StatCard({
   label,
   value,
@@ -9,6 +11,8 @@ export default function StatCard({
   changeLabel,
   accent,
 }: KpiStat) {
+  // 증감률에 따라 배지 색(클래스)과 글자 정하기 : 증가 ▲ / 감소 ▼ / 0 / 데이터 없음 —
+  // toFixed(2) : 소수점 2자리 글자로 (52.9 → '52.90')
   let badgeClass = 'change-badge';
   let changeText = '—';
 
@@ -26,6 +30,8 @@ export default function StatCard({
 
   return (
     <div className="stat-card">
+      {/* 카드 위쪽 색 띠 : CSS 변수 --accent 에 색을 넣으면 Dashboard.css 가 그 색으로 칠함
+          [TS] as CSSProperties : '--accent' 같은 CSS 변수 이름도 style 에 넣을 수 있게 해 주는 표시 */}
       <div
         className="stat-card__accent"
         style={{ '--accent': accent } as CSSProperties}
