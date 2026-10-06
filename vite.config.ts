@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
       minify: !emitSourcemaps,
     },
     plugins: [
-react(),
+react(), 
       tailwindcss(),
       figmaSiteConfiguration(siteConfiguration),
       figmaErrorOverlayReplay(),
@@ -50,7 +50,7 @@ react(),
         },
 
       },
-      host: process.env.FIGMA_DEV_SERVER_HOST || '0.0.0.0',
+      host: process.env.FIGMA_DEV_SERVER_HOST || true,
       port: parseInt(process.env.PORT || '8443'),
       strictPort: true,
       watch: {
@@ -76,7 +76,7 @@ react(),
       changeOrigin: true,
     },
   },
-  host: process.env.FIGMA_DEV_SERVER_HOST || '0.0.0.0',
+  host: process.env.FIGMA_DEV_SERVER_HOST || true,
   port: parseInt(process.env.PORT || '8443'),
 },
   }
