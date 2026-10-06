@@ -151,8 +151,8 @@ export default function Dashboard({
         <StatCard {...EXCHANGE_CARD} />
       </div>
 
-      {/* 기존 월별 차트 유지 — 더미 데이터 사용 */}
-      <TradeTrendChart />
+      {/* 월별 수출입 및 무역수지 차트 */}
+      <TradeTrendChart year={TRADE_YEAR} />
 
       {/* 기존 맞춤 인사이트 유지 — 더미 데이터 사용 */}
       {user && matchingCountries.length > 0 && (

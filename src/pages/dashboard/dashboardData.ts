@@ -11,22 +11,6 @@ export interface KpiStat {
 // 아래 데이터는 기존 차트와 맞춤 인사이트용 더미 데이터.
 // 각 기능의 API를 연결할 때 교체.
 
-// 월별 수출입 추이 (단위: 억 달러)
-export const MONTHLY_TRADE = [
-  { month: '1월', export: 523, import: 467, balance: 56 },
-  { month: '2월', export: 498, import: 445, balance: 53 },
-  { month: '3월', export: 556, import: 478, balance: 78 },
-  { month: '4월', export: 584, import: 501, balance: 83 },
-  { month: '5월', export: 612, import: 534, balance: 78 },
-  { month: '6월', export: 598, import: 512, balance: 86 },
-  { month: '7월', export: 634, import: 548, balance: 86 },
-  { month: '8월', export: 652, import: 567, balance: 85 },
-  { month: '9월', export: 619, import: 532, balance: 87 },
-  { month: '10월', export: 665, import: 574, balance: 91 },
-  { month: '11월', export: 682, import: 598, balance: 84 },
-  { month: '12월', export: 712, import: 612, balance: 100 },
-];
-
 // 맞춤 인사이트 — 수출/수입 상위 HS 코드
 export interface TopHsItem {
   code: string;
