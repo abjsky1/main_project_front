@@ -2,6 +2,56 @@
    대시보드 (Dashboard.tsx 와 components/ 폴더)
    ===================================================================== */
 
+/* ---------- 대표 이미지 배너 (헤더 바로 아래 , 화면 가로 전체) ----------
+   이미지 원본은 2560×1020(2배 크기)이고, 가운데에 최대 1280×510 으로 표시
+   → 고해상도(레티나·4K) 화면에서는 원본 픽셀을 그대로 써서 선명하게 보임.
+   이미지 양옆 빈 공간은 이미지 가장자리 색과 같은 그라데이션으로 채워서 끊김 없이 이어지게 함.
+   (색은 이미지 왼쪽/오른쪽 가장자리 픽셀을 위→아래로 뽑은 값)                         */
+.dashboard-hero {
+  background: #fff;
+}
+
+/* 이미지 + 양옆 배경 */
+.dashboard-hero__stage {
+  background:
+    /* 왼쪽 절반 : 이미지 왼쪽 가장자리 색 (연보라 계열) */
+    linear-gradient(to bottom, #f8f9fd 0%, #f4f5fe 13%, #efeffd 25%, #eae9fb 50%, #e3e4f6 75%, #eaeffb 100%)
+      left top / 50% 100% no-repeat,
+    /* 오른쪽 절반 : 이미지 오른쪽 가장자리 색 (연하늘 계열) */
+    linear-gradient(to bottom, #f8f9fd 0%, #eff7fe 13%, #e9f5fc 25%, #dff2fc 50%, #dce8f5 75%, #eaeffb 100%)
+      right top / 50% 100% no-repeat;
+}
+
+.dashboard-hero__img {
+  display: block;
+  width: 100%;
+  max-width: 1280px;     /* 원본(2560)의 절반 크기로 표시 → 최대 1280×510 */
+  height: auto;          /* 원본 비율 유지 */
+  margin: 0 auto;
+}
+
+/* 화면이 이미지보다 넓을 때만 : 이미지 좌우 끝 20px 을 살짝 투명하게 → 배경 그라데이션과 자연스럽게 섞임
+   (양 끝 "화주 / 운송사" 글자는 가장자리에서 약 28~31px 안쪽이라 흐려지지 않음) */
+@media (min-width: 1281px) {
+  .dashboard-hero__img {
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+  }
+}
+
+/* 배너 아래 : 이미지 아래쪽 색(#eaeffb) → 흰 페이지로 부드럽게 */
+.dashboard-hero::after {
+  content: '';
+  display: block;
+  height: 40px;
+  background: linear-gradient(to bottom, #eaeffb, #fff);
+}
+
+/* 배너 아래 본문 : 위쪽 여백은 배너 페이드가 대신하니 조금 줄임 */
+.dashboard-body {
+  padding-top: 16px;
+}
+
 /* ---------- 페이지 제목 ---------- */
 .dashboard-header {
   margin-bottom: 36px;

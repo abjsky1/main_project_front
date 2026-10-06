@@ -9,6 +9,7 @@ import StatCard from './components/StatCard';
 import TradeTrendChart from './components/TradeTrendChart';
 import PersonalInsights from './components/PersonalInsights';
 
+import heroImage from '../../assets/macross_wide.png';   // 2560×1020 원본 → 1280×510 으로 표시 (고해상도 화면에서 선명)
 import './Dashboard.css';
 
 interface DashboardProps {
@@ -128,38 +129,53 @@ export default function Dashboard({
   ];
 
   return (
-    <div className="page-container">
-      <PageHeader
-        eyebrow="Overview"
-        title={<>{greeting}종합 대시보드</>}
-        className="dashboard-header"
-      />
-
-      <p className="eyebrow dashboard-kpi-title">
-        {TRADE_YEAR}년 누적 무역 현황
-      </p>
-      
-      {/* 로딩 여부와 관계없이 카드 4개 표시 */}
-      <div className="dashboard-kpi-grid">
-        {cards.map((card) => (
-          <StatCard
-            key={card.label}
-            {...card}
+    <>
+      {/* 대표 이미지 (화주 ↔ Macross ↔ 운송사) — 화면 가로 전체 배너 */}
+      <section className="dashboard-hero">
+        <div className="dashboard-hero__stage">
+          <img
+            src={heroImage}
+            alt="Macross — 화주와 운송사를 연결하는 물류 매칭 플랫폼"
+            width={1280}
+            height={510}
+            className="dashboard-hero__img"
           />
-        ))}
+        </div>
+      </section>
 
-        <StatCard {...EXCHANGE_CARD} />
-      </div>
-
-      {/* 월별 수출입 및 무역수지 차트 */}
-      <TradeTrendChart year={TRADE_YEAR} />
-
-      {/* 기존 맞춤 인사이트 유지 — 더미 데이터 사용 */}
-      {user && matchingCountries.length > 0 && (
-        <PersonalInsights
-          countries={matchingCountries}
+      <div className="page-container dashboard-body">
+        <PageHeader
+          eyebrow="Overview"
+          title={<>{greeting}종합 대시보드</>}
+          className="dashboard-header"
         />
-      )}
-    </div>
+
+        <p className="eyebrow dashboard-kpi-title">
+          {TRADE_YEAR}년 누적 무역 현황
+        </p>
+      
+        {/* 로딩 여부와 관계없이 카드 4개 표시 */}
+        <div className="dashboard-kpi-grid">
+          {cards.map((card) => (
+            <StatCard
+              key={card.label}
+              {...card}
+            />
+          ))}
+
+          <StatCard {...EXCHANGE_CARD} />
+        </div>
+
+        {/* 월별 수출입 및 무역수지 차트 */}
+        <TradeTrendChart year={TRADE_YEAR} />
+
+        {/* 기존 맞춤 인사이트 유지 — 더미 데이터 사용 */}
+        {user && matchingCountries.length > 0 && (
+          <PersonalInsights
+            countries={matchingCountries}
+          />
+        )}
+      </div>
+    </>
   );
 }
