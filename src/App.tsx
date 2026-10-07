@@ -97,14 +97,8 @@ export default function App() {
     try {
 
       // 1. Spring 로그인 API 호출
-      const response =
-        await axios.post(
-          '/api/login',
-          {
-            userEmail: email,
-            userPassword: password
-          }
-        );
+          const response = await axios.post('/api/login',{userEmail: email,userPassword: password},
+            {withCredentials: true}); // 프론트와 백엔드가 HTTP 요청을 주고받을 때 쿠키를 함께 보내고 받을 수 있게 하는 설정
       // 2. 로그인 실패
       if (!response.data) {
         return '이메일 또는 비밀번호가 올바르지 않습니다.';
@@ -184,13 +178,31 @@ export default function App() {
   };
 
   // 로그아웃 : 회원 관련 값 비우기 → 대시보드(/)로 이동
-  const handleLogout = () => {
+  const handleLogout = async () => {
+  try {
+
+    // 1. Spring 로그아웃 API 호출
+    await axios.post(
+      '/api/login/logout',
+      {},
+      {
+        withCredentials: true
+      }
+    );
+
+    // 2. 프론트 로그인 상태 초기화
     setShipperRows([]);
     setLogisticsRows([]);
     setMatchingCountries([]);
     setUser(null);
+
+    // 3. 대시보드로 이동
     navigate(PAGE_PATHS.dashboard);
-  };
+
+  } catch (error) {
+    console.log('로그아웃 오류 : ', error);
+  }
+};
 
   return (
     <div className="app-root">
