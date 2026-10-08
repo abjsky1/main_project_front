@@ -24,7 +24,9 @@ export interface AuditSearchParams {
 
 // 감사 로그 조회 (필터 조건으로 DB 에서 조회 , 최신순)
 // 예) params = { user: 'kim', result: true }  →  GET /api/audit?user=kim&result=true
+// - 관리자만 사용 가능 : 서버가 로그인 쿠키(AccessToken)로 확인 → withCredentials: true 로 쿠키를 같이 보냄
+// [TS] AuditDto[] | null : 관리자가 아니면 서버가 null 을 돌려줌 (빈 응답)
 export async function getAuditLogs(params: AuditSearchParams, signal?: AbortSignal) {
-  const response = await axios.get<AuditDto[]>('/api/audit', { params, signal });
+  const response = await axios.get<AuditDto[] | null>('/api/audit', { params, signal, withCredentials: true });
   return response.data;
 }

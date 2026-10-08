@@ -1,6 +1,10 @@
 // 시스템 관리 화면에서 쓰는 타입 / 표시용 매핑
 // (데이터는 백엔드에서 조회 : 사용자 목록 GET /api/authorization , 감사 로그 GET /api/audit)
 
+// 서버가 "관리자가 아님" 이라고 응답했을 때 보여줄 문구 (두 탭 공통)
+// 로그인한 지 20분이 지나 AccessToken 쿠키가 만료된 경우가 가장 흔함
+export const ADMIN_REQUIRED_MESSAGE = '관리자 권한을 확인하지 못했습니다. 로그인한 지 오래되었다면 관리자 계정으로 다시 로그인해 주세요.';
+
 export type UserStatus = '활성' | '비활성';
 export type UserRoleLabel = '관리자' | '일반사용자';
 
@@ -36,6 +40,7 @@ export const MEMBER_TYPE_LABEL: Record<string, string> = {
   '수출입기업': '수출입기업',
   '물류운송업체': '물류업체',
   '비회원': '비회원',
+  '탈퇴 회원': '탈퇴 회원',   // 탈퇴한 회원의 로그 (회원 정보는 삭제되고 로그만 "탈퇴 회원" 공통 계정에 남음)
 };
 
 // 작업 유형별 배지 색 → SystemAdmin.css 의 .action-badge--xxx 클래스

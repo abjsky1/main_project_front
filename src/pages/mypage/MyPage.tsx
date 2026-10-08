@@ -6,11 +6,11 @@
        관리자    : 채팅방 목록 + 고른 방의 대화 (components/AdminChatConsole)
        ⚠️ 채팅은 프론트 데모 (브라우저 저장 — chatData.ts)
    - 관심 국가 설정은 맞춤 인사이트 페이지 위쪽으로 옮김
-   - 회원 탈퇴 버튼 (기업 회원만, 실제 탈퇴 API 는 로그인 담당 팀원이 만들면 연결)
+   - 회원 탈퇴 (기업 회원만) : 비밀번호 확인 → POST /api/mypage/withdraw → 성공하면 로그아웃 상태로 첫 화면
    ===================================================================== */
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import type { User } from '../../types/user';
-import { updateMyInfo } from '../../api/mypageApi';
+import { updateMyInfo, withdrawMember } from '../../api/mypageApi';
 import PageHeader from '../../components/common/PageHeader';
 import AccessGuard from '../../components/common/AccessGuard';
 import SupportChat from './components/SupportChat';
@@ -20,13 +20,14 @@ import './MyPage.css';
 interface MyPageProps {
   user: User | null;
   onUserChange: (user: User) => void;                  // 이름·주소 수정 성공 → App 의 user 도 바꿈 (헤더 동그라미 글자 등)
+  onWithdrawn: () => void;                             // 탈퇴 성공 → App 이 로그인 상태를 비우고 첫 화면으로
 }
 
 // 서버 저장 실패 시 안내 문구 (본인 확인용 쿠키가 만료된 경우가 가장 흔함)
 const LOGIN_EXPIRED_MESSAGE = '저장하지 못했습니다. 로그인한 지 오래되었다면 다시 로그인한 뒤 시도해 주세요.';
 const SERVER_ERROR_MESSAGE = '서버 요청에 실패했습니다. Spring 서버(8080) 실행 상태를 확인해 주세요.';
 
-export default function MyPage({ user, onUserChange }: MyPageProps) {
+export default function MyPage({ user, onUserChange, onWithdrawn }: MyPageProps) {
   // ---------- 내 정보 수정 ----------
   const [editing, setEditing] = useState(false);       // 수정 모드인지
   const [editName, setEditName] = useState('');        // 수정 중인 이름
@@ -34,6 +35,12 @@ export default function MyPage({ user, onUserChange }: MyPageProps) {
   const [infoSaving, setInfoSaving] = useState(false);
   const [infoMessage, setInfoMessage] = useState('');  // 저장 결과 안내
   const [infoError, setInfoError] = useState('');      // 입력 / 저장 오류 안내
+
+  // ---------- 회원 탈퇴 ----------
+  const [withdrawOpen, setWithdrawOpen] = useState(false);       // 비밀번호 입력칸이 열렸는지
+  const [withdrawPassword, setWithdrawPassword] = useState('');  // 입력한 비밀번호
+  const [withdrawing, setWithdrawing] = useState(false);         // 탈퇴 요청 중 (버튼 잠그기)
+  const [withdrawError, setWithdrawError] = useState('');
 
   const isCompany = !!user && user.role !== 'admin';   // 기업 회원(수출입기업·물류업체)인지
 
@@ -102,12 +109,46 @@ export default function MyPage({ user, onUserChange }: MyPageProps) {
     }
   };
 
-  // 회원 탈퇴 버튼
-  const handleWithdraw = () => {
-    if (!window.confirm('정말 회원 탈퇴를 하시겠습니까?\n탈퇴하면 등록한 매칭 조건과 매칭 기록을 더 이상 이용할 수 없습니다.')) return;
-    // TODO: 로그인 담당 팀원이 회원 탈퇴 API 를 만들면 여기서 호출하고, 성공하면 로그아웃 처리
-    //       예) const response = await axios.delete(`/api/member/${user.memberId}`);
-    alert('회원 탈퇴 기능은 준비 중입니다.');
+  /* ---------- 회원 탈퇴 ---------- */
+
+  // [회원 탈퇴] 버튼 : 비밀번호 입력칸 열기
+  const openWithdraw = () => {
+    setWithdrawPassword('');
+    setWithdrawError('');
+    setWithdrawOpen(true);
+  };
+
+  // [취소] : 입력칸 닫기 (입력한 비밀번호도 지움)
+  const closeWithdraw = () => {
+    setWithdrawOpen(false);
+    setWithdrawPassword('');
+    setWithdrawError('');
+  };
+
+  // [탈퇴하기] : 한 번 더 확인 → 서버에 탈퇴 요청 → 성공하면 App 이 로그아웃 상태로 바꾸고 첫 화면으로
+  // [TS] FormEvent : form 의 onSubmit 이벤트 타입 (Enter 로도 제출되게 form 을 사용)
+  const handleWithdraw = async (event: FormEvent) => {
+    event.preventDefault();   // form 기본 동작(페이지 새로고침) 막기
+    if (!withdrawPassword) { setWithdrawError('비밀번호를 입력해 주세요.'); return; }
+    if (!window.confirm('정말 회원 탈퇴를 하시겠습니까?\n등록한 매칭 조건 · 매칭 기록 · 관심 국가가 모두 삭제되며 되돌릴 수 없습니다.')) return;
+
+    setWithdrawing(true);
+    setWithdrawError('');
+    try {
+      const ok = await withdrawMember(withdrawPassword);
+      if (!ok) {
+        // 실패 이유 : 비밀번호가 틀렸거나 , 로그인 쿠키가 만료된 경우 (서버는 이유를 나눠 알려주지 않음)
+        setWithdrawError('탈퇴하지 못했습니다. 비밀번호를 확인해 주세요. 로그인한 지 오래되었다면 다시 로그인한 뒤 시도해 주세요.');
+        return;
+      }
+      alert('회원 탈퇴가 완료되었습니다. 그동안 MACROSS 를 이용해 주셔서 감사합니다.');
+      onWithdrawn();   // 서버가 쿠키는 이미 지웠으므로 , 프론트 로그인 상태만 비우면 됨
+    } catch (error) {
+      console.log('회원 탈퇴 실패 : ', error);
+      setWithdrawError(SERVER_ERROR_MESSAGE);
+    } finally {
+      setWithdrawing(false);
+    }
   };
 
   return (
@@ -176,11 +217,34 @@ export default function MyPage({ user, onUserChange }: MyPageProps) {
       {/* ---------- 회원 탈퇴 (기업 회원만) ---------- */}
       {isCompany && (
         <section className="mypage-withdraw">
-          <div>
-            <p className="mypage-withdraw__title">회원 탈퇴</p>
-            <p className="mypage-withdraw__desc">탈퇴하면 계정과 매칭 정보를 더 이상 이용할 수 없습니다.</p>
+          <div className="mypage-withdraw__row">
+            <div>
+              <p className="mypage-withdraw__title">회원 탈퇴</p>
+              <p className="mypage-withdraw__desc">탈퇴하면 계정 · 매칭 조건 · 매칭 기록 · 관심 국가가 모두 삭제되며 되돌릴 수 없습니다.</p>
+            </div>
+            {/* 입력칸이 닫혀 있을 때만 [회원 탈퇴] 버튼 */}
+            {!withdrawOpen && <button onClick={openWithdraw} className="mypage-withdraw__btn">회원 탈퇴</button>}
           </div>
-          <button onClick={handleWithdraw} className="mypage-withdraw__btn">회원 탈퇴</button>
+
+          {/* 비밀번호 확인 (Enter 로도 제출) */}
+          {withdrawOpen && (
+            <form onSubmit={handleWithdraw} className="mypage-withdraw__form">
+              <input
+                type="password"
+                value={withdrawPassword}
+                onChange={(e) => setWithdrawPassword(e.target.value)}
+                placeholder="비밀번호를 입력하세요"
+                autoComplete="current-password"
+                autoFocus
+                className="mypage-withdraw__input"
+              />
+              <button type="button" onClick={closeWithdraw} disabled={withdrawing} className="mypage-cancel-btn">취소</button>
+              <button type="submit" disabled={withdrawing} className="mypage-withdraw__btn">
+                {withdrawing ? '탈퇴 처리 중...' : '탈퇴하기'}
+              </button>
+            </form>
+          )}
+          {withdrawError && <p className="mypage-error">{withdrawError}</p>}
         </section>
       )}
     </div>

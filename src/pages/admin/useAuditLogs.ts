@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getAuditLogs, type AuditDto, type AuditSearchParams } from '../../api/auditApi';
-import { MEMBER_TYPE_LABEL, type AuditLog } from './adminData';
+import { ADMIN_REQUIRED_MESSAGE, MEMBER_TYPE_LABEL, type AuditLog } from './adminData';
 
 export type LogResultFilter = 'all' | '성공' | '실패';
 
@@ -70,6 +70,12 @@ export default function useAuditLogs() {
     setLoadError('');
     try {
       const data = await getAuditLogs(toParams(filter), controller.signal);
+      // 관리자가 아니면 서버가 null 을 돌려줌 → 응답이 비어 있음 (!data 로 확인)
+      if (!data) {
+        setLogs([]);
+        setLoadError(ADMIN_REQUIRED_MESSAGE);
+        return;
+      }
       setLogs(data.map(toAuditLog));
     } catch (error) {
       if (controller.signal.aborted) return;   // 취소된 요청이면 무시

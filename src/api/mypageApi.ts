@@ -13,3 +13,12 @@ export async function updateMyInfo(memberId: string, managerName: string, compan
   );
   return response.data;
 }
+
+// POST /api/mypage/withdraw : 회원 탈퇴 , 성공하면 true
+// - 어떤 회원인지는 서버가 로그인 쿠키(AccessToken)로 정함 → withCredentials: true 로 쿠키를 같이 보냄
+// - 비밀번호가 틀리거나 , 쿠키가 만료됐거나 , 관리자 계정이면 false
+// - 성공하면 서버가 쿠키 2개를 지워 줌 (로그아웃과 같은 상태가 됨)
+export async function withdrawMember(userPassword: string) {
+  const response = await axios.post<boolean>('/api/mypage/withdraw', { userPassword }, { withCredentials: true });
+  return response.data;
+}

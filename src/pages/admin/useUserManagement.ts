@@ -3,7 +3,7 @@ import {
   searchUsers, toggleMemberRole, toggleMemberStatus,
   type AuthorizationDto, type UserSearchParams,
 } from '../../api/authorizationApi';
-import type { SystemUser, UserRoleLabel, UserStatus } from './adminData';
+import { ADMIN_REQUIRED_MESSAGE, type SystemUser, type UserRoleLabel, type UserStatus } from './adminData';
 
 export type LoginSort = 'asc' | 'desc' | null;
 
@@ -68,6 +68,12 @@ export default function useUserManagement() {
     setLoadError('');
     try {
       const data = await searchUsers(toParams(filter), signal);
+      // 관리자가 아니면 서버가 null 을 돌려줌 → 응답이 비어 있음 (axios 는 빈 응답을 '' 로 줌 → !data 로 확인)
+      if (!data) {
+        setUsers([]);
+        setLoadError(ADMIN_REQUIRED_MESSAGE);
+        return;
+      }
       setUsers(data.members.map(toSystemUser));   // 응답 목록을 표 한 줄 모양으로 변환
       setSummary({ all: data.allUser, active: data.activate, inactive: data.deactivate });
     } catch (error) {
@@ -109,7 +115,8 @@ export default function useUserManagement() {
     setBusyId(id);
     try {
       const ok = await toggleMemberRole(id);
-      if (!ok) { alert('권한을 변경하지 못했습니다.'); return; }
+      // 실패 이유 : 내 계정을 바꾸려 했거나 , 쿠키가 만료되어 관리자 확인이 안 된 경우 (\n = 알림창 줄바꿈)
+      if (!ok) { alert('권한을 변경하지 못했습니다.\n(내 계정의 권한은 바꿀 수 없습니다. 로그인한 지 오래되었다면 다시 로그인해 주세요.)'); return; }
       // 목록을 새로 만들면서 해당 회원(id 가 같은 줄)의 역할만 반대로 바꿈
       setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role: u.role === '관리자' ? '일반사용자' : '관리자' } : u)));
     } catch (error) {
@@ -127,7 +134,7 @@ export default function useUserManagement() {
     setBusyId(id);
     try {
       const ok = await toggleMemberStatus(id);
-      if (!ok) { alert('상태를 변경하지 못했습니다.'); return; }
+      if (!ok) { alert('상태를 변경하지 못했습니다.\n(내 계정의 상태는 바꿀 수 없습니다. 로그인한 지 오래되었다면 다시 로그인해 주세요.)'); return; }
       setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status } : u)));
       // 요약 카드 숫자 : 활성으로 바꿨으면 활성 +1 / 비활성 -1 , 반대면 반대로
       setSummary((s) => (status === '활성'

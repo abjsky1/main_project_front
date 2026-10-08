@@ -629,15 +629,52 @@
 
 /* ---------- 회원 탈퇴 ---------- */
 .mypage-withdraw {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
   margin-top: 16px;
   padding: 20px 24px;
   border-radius: 16px;
   background: rgba(217, 48, 37, 0.03);
   border: 1px solid rgba(217, 48, 37, 0.12);
+}
+
+/* 제목 · 설명 | [회원 탈퇴] 버튼 한 줄 */
+.mypage-withdraw__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* 비밀번호 입력 | [취소] [탈퇴하기] 한 줄 */
+.mypage-withdraw__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(217, 48, 37, 0.2);
+}
+
+.mypage-withdraw__input {
+  flex: 0 1 280px;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  outline: none;
+  color: var(--text-primary);
+  background: #fff;
+  border: 1px solid rgba(217, 48, 37, 0.25);
+}
+
+.mypage-withdraw__input:focus {
+  border-color: var(--danger);
+}
+
+.mypage-withdraw__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .mypage-withdraw__title {

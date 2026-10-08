@@ -212,7 +212,15 @@ export default function App() {
     setRegisteredPasswords((prev) => ({ ...prev, [newUser.email]: password }));
   };
 
-  // 로그아웃 : 회원 관련 값 비우기 → 대시보드(/)로 이동
+  // 프론트 로그인 상태 비우기 → 첫 화면(/)으로 이동 (로그아웃 · 회원 탈퇴가 같이 사용)
+  const clearLoginState = () => {
+    setShipperRows([]);
+    setLogisticsRows([]);
+    setUser(null);
+    navigate(PAGE_PATHS.dashboard);
+  };
+
+  // 로그아웃 : 서버에 로그아웃 요청(쿠키 · 레디스 토큰 삭제) → 프론트 로그인 상태 비우기
   const handleLogout = async () => {
   try {
 
@@ -225,13 +233,8 @@ export default function App() {
       }
     );
 
-    // 2. 프론트 로그인 상태 초기화
-    setShipperRows([]);
-    setLogisticsRows([]);
-    setUser(null);
-
-    // 3. 대시보드로 이동
-    navigate(PAGE_PATHS.dashboard);
+    // 2. 프론트 로그인 상태 초기화 + 첫 화면으로 이동
+    clearLoginState();
 
   } catch (error) {
     console.log('로그아웃 오류 : ', error);
@@ -260,7 +263,7 @@ export default function App() {
           <Route path={PAGE_PATHS['matching-settings']} element={<MatchingSettings key={user?.memberId ?? user?.email ?? 'guest'} user={user} shipperRows={shipperRows} logisticsRows={logisticsRows} onShipperRowsChange={setShipperRows} onLogisticsRowsChange={setLogisticsRows} />} />
           <Route path={PAGE_PATHS.matching} element={<SmartMatching user={user} />} />
           <Route path={PAGE_PATHS.admin} element={<SystemAdmin user={user} />} />
-          <Route path={PAGE_PATHS.mypage} element={<MyPage user={user} onUserChange={setUser} />} />
+          <Route path={PAGE_PATHS.mypage} element={<MyPage user={user} onUserChange={setUser} onWithdrawn={clearLoginState} />} />
           {/* 없는 주소는 대시보드로 */}
           <Route path="*" element={<Navigate to={PAGE_PATHS.dashboard} replace />} />
         </Routes>
