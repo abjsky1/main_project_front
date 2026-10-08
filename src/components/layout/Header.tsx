@@ -53,9 +53,11 @@ interface MatchingNotification {
 
 // 메뉴 전체 목록 — 아래 visibleNavItems 에서 로그인 상태에 맞는 것만 골라서 보여줌
 const ALL_NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard', label: '대시보드' },
+  { id: 'dashboard', label: '무역 현황' },
   { id: 'trade', label: '무역 데이터 분석' },
+  { id: 'insights', label: '맞춤 인사이트', authRequired: true, userOnly: true },
   { id: 'matching-settings', label: '매칭 조건 설정', authRequired: true, userOnly: true },
+  { id: 'my-matching', label: '내 매칭', authRequired: true, userOnly: true },
   { id: 'matching', label: '매칭 관리', adminOnly: true },
   { id: 'admin', label: '시스템 관리', adminOnly: true },
 ];
@@ -261,7 +263,7 @@ export default function Header({ currentPage, onNavigate, user, onLoginClick, on
     return true;
   });
 
-  // 이름 아래 작은 역할 글자 : 관리자 → ADMIN , 물류업체 → LOGISTICS , 그 외 → USER
+  // 동그라미 옆 작은 역할 글자 : 관리자 → ADMIN , 물류업체 → LOGISTICS , 그 외 → USER
   const roleLabel = isAdmin ? 'ADMIN' : user?.companyType === '물류업체' ? 'LOGISTICS' : 'USER';
 
   return (
@@ -437,11 +439,17 @@ export default function Header({ currentPage, onNavigate, user, onLoginClick, on
 
               )}
               <div className="user-box__profile">
-                <div className="user-box__avatar">{user.name.charAt(0)}</div>
-                <div className="user-box__info">
-                  <span className="user-box__name">{user.name}</span>
-                  <span className={isAdmin ? 'user-box__role is-admin' : 'user-box__role'}>{roleLabel}</span>
-                </div>
+                {/* 이름 첫 글자 동그라미 : 누르면 마이페이지로 이동 (마이페이지에 있을 때는 is-active 로 테두리 강조) */}
+                <button
+                  type="button"
+                  onClick={() => onNavigate('mypage')}
+                  className={currentPage === 'mypage' ? 'user-box__avatar is-active' : 'user-box__avatar'}
+                  title="마이페이지"
+                  aria-label="마이페이지"
+                >
+                  {user.name.charAt(0)}
+                </button>
+                <span className={isAdmin ? 'user-box__role is-admin' : 'user-box__role'}>{roleLabel}</span>
               </div>
               <button onClick={onLogout} className="logout-btn">
                 로그아웃

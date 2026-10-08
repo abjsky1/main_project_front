@@ -1,9 +1,10 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { axisTick, tooltipBoxStyle } from '../../../styles/chartTheme';
-import { TOP_HS_EXPORT, TOP_HS_IMPORT, yearlyTradeData, type TopHsItem } from '../dashboardData';
+import { topHsData, yearlyTradeData, type TopHsItem } from '../insightsData';
 
-interface PersonalInsightsProps {
-  countries: string[];  // 매칭 조건에 등록한 국가 목록
+interface InsightSetProps {
+  country: string;   // 관심 국가 이름
+  order: number;     // 몇 번째 관심 국가인지 (1, 2, 3)
 }
 
 // 수출/수입 상위 HS 코드 한 줄
@@ -19,17 +20,17 @@ function HsRankItem({ item, kind }: { item: TopHsItem; kind: 'export' | 'import'
   );
 }
 
-// 로그인 + 매칭 조건이 있을 때만 보이는 맞춤 인사이트 영역
-// (그래프 값은 dashboardData.ts 의 더미 데이터 — API 연결 시 교체)
-export default function PersonalInsights({ countries }: PersonalInsightsProps) {
-  const yearData = yearlyTradeData(countries);
-  // 국가는 3개까지만 이름을 보여주고, 더 있으면 ' 외 N개국'
-  const countryLabel =countries.slice(0, 3).join(', ') + (countries.length > 3 ? ` 외 ${countries.length - 3}개국` : '');
+// 관심 국가 1개에 대한 인사이트 세트 (수출입 추이 / 무역수지 추이 / 수출·수입 Top 2)
+// Insights.tsx 가 관심 국가 개수만큼 이 컴포넌트를 반복해서 그림 → 모양은 같고 값만 국가에 따라 바뀜
+export default function InsightSet({ country, order }: InsightSetProps) {
+  // 이 국가의 더미 데이터 (같은 국가면 항상 같은 값 — insightsData.ts)
+  const yearData = yearlyTradeData([country]);
+  const { exportTop, importTop } = topHsData(country);
 
   return (
-    <div>
-      <p className="eyebrow insights__title">Personalized Insights</p>
-      <p className="insights__countries">{countryLabel}</p>
+    <section className="insight-set">
+      <p className="eyebrow insights__title">관심 국가 {order}</p>
+      <h2 className="insight-set__country">{country}</h2>
 
       <div className="insights__grid">
         {/* 왼쪽: 최근 5년 수출입액 */}
@@ -92,12 +93,12 @@ export default function PersonalInsights({ countries }: PersonalInsightsProps) {
         <div className="insight-card insight-card--white">
           <div className="hs-rank">
             <p className="hs-rank__label hs-rank__label--export">수출 Top 2</p>
-            {TOP_HS_EXPORT.map((h) => <HsRankItem key={h.code} item={h} kind="export" />)}
+            {exportTop.map((h) => <HsRankItem key={h.code} item={h} kind="export" />)}
             <p className="hs-rank__label hs-rank__label--import">수입 Top 2</p>
-            {TOP_HS_IMPORT.map((h) => <HsRankItem key={h.code} item={h} kind="import" />)}
+            {importTop.map((h) => <HsRankItem key={h.code} item={h} kind="import" />)}
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

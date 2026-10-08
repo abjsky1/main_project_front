@@ -27,8 +27,6 @@ import './MatchingSettings.css';
 // 조건 목록(shipperRows/logisticsRows)은 App 이 보관 → 이 페이지는 받아서 그리고, 바뀌면 onXxxChange 로 알려줌
 interface MatchingSettingsProps {
   user: User | null;
-  onLoginClick: () => void;
-  onMatchingUpdate?: (countries: string[]) => void;           // 등록한 국가 목록 → 대시보드 맞춤 인사이트에 사용
   shipperRows: ShipperCondition[];
   logisticsRows: LogisticsCondition[];
   onShipperRowsChange: (rows: ShipperCondition[]) => void;    // [TS] (rows: ...) => void : rows 를 받는 함수
@@ -43,7 +41,7 @@ const SectionTitle = ({ children }: { children: string }) => (
   </div>
 );
 
-export default function MatchingSettings({ user, onLoginClick, onMatchingUpdate, shipperRows, logisticsRows, onShipperRowsChange, onLogisticsRowsChange }: MatchingSettingsProps) {
+export default function MatchingSettings({ user, shipperRows, logisticsRows, onShipperRowsChange, onLogisticsRowsChange }: MatchingSettingsProps) {
   const [consented, setConsented] = useState(false);                     // 매칭 서비스 참여 동의 체크
   const [shipperForm, setShipperForm] = useState(emptyShipper());         // 수출입기업 입력폼 값
   const [logisticsForm, setLogisticsForm] = useState(emptyLogistics());   // 물류업체 입력폼 값
@@ -76,15 +74,11 @@ export default function MatchingSettings({ user, onLoginClick, onMatchingUpdate,
         if (!mounted.current || signal?.aborted) return;   // 페이지를 떠났거나 요청이 취소됐으면 무시
         onShipperRowsChange(rows);
         onLogisticsRowsChange([]);
-        // 등록한 국가들을 중복 없이 모아서 App 에 전달
-        // flatMap : 각 조건의 countries 배열을 하나로 이어 붙임 → new Set : 중복 제거 → [... ] : 다시 배열로
-        onMatchingUpdate?.([...new Set(rows.flatMap((row) => row.countries))]);
       } else {
         const rows = await loadLogisticsRows(memberId, countries, routes, signal);
         if (!mounted.current || signal?.aborted) return;
         onLogisticsRowsChange(rows);
         onShipperRowsChange([]);
-        onMatchingUpdate?.([...new Set(rows.flatMap((row) => row.countries))]);
       }
     } catch (error) {
       if (mounted.current && !signal?.aborted) setLoadError(errorMessage(error));
@@ -92,7 +86,7 @@ export default function MatchingSettings({ user, onLoginClick, onMatchingUpdate,
     } finally {
       if (mounted.current && !signal?.aborted) setLoading(false);
     }
-  }, [memberId, companyType, countries, routes, onShipperRowsChange, onLogisticsRowsChange, onMatchingUpdate]);
+  }, [memberId, companyType, countries, routes, onShipperRowsChange, onLogisticsRowsChange]);
 
   // 컴포넌트 생명주기 확인 (B_react Lifecycle 예제의 마운트 / 언마운트)
   useEffect(() => {
@@ -155,7 +149,6 @@ export default function MatchingSettings({ user, onLoginClick, onMatchingUpdate,
     // 이전 회원의 목록이 잠깐 보이지 않도록 먼저 비우기
     onShipperRowsChange([]);
     onLogisticsRowsChange([]);
-    onMatchingUpdate?.([]);
 
     if (!memberId) {
       setLoadError('DB 회원 ID가 없습니다. 실제 회원으로 로그인해 주세요.');
@@ -180,21 +173,17 @@ export default function MatchingSettings({ user, onLoginClick, onMatchingUpdate,
     loadRows,
     onShipperRowsChange,
     onLogisticsRowsChange,
-    onMatchingUpdate,
   ]);
 
-  // 로그인 안 했으면 안내 화면
-  if (!user) {
+  // 기업 회원(수출입기업·물류업체)이 아니면 안내 화면 (로그인 안 했거나 관리자인 경우)
+  if (!user || user.role === 'admin') {
     return (
       <div className="page-container">
         <PageHeader eyebrow="Matching" title="매칭 조건 설정" className="page-header--compact" />
         <AccessGuard
           icon="users"
           short
-          title="로그인이 필요합니다"
-          description="매칭 조건 설정은 로그인 후 이용 가능합니다."
-          buttonLabel="로그인 / 회원가입"
-          onLoginClick={onLoginClick}
+          description="매칭 조건 설정은 기업 회원(수출입기업·물류업체)만 이용할 수 있습니다."
         />
       </div>
     );

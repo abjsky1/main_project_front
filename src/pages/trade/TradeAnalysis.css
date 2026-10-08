@@ -33,6 +33,9 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
+/* 검색 조건 칸 배치
+   - 좁은 화면 : 2칸 (국가 · HS 코드는 한 줄씩 넓게 , 시작 · 종료 기간은 나란히)
+   - 넓은 화면 : 국가 - HS 코드 - 시작 기간 - 종료 기간 한 줄 (HS 코드 칸만 2배 넓게) */
 .trade-search-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -40,13 +43,19 @@
   margin-top: 12px;
 }
 
-@media (min-width: 768px) {
+.trade-search-grid__country,
+.trade-search-grid__hs {
+  grid-column: 1 / -1;            /* 좁은 화면 : 한 줄 전체 */
+}
+
+@media (min-width: 900px) {
   .trade-search-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
   }
 
-  .trade-search-grid__wide {
-    grid-column: span 2 / span 2;
+  .trade-search-grid__country,
+  .trade-search-grid__hs {
+    grid-column: auto;            /* 넓은 화면 : 한 칸씩 차례대로 */
   }
 }
 
@@ -93,6 +102,127 @@ select.trade-input {
 
 .trade-search-btn:hover {
   opacity: 0.9;
+}
+
+/* 검색 중에는 버튼 잠금 */
+.trade-search-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* 검색 조건 아래 안내 / 오류 문구 */
+.trade-search-message {
+  margin-top: 8px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+.trade-search-message.is-error {
+  color: var(--danger);
+}
+
+/* 검색 전 사용 방법 안내 */
+.trade-search-guide {
+  padding: 32px 24px;
+  border-radius: 16px;
+  text-align: center;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-secondary);
+  background: var(--tint-bg);
+  border: 1px dashed var(--tint-border);
+}
+
+.trade-search-guide__sub {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+/* ---------- HS 코드 찾기 (HsCodeSelect.tsx) ---------- */
+.trade-hs {
+  position: relative;            /* 추천 목록을 입력칸 바로 아래에 띄우기 위한 기준 */
+}
+
+.trade-hs__menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 6px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--clean-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* 추천 한 줄 : 코드 | 품목명 | 4자리(호) 이름 */
+.trade-hs__option {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  text-align: left;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+}
+
+.trade-hs__option:hover {
+  background: var(--tint-bg-hover);
+}
+
+.trade-hs__code {
+  flex-shrink: 0;
+  font-family: var(--font-code);
+  font-weight: 600;
+  color: var(--brand-purple);
+}
+
+.trade-hs__name {
+  flex-shrink: 0;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.trade-hs__group {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.trade-hs__empty {
+  padding: 10px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+/* 고른 코드의 품목명 */
+.trade-hs__selected {
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trade-hs__selected strong {
+  color: var(--brand-purple);
 }
 
 /* ---------- 검색 결과 상단 바 ---------- */
@@ -143,17 +273,14 @@ select.trade-input {
 }
 
 /* ---------- 필터 패널 ---------- */
+/* 필터 패널 : 국가 | 금액 정렬 한 줄 (넓은 화면에서는 정렬 버튼 칸을 3배 넓게) */
 .trade-filter-panel {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 @media (min-width: 768px) {
   .trade-filter-panel {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .trade-filter-panel__full {
-    grid-column: span 3 / span 3;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
   }
 }
 
@@ -168,14 +295,13 @@ select.trade-input {
   color: var(--text-primary);
 }
 
-.trade-sort-label {
-  margin-bottom: 8px;
-}
-
+/* 정렬 버튼 줄 : 옆 칸의 국가 선택칸(높이 38px)과 같은 높이 안에서 세로 가운데 정렬 */
 .trade-sort-options {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
+  min-height: 38px;
 }
 
 .trade-sort-options .option-btn {

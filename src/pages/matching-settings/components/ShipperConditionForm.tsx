@@ -41,7 +41,7 @@ export default function ShipperConditionForm({
           <CountrySelect countries={countries} value={form.countries} onChange={(v) => onFieldChange('countries', v)} />
         </FormField>
         <FormField label="타겟 HS코드">
-          <input value={form.hsCode} onChange={(e) => onFieldChange('hsCode', e.target.value)} placeholder="예: 3304.99" className="ms-input" />
+          <input value={form.hsCode} onChange={(e) => onFieldChange('hsCode', e.target.value)} placeholder="예: 3304991000" className="ms-input" />
         </FormField>
         <FormField label="수출/수입 구분">
           <select value={form.tradeType} onChange={(e) => onFieldChange('tradeType', e.target.value)} className="ms-input">

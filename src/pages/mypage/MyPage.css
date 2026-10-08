@@ -1,0 +1,371 @@
+/* =====================================================================
+   마이페이지 (MyPage.tsx)
+   ===================================================================== */
+
+/* 내 정보 / 관심 국가 카드 2칸 (화면이 좁으면 1칸) */
+.mypage-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (min-width: 900px) {
+  .mypage-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* 관리자는 카드가 1개라 절반 너비로 */
+  .mypage-grid--single {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.mypage-card {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--clean-border);
+}
+
+/* ---------- 내 정보 ---------- */
+.mypage-profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 20px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.mypage-profile__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 9999px;
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand-gradient);
+}
+
+.mypage-profile__name {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* 이름 · 기업명 · 이메일 묶음 (남는 공간을 차지 → [수정] 버튼은 오른쪽 끝으로) */
+.mypage-profile__text {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+/* 기업명 · 회원 유형 */
+.mypage-profile__company {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 600;
+  color: var(--brand-purple);
+}
+
+.mypage-profile__email {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+/* [수정] 버튼 */
+.mypage-edit-btn {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.06);
+  border: 1px solid rgba(100, 50, 220, 0.15);
+  transition: all 150ms var(--ease);
+}
+
+.mypage-edit-btn:hover {
+  background: rgba(100, 50, 220, 0.1);
+}
+
+/* 수정 모드의 입력칸 (이름 · 주소) */
+.mypage-input {
+  width: 100%;
+  max-width: 320px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  text-align: right;
+  outline: none;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1px solid rgba(100, 50, 220, 0.25);
+}
+
+.mypage-input:focus {
+  border-color: var(--brand-purple);
+}
+
+/* 수정 모드 : [취소] [저장] */
+.mypage-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.mypage-cancel-btn {
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: #fff;
+  border: 1px solid var(--clean-border);
+}
+
+.mypage-save-btn {
+  padding: 8px 20px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand-gradient);
+}
+
+.mypage-cancel-btn:disabled,
+.mypage-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mypage-info__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  border-bottom: 1px solid var(--row-sep);
+}
+
+.mypage-info__row:last-child {
+  border-bottom: none;
+}
+
+.mypage-info__row dt {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.mypage-info__row dd {
+  font-weight: 600;
+  text-align: right;
+  color: var(--text-primary);
+}
+
+/* ---------- 관심 국가 ---------- */
+.mypage-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.mypage-card__title {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mypage-card__count {
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.08);
+}
+
+.mypage-card__desc {
+  margin-bottom: 16px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+.mypage-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  outline: none;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1px solid var(--clean-border);
+}
+
+.mypage-select:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.mypage-error {
+  margin-top: 8px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--danger);
+}
+
+/* 저장 결과 안내 (초록) */
+.mypage-notice {
+  margin-top: 8px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--success);
+}
+
+/* 3개가 찼을 때 "다음에 빠질 국가" 안내 */
+.mypage-hint {
+  margin-top: 8px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-secondary);
+}
+
+.mypage-hint strong {
+  color: var(--brand-purple);
+}
+
+.mypage-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 36px;
+  margin-top: 16px;
+}
+
+.mypage-empty {
+  font-size: var(--fs-xs);
+  line-height: 36px;
+  color: var(--text-muted);
+}
+
+.mypage-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 6px;
+  border-radius: 9999px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  background: rgba(100, 50, 220, 0.05);
+  border: 1px solid rgba(100, 50, 220, 0.15);
+}
+
+/* 칩 앞의 순서 번호 동그라미 */
+.mypage-chip__order {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand-gradient);
+}
+
+.mypage-chip__remove {
+  padding: 0 4px;
+  font-size: var(--fs-base);
+  line-height: 1;
+  color: var(--text-muted);
+}
+
+.mypage-chip__remove:hover {
+  color: var(--danger);
+}
+
+.mypage-chip__remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mypage-link-btn {
+  align-self: flex-start;
+  margin-top: auto;              /* 카드 맨 아래로 */
+  padding-top: 20px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 600;
+  color: var(--brand-purple);
+}
+
+.mypage-link-btn:hover {
+  text-decoration: underline;
+}
+
+/* ---------- 회원 탈퇴 ---------- */
+.mypage-withdraw {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 20px 24px;
+  border-radius: 16px;
+  background: rgba(217, 48, 37, 0.03);
+  border: 1px solid rgba(217, 48, 37, 0.12);
+}
+
+.mypage-withdraw__title {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mypage-withdraw__desc {
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+.mypage-withdraw__btn {
+  flex-shrink: 0;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  color: var(--danger);
+  background: #fff;
+  border: 1px solid rgba(217, 48, 37, 0.3);
+  transition: all 150ms var(--ease);
+}
+
+.mypage-withdraw__btn:hover {
+  color: #fff;
+  background: var(--danger);
+}

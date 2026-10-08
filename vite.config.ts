@@ -48,6 +48,11 @@ react(),
           target: 'http://localhost:8080',
           changeOrigin: true,
         },
+        // HS 코드 CSV (무역 데이터 분석의 HS 코드 찾기)
+        '/hscode': {
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+        },
 
       },
       host: process.env.FIGMA_DEV_SERVER_HOST || '0.0.0.0',
@@ -72,6 +77,10 @@ react(),
       changeOrigin: true,
     },
     '/route': {
+      target: 'http://localhost:8080',
+      changeOrigin: true,
+    },
+    '/hscode': {
       target: 'http://localhost:8080',
       changeOrigin: true,
     },
