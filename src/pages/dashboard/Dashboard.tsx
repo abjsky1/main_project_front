@@ -1,7 +1,9 @@
 /* =====================================================================
-   대시보드 페이지 (주소: / , 누구나 볼 수 있음)
-   - 상단 대표 이미지 → 누적 무역 카드 4개 → 월별 수출입 차트 → (로그인 + 매칭 조건이 있으면) 맞춤 인사이트
+   무역 현황 페이지 = 첫 화면 (주소: / , 누구나 볼 수 있음)
+   (코드 안의 이름은 예전 이름 그대로 Dashboard / dashboard 사용)
+   - 상단 대표 이미지 → 인사말 → 누적 무역 카드 4개 → 월별 수출입 차트
    - 누적 무역 카드는 Spring /api/cumulative/trade 에서 조회
+   - 예전 하단의 맞춤 인사이트는 별도 페이지(pages/insights)로 옮김
    ===================================================================== */
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -12,7 +14,6 @@ import type { KpiStat } from './dashboardData';
 import PageHeader from '../../components/common/PageHeader';
 import StatCard from './components/StatCard';
 import TradeTrendChart from './components/TradeTrendChart';
-import PersonalInsights from './components/PersonalInsights';
 
 import heroImage from '../../assets/macross_wide.png';   // 2560×1020 원본 → 1280×510 으로 표시 (고해상도 화면에서 선명)
 import './Dashboard.css';
@@ -20,7 +21,6 @@ import './Dashboard.css';
 // [TS] App.tsx 에서 받는 props 의 모양 (가이드 2-4)
 interface DashboardProps {
   user: User | null;             // 로그인 안 했으면 null
-  matchingCountries: string[];   // 매칭 조건에 등록한 국가 목록 (맞춤 인사이트용)
 }
 
 // Spring TradestatusDto 응답 구조
@@ -62,9 +62,9 @@ function formatAmount(value: number): string {
 
 export default function Dashboard({
   user,
-  matchingCountries,
 }: DashboardProps) {
-  const greeting = user ? `${user.name}님, ` : '';   // 로그인했으면 제목 앞에 'OOO님, '
+  // 제목 인사말 : 로그인했으면 'OOO님, 안녕하세요' , 비회원이면 환영 인사
+  const greeting = user ? `${user.name}님, 안녕하세요` : 'MACROSS에 오신 것을 환영합니다';
 
   // 누적 무역 응답 (받기 전에는 null)
   const [trade, setTrade] = useState<TradestatusResponse | null>(null);
@@ -158,7 +158,7 @@ export default function Dashboard({
       <div className="page-container dashboard-body">
         <PageHeader
           eyebrow="Overview"
-          title={<>{greeting}종합 대시보드</>}
+          title={greeting}
           className="dashboard-header"
         />
 
@@ -181,13 +181,6 @@ export default function Dashboard({
 
         {/* 월별 수출입 및 무역수지 차트 */}
         <TradeTrendChart year={TRADE_YEAR} />
-
-        {/* 기존 맞춤 인사이트 유지 — 더미 데이터 사용 */}
-        {user && matchingCountries.length > 0 && (
-          <PersonalInsights
-            countries={matchingCountries}
-          />
-        )}
       </div>
     </>
   );

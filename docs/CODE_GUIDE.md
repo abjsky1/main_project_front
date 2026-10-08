@@ -19,11 +19,18 @@ main.tsx            ← 시작점. <BrowserRouter>로 App을 감쌈 (B_react 의
 
 | 주소 | 페이지 파일 | 하는 일 |
 |---|---|---|
-| `/` | `pages/dashboard/Dashboard.tsx` | 누적 무역 카드, 월별 차트, 맞춤 인사이트 |
-| `/trade` | `pages/trade/TradeAnalysis.tsx` | 조건 검색 탭 + 환율 탭 (현재 더미 데이터) |
-| `/matching-settings` | `pages/matching-settings/MatchingSettings.tsx` | 회원이 매칭 조건 등록/삭제 |
-| `/matching` | `pages/smart-matching/SmartMatching.tsx` | 관리자가 매칭 결과 승인/반려 |
+| `/` | `pages/dashboard/Dashboard.tsx` | **무역 현황** (첫 화면): 인사말, 누적 무역 카드, 월별 차트 |
+| `/trade` | `pages/trade/TradeAnalysis.tsx` | 조건 검색 탭(팀원 검색 API `/api/condition/search` 로 실제 데이터 , HS 코드 찾기) + 환율 탭(더미 데이터) |
+| `/insights` | `pages/insights/Insights.tsx` | 기업 회원: 관심 국가별 맞춤 인사이트 (국가 수만큼 세트 반복, 그래프 값은 더미 데이터) |
+| `/matching-settings` | `pages/matching-settings/MatchingSettings.tsx` | 기업 회원이 매칭 조건 등록/삭제 |
+| `/my-matching` | `pages/my-matching/MyMatching.tsx` | 기업 회원: **새 매칭 흐름 예시** — 화주는 추천 운송사 목록, 운송사는 받은 요청 목록 (⚠️ 회의용 더미 데이터) |
+| `/my-matching/:matchId` | `pages/my-matching/MyMatchingDetail.tsx` | 매칭 상세 (기업정보 · 사업자 확인 · 점수 · 조건 비교) + 요청/수락/거절 버튼 — `useParams` 로 번호를 꺼냄 |
+| `/matching` | `pages/smart-matching/SmartMatching.tsx` | 관리자가 매칭 결과 승인/반려 (지금은 예전 흐름 , 실제 DB) |
 | `/admin` | `pages/admin/SystemAdmin.tsx` | 관리자: 사용자 권한 관리 + 감사 로그 |
+| `/mypage` | `pages/mypage/MyPage.tsx` | 내 정보(이름·주소 수정 `PUT /api/mypage/{memberId}`), 관심 국가(최대 3개 , `/api/interest` DB 저장 , 밀어내기), 회원 탈퇴 버튼 — 헤더 오른쪽 동그라미로 이동 |
+
+> 코드 안에서는 첫 화면을 예전 이름 그대로 `dashboard` / `Dashboard` 라고 부릅니다(화면에 보이는 이름만 "무역 현황").
+> 권한이 없는 페이지에 주소로 직접 들어오면 각 페이지가 `AccessGuard`("접근 권한이 없습니다" + 홈으로 돌아가기)를 보여줍니다.
 
 **서버 호출 흐름 예시 (매칭 조건 목록):**
 
@@ -34,7 +41,18 @@ MatchingSettings.tsx
       → vite 프록시가 /api 요청을 http://localhost:8080 (Spring) 으로 전달
 ```
 
-`/api`, `/country`, `/route` 로 시작하는 주소는 vite 프록시가 Spring 으로 넘기기 때문에, 페이지 주소로 쓰면 안 됩니다.
+`/api`, `/country`, `/route`, `/hscode` 로 시작하는 주소는 vite 프록시가 Spring 으로 넘기기 때문에, 페이지 주소로 쓰면 안 됩니다.
+
+**로그인 쿠키로 본인 확인하는 API (마이페이지 수정 · 관심 국가 추가/삭제):**
+
+```
+MyPage.tsx → api/mypageApi.ts 의 updateMyInfo()
+  → axios.put('/api/mypage/회원번호', { managerName, companyAddress }, { withCredentials: true })
+    → MypageController : @CookieValue 로 AccessToken 쿠키를 받음
+      → MypageService : 쿠키 속 회원 번호 == 주소의 회원 번호 일 때만 수정 (아니면 false)
+```
+
+로그인 후 약 20분이 지나면 AccessToken 쿠키가 만료되어 수정이 `false` 로 실패합니다 → 다시 로그인하면 됩니다.
 
 ---
 

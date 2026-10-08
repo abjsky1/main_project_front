@@ -56,7 +56,7 @@ export default function LogisticsConditionForm({
           <input type="number" value={form.availableCapacity} onChange={(e) => onFieldChange('availableCapacity', e.target.value)} placeholder="예: 50" className="ms-input" />
         </FormField>
         <FormField label="타겟 HS코드">
-          <input value={form.hsCode} onChange={(e) => onFieldChange('hsCode', e.target.value)} placeholder="예: 3304.99" className="ms-input" />
+          <input value={form.hsCode} onChange={(e) => onFieldChange('hsCode', e.target.value)} placeholder="예: 3304991000" className="ms-input" />
         </FormField>
         <FormField label="HS코드 취급 경험 (회)">
           <input type="number" value={form.experience} onChange={(e) => onFieldChange('experience', e.target.value)} placeholder="예: 24" className="ms-input" />

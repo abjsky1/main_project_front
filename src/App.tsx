@@ -4,7 +4,7 @@
    - <Routes> 로 주소에 맞는 페이지를 보여줌 (주소 목록은 routes.ts)
    - 여러 페이지가 같이 쓰는 값(매칭 조건 목록 등)도 여기서 보관해서 props 로 내려줌
    ===================================================================== */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import type { CompanyType, User } from './types/user';
@@ -18,6 +18,11 @@ import MatchingSettings from './pages/matching-settings/MatchingSettings';
 import type { ShipperCondition, LogisticsCondition } from './pages/matching-settings/matchingTypes';
 import SmartMatching from './pages/smart-matching/SmartMatching';
 import SystemAdmin from './pages/admin/SystemAdmin';
+import Insights from './pages/insights/Insights';
+import MyPage from './pages/mypage/MyPage';
+import MyMatching from './pages/my-matching/MyMatching';
+import MyMatchingDetail from './pages/my-matching/MyMatchingDetail';
+import { getInterests, type InterestDto } from './api/interestApi';
 
 // 다른 파일에서 '../App' 으로 타입을 가져오던 코드와의 호환용
 export type { Page, UserRole, CompanyType, User } from './types/user';
@@ -79,11 +84,43 @@ export default function App() {
   const [showSignup, setShowSignup] = useState(false);   // 회원가입 모달 열림 여부
   const [registeredUsers, setRegisteredUsers] = useState<User[]>(DEMO_USERS);
   const [registeredPasswords, setRegisteredPasswords] = useState<Record<string, string>>(DEMO_PASSWORDS);
-  // 매칭 조건에 등록한 국가 목록 (MatchingSettings 가 채우고 → Dashboard 맞춤 인사이트가 사용)
-  const [matchingCountries, setMatchingCountries] = useState<string[]>([]);
   // 내 매칭 조건 목록 (MatchingSettings 화면의 표)
   const [shipperRows, setShipperRows] = useState<ShipperCondition[]>([]);
   const [logisticsRows, setLogisticsRows] = useState<LogisticsCondition[]>([]);
+
+  // 관심 국가 (마이페이지에서 설정 → 맞춤 인사이트에서 국가별로 표시)
+  // 두 페이지가 같이 쓰는 값이라 부모인 App 이 보관 , 실제 저장은 DB (GET /api/interest)
+  const [interests, setInterests] = useState<InterestDto[]>([]);
+  const memberId = user?.memberId;
+
+  // 로그인한 회원이 바뀌면(로그인 / 로그아웃) 그 회원의 관심 국가를 DB 에서 불러옴
+  useEffect(() => {
+    if (!memberId) {
+      setInterests([]);
+      return;
+    }
+
+    let ignore = false;   // 응답 전에 회원이 바뀌면 true → 늦게 온 응답 무시 (가이드 3-4)
+
+    async function fetchInterests(id: string) {
+      try {
+        const data = await getInterests(id);
+        if (!ignore) setInterests(data);
+      } catch (error) {
+        console.log('관심 국가 조회 실패 : ', error);
+        if (!ignore) setInterests([]);
+      }
+    }
+
+    fetchInterests(memberId);
+
+    return () => {
+      ignore = true;
+    };
+  }, [memberId]);
+
+  // 맞춤 인사이트에 넘길 국가 이름 목록 (이름이 없으면 '국가 #번호')
+  const interestCountryNames = interests.map((interest) => interest.countryName ?? `국가 #${interest.countryId}`);
 
   // 로그인 (LoginModal 에서 호출)
   // 돌려주는 값 : 실패하면 오류 문구(글자), 성공하면 null → LoginModal 이 오류 문구를 화면에 표시
@@ -193,7 +230,6 @@ export default function App() {
     // 2. 프론트 로그인 상태 초기화
     setShipperRows([]);
     setLogisticsRows([]);
-    setMatchingCountries([]);
     setUser(null);
 
     // 3. 대시보드로 이동
@@ -218,11 +254,16 @@ export default function App() {
       {/* MatchingSettings 의 key : 로그인한 회원이 바뀌면 key 가 바뀌어서 페이지를 새로 만듦 (이전 회원 입력값 초기화) */}
       <main className="app-main">
         <Routes>
-          <Route path={PAGE_PATHS.dashboard} element={<Dashboard user={user} matchingCountries={matchingCountries} />} />
+          <Route path={PAGE_PATHS.dashboard} element={<Dashboard user={user} />} />
           <Route path={PAGE_PATHS.trade} element={<TradeAnalysis />} />
-          <Route path={PAGE_PATHS['matching-settings']} element={<MatchingSettings key={user?.memberId ?? user?.email ?? 'guest'} user={user} onLoginClick={() => setShowLogin(true)} onMatchingUpdate={setMatchingCountries} shipperRows={shipperRows} logisticsRows={logisticsRows} onShipperRowsChange={setShipperRows} onLogisticsRowsChange={setLogisticsRows} />} />
-          <Route path={PAGE_PATHS.matching} element={<SmartMatching user={user} onLoginClick={() => setShowLogin(true)} />} />
-          <Route path={PAGE_PATHS.admin} element={<SystemAdmin user={user} onLoginClick={() => setShowLogin(true)} />} />
+          <Route path={PAGE_PATHS.insights} element={<Insights user={user} countries={interestCountryNames} />} />
+          <Route path={PAGE_PATHS['matching-settings']} element={<MatchingSettings key={user?.memberId ?? user?.email ?? 'guest'} user={user} shipperRows={shipperRows} logisticsRows={logisticsRows} onShipperRowsChange={setShipperRows} onLogisticsRowsChange={setLogisticsRows} />} />
+          {/* 내 매칭 목록 + 상세 (:matchId 자리에 매칭 번호 — 상세 페이지가 useParams 로 꺼냄) */}
+          <Route path={PAGE_PATHS['my-matching']} element={<MyMatching user={user} />} />
+          <Route path={`${PAGE_PATHS['my-matching']}/:matchId`} element={<MyMatchingDetail user={user} />} />
+          <Route path={PAGE_PATHS.matching} element={<SmartMatching user={user} />} />
+          <Route path={PAGE_PATHS.admin} element={<SystemAdmin user={user} />} />
+          <Route path={PAGE_PATHS.mypage} element={<MyPage user={user} onUserChange={setUser} interests={interests} onInterestsChange={setInterests} />} />
           {/* 없는 주소는 대시보드로 */}
           <Route path="*" element={<Navigate to={PAGE_PATHS.dashboard} replace />} />
         </Routes>

@@ -18,10 +18,9 @@ import axios from 'axios';
 // [TS] 이 컴포넌트가 받는 props 의 모양 (가이드 2-4)
 interface SmartMatchingProps {
   user: User | null;          // 로그인 안 했으면 null
-  onLoginClick: () => void;   // [TS] () => void : "아무것도 안 받고 아무것도 안 돌려주는 함수"
 }
 
-export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps) {
+export default function SmartMatching({ user }: SmartMatchingProps) {
   const [matches, setMatches] = useState<MatchItem[]>([]);                // 매칭 카드 목록
   const [expandedId, setExpandedId] = useState<number | null>(null);      // 펼쳐진 카드 id (없으면 null)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');  // 상단 상태 카드에서 고른 필터
@@ -66,10 +65,7 @@ export default function SmartMatching({ user, onLoginClick }: SmartMatchingProps
         <PageHeader eyebrow="Admin" title="매칭 관리" className="page-header--compact" />
         <AccessGuard
           icon="lock"
-          title="관리자 전용 메뉴"
-          description="관리자 계정으로만 접근 가능합니다."
-          buttonLabel="관리자로 로그인"
-          onLoginClick={onLoginClick}
+          description="매칭 관리는 관리자 계정으로만 이용할 수 있습니다."
         />
       </div>
     );

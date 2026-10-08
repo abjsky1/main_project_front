@@ -1,4 +1,5 @@
-// ⚠️ 더미 데이터 — 백엔드 API 연결 시 이 파일의 값/함수를 서버 응답으로 교체하세요.
+// ⚠️ 환율 부분은 더미 데이터 — 백엔드 API 연결 시 이 파일의 값/함수를 서버 응답으로 교체하세요.
+//    (조건 검색 결과는 팀원의 검색 API(/api/condition/search)에 연결되어 실제 데이터를 사용 — useTradeSearch.ts)
 
 // [TS] 'a' | 'b' : 이 글자들 중 하나만 들어갈 수 있는 타입 (가이드 2-3)
 export type Currency = 'USD' | 'EUR' | 'CNH' | 'JPY';
@@ -140,25 +141,15 @@ export const SEARCH_COUNTRIES = [
   '영국령 인도양 지역',
 ].sort();
 
-// 검색 결과 표 한 줄
+// 검색 결과 표 한 줄 (백엔드 TradeSearchDto 를 useTradeSearch 에서 이 모양으로 변환 — 실제 데이터)
 export interface TradeResult {
   id: number;
   hsCode: string;
   product: string;
   country: string;
-  exportAmt: number;   // 수출액 (백만$)
-  importAmt: number;   // 수입액 (백만$)
-  balance: number;     // 무역수지
+  exportAmt: number;   // 수출액 ($)
+  importAmt: number;   // 수입액 ($)
+  balance: number;     // 무역수지 ($)
   period: string;
 }
 
-export const TRADE_RESULTS: TradeResult[] = [
-  { id: 1, hsCode: '3304.99', product: '기초화장품류', country: '미국', exportAmt: 2345.8, importAmt: 123.4, balance: 2222.4, period: '2025-12' },
-  { id: 2, hsCode: '8517.12', product: '스마트폰 및 통신기기', country: '중국', exportAmt: 12458.2, importAmt: 8952.1, balance: 3506.1, period: '2025-12' },
-  { id: 3, hsCode: '8708.99', product: '자동차 부품', country: '독일', exportAmt: 1823.4, importAmt: 3241.5, balance: -1418.1, period: '2025-12' },
-  { id: 4, hsCode: '8541.10', product: '반도체 다이오드', country: '미국', exportAmt: 18942.3, importAmt: 2134.8, balance: 16807.5, period: '2025-12' },
-  { id: 5, hsCode: '6203.42', product: '면혼방 바지', country: '베트남', exportAmt: 456.2, importAmt: 1823.4, balance: -1367.2, period: '2025-12' },
-  { id: 6, hsCode: '2710.19', product: '기타 석유류', country: '사우디아라비아', exportAmt: 823.1, importAmt: 15234.8, balance: -14411.7, period: '2025-12' },
-  { id: 7, hsCode: '8473.30', product: '컴퓨터 부품', country: '일본', exportAmt: 3241.5, importAmt: 4523.8, balance: -1282.3, period: '2025-12' },
-  { id: 8, hsCode: '3002.90', product: '의약품 원료', country: '인도', exportAmt: 1234.5, importAmt: 892.3, balance: 342.2, period: '2025-12' },
-];

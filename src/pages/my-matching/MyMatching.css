@@ -1,0 +1,647 @@
+/* =====================================================================
+   내 매칭 (MyMatching.tsx , MyMatchingDetail.tsx 와 components/)
+   색 · 표 모양은 무역 데이터 분석 표 , 관리자 매칭 관리 배지와 같은 스타일
+   ===================================================================== */
+
+/* ---------- 제목 + [데모 초기화] ---------- */
+.mm-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.mm-reset-btn {
+  flex-shrink: 0;
+  margin-bottom: 32px;            /* .page-header 의 아래 여백과 맞춤 */
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: #fff;
+  border: 1px solid var(--clean-border);
+}
+
+.mm-reset-btn:hover {
+  color: var(--danger);
+  border-color: rgba(217, 48, 37, 0.3);
+}
+
+/* ---------- 새 매칭 흐름 4단계 안내 (FlowGuide) ---------- */
+.mm-flow {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+@media (min-width: 900px) {
+  .mm-flow {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.mm-flow__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--clean-border);
+}
+
+/* 내가 하는 단계 */
+.mm-flow__item.is-mine {
+  background: rgba(100, 50, 220, 0.05);
+  border-color: rgba(100, 50, 220, 0.3);
+}
+
+.mm-flow__num {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: #fff;
+  border: 1px solid var(--clean-border);
+}
+
+.mm-flow__item.is-mine .mm-flow__num {
+  color: #fff;
+  border: none;
+  background: var(--brand-gradient);
+}
+
+.mm-flow__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mm-flow__me {
+  padding: 1px 8px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.1);
+}
+
+.mm-flow__desc {
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+/* 회의용 예시 안내 */
+.mm-demo-note {
+  margin-bottom: 24px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+/* 매칭이 없을 때 / 찾을 수 없을 때 */
+.mm-empty {
+  padding: 40px 24px;
+  border-radius: 16px;
+  text-align: center;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-secondary);
+  background: var(--tint-bg);
+  border: 1px dashed var(--tint-border);
+}
+
+.mm-empty__sub {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+/* ---------- 화물 조건별 묶음 (목록) ---------- */
+.mm-groups > :not(:last-child) {
+  margin-bottom: 28px;
+}
+
+.mm-condition__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.mm-condition__route {
+  margin-top: 4px;
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mm-condition__meta {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+.mm-condition__count {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.08);
+}
+
+.mm-condition__count.is-action {
+  color: #fff;
+  background: var(--brand-gradient);
+}
+
+/* ---------- 표 (무역 데이터 분석 표와 같은 모양) ---------- */
+.mm-table-wrap {
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid var(--clean-border);
+}
+
+.mm-table {
+  width: 100%;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.mm-table thead tr {
+  border-bottom: 1px solid var(--clean-border);
+}
+
+.mm-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+  color: var(--text-muted);
+  background: rgba(100, 50, 220, 0.02);
+}
+
+.mm-table tbody tr {
+  border-bottom: 1px solid var(--row-sep);
+}
+
+.mm-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.mm-table tbody tr:hover {
+  background: rgba(100, 50, 220, 0.025);
+}
+
+.mm-table td {
+  padding: 12px 16px;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.mm-table__rank {
+  font-family: var(--font-code);
+  font-weight: 700;
+  color: var(--brand-purple) !important;
+}
+
+.mm-table__company {
+  font-weight: 700;
+  color: var(--text-primary) !important;
+}
+
+.mm-table__label {
+  font-weight: 600;
+  color: var(--text-muted) !important;
+}
+
+.mm-detail-btn {
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.06);
+  border: 1px solid rgba(100, 50, 220, 0.15);
+}
+
+.mm-detail-btn:hover {
+  background: rgba(100, 50, 220, 0.12);
+}
+
+/* ---------- 점수 막대 (ScoreBar) ---------- */
+.mm-score {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 150px;
+}
+
+.mm-score__label {
+  flex-shrink: 0;
+  width: 92px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.mm-score__track {
+  flex: 1 1 0%;
+  height: 6px;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: var(--divider);
+}
+
+/* 막대 길이 = CSS 변수 --fill (ScoreBar 에서 % 로 넣어 줌) */
+.mm-score__fill {
+  display: block;
+  width: var(--fill);
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--brand-gradient);
+}
+
+.mm-score__value {
+  flex-shrink: 0;
+  min-width: 52px;
+  text-align: right;
+  font-family: var(--font-code);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mm-score__value small {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* ---------- 진행 상태 배지 (StageBadge) — 관리자 매칭 관리 배지와 같은 색 ---------- */
+.mm-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mm-badge--pending { background: rgba(100, 50, 220, 0.08); color: #7c3aed; }
+.mm-badge--waiting { background: rgba(6, 182, 212, 0.1); color: #0e7490; }
+.mm-badge--review { background: #fef3c7; color: #92400e; }
+.mm-badge--completed { background: #dcfce7; color: #166534; }
+.mm-badge--failed { background: #fee2e2; color: #991b1b; }
+.mm-badge--muted { background: var(--divider); color: var(--text-muted); }
+.mm-badge--action { background: var(--brand-gradient); color: #fff; }
+
+/* =====================================================================
+   상세 페이지 (MyMatchingDetail.tsx)
+   ===================================================================== */
+.mm-back-btn {
+  margin-bottom: 20px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.mm-back-btn:hover {
+  color: var(--brand-purple);
+}
+
+/* 제목 + 총점 */
+.mm-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.mm-detail-head .eyebrow {
+  margin-bottom: 4px;
+}
+
+.mm-detail-score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.mm-detail-score__label {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+.mm-detail-score__value {
+  font-family: var(--font-code);
+  font-size: 32px;
+  line-height: 1;
+  font-weight: 800;
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.mm-detail-score__value small {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  -webkit-text-fill-color: var(--text-muted);
+}
+
+/* 진행 상황 4칸 (ProgressSteps) */
+.mm-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.mm-steps__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--input-bg);
+  border: 1px solid var(--clean-border);
+}
+
+.mm-steps__dot {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #fff;
+  border: 1px solid var(--clean-border);
+}
+
+.mm-steps__item.is-done {
+  color: var(--success);
+  background: rgba(26, 158, 92, 0.05);
+  border-color: rgba(26, 158, 92, 0.2);
+}
+
+.mm-steps__item.is-done .mm-steps__dot {
+  color: #fff;
+  border: none;
+  background: var(--success);
+}
+
+.mm-steps__item.is-current {
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.05);
+  border-color: rgba(100, 50, 220, 0.3);
+}
+
+.mm-steps__item.is-current .mm-steps__dot {
+  color: #fff;
+  border: none;
+  background: var(--brand-gradient);
+}
+
+.mm-steps__item.is-failed {
+  color: var(--danger);
+  background: rgba(217, 48, 37, 0.04);
+  border-color: rgba(217, 48, 37, 0.2);
+}
+
+.mm-steps__item.is-failed .mm-steps__dot {
+  color: #fff;
+  border: none;
+  background: var(--danger);
+}
+
+/* 버튼을 누른 뒤 결과 안내 */
+.mm-notice {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 600;
+  color: var(--success);
+  background: rgba(26, 158, 92, 0.06);
+  border: 1px solid rgba(26, 158, 92, 0.2);
+}
+
+/* 카드 4개 (기본 정보 · 사업자 확인 2칸 + 매칭 정보 · 조건 비교 넓게) */
+.mm-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (min-width: 900px) {
+  .mm-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mm-card--wide {
+    grid-column: span 2 / span 2;
+  }
+}
+
+.mm-card {
+  padding: 20px 24px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--clean-border);
+}
+
+.mm-card__title {
+  margin-bottom: 12px;
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mm-card__sub {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.mm-card__note {
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* 항목 : 값 줄들 */
+.mm-rows__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  border-bottom: 1px solid var(--row-sep);
+}
+
+.mm-rows__row:last-child {
+  border-bottom: none;
+}
+
+.mm-rows__row dt {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.mm-rows__row dd {
+  font-weight: 600;
+  text-align: right;
+  color: var(--text-primary);
+}
+
+.mm-mono {
+  font-family: var(--font-code);
+}
+
+/* 사업자 상태 배지 */
+.mm-biz {
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+}
+
+.mm-biz--ok { background: #dcfce7; color: #166534; }
+.mm-biz--warn { background: #fef3c7; color: #92400e; }
+.mm-biz--closed { background: #fee2e2; color: #991b1b; }
+
+/* 세부 점수 막대들 */
+.mm-scores {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 10px 32px;
+}
+
+@media (min-width: 900px) {
+  .mm-scores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* O / X 칩 , 매칭 분석 요소 칩 */
+.mm-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mm-flag {
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--divider);
+}
+
+.mm-flag.is-on {
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.08);
+}
+
+.mm-flag.is-factor {
+  color: #0e7490;
+  background: rgba(6, 182, 212, 0.08);
+}
+
+/* ---------- 아래 버튼 영역 ---------- */
+.mm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--divider);
+}
+
+.mm-actions__message {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.mm-primary-btn {
+  padding: 10px 24px;
+  border-radius: 9999px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand-gradient);
+}
+
+.mm-primary-btn:hover {
+  opacity: 0.9;
+}
+
+.mm-reject-btn {
+  padding: 10px 20px;
+  border-radius: 9999px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 600;
+  color: var(--danger);
+  background: #fff;
+  border: 1px solid rgba(217, 48, 37, 0.3);
+}
+
+.mm-reject-btn:hover {
+  background: rgba(217, 48, 37, 0.05);
+}

@@ -1,0 +1,204 @@
+/* =====================================================================
+   맞춤 인사이트 (Insights.tsx 와 components/InsightSet.tsx)
+   카드·그래프·Top 2 모양은 예전 대시보드 하단 "Personalized Insights" 와 같은 스타일
+   (차트 범례 .chart-legend__item / .legend-line 은 styles/common.css)
+   ===================================================================== */
+
+/* ---------- 페이지 제목 + [관심 국가 변경] 버튼 ---------- */
+.insights-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.insights-edit-btn {
+  flex-shrink: 0;
+  margin-bottom: 32px;            /* .page-header 의 아래 여백과 맞춤 */
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.06);
+  border: 1px solid rgba(100, 50, 220, 0.15);
+  transition: all 150ms var(--ease);
+}
+
+.insights-edit-btn:hover {
+  background: rgba(100, 50, 220, 0.1);
+}
+
+/* ---------- 관심 국가 1개 세트 ---------- */
+.insight-set + .insight-set {
+  margin-top: 40px;              /* 세트와 세트 사이 간격 */
+}
+
+.insights__title {
+  margin-bottom: 4px;
+}
+
+/* 세트 제목 (국가 이름) */
+.insight-set__country {
+  margin-bottom: 16px;
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.insights__grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .insights__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.insight-card {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.insight-card--purple {
+  background: rgba(100, 50, 220, 0.035);
+  border: 1px solid rgba(100, 50, 220, 0.12);
+}
+
+.insight-card--cyan {
+  background: rgba(6, 182, 212, 0.04);
+  border: 1px solid rgba(6, 182, 212, 0.15);
+}
+
+.insight-card--white {
+  justify-content: center;
+  background: #fff;
+  border: 1px solid var(--clean-border);
+}
+
+.insight-card__label {
+  margin-bottom: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--brand-purple);
+}
+
+.insight-card--cyan .insight-card__label {
+  color: var(--brand-cyan);
+}
+
+.insight-card__title {
+  margin-bottom: 12px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.insight-card__chart {
+  flex: 1 1 0%;
+  min-height: 160px;
+}
+
+.insight-card__legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.insight-card__legend--tight {
+  gap: 6px;
+}
+
+.insight-card__legend .legend-line {
+  border-radius: 9999px;
+}
+
+/* 점선 범례 (수입) */
+.legend-line--dashed {
+  height: 1px;
+  background: #9090a8;
+  border-top: 1px dashed #9090a8;
+}
+
+.legend-surplus { color: var(--danger); }
+.legend-deficit { color: var(--success); }
+
+/* ---------- 수출/수입 Top 2 목록 ---------- */
+.hs-rank > :not(:last-child) {
+  margin-bottom: 10px;
+}
+
+.hs-rank__label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.hs-rank__label--export {
+  color: var(--danger);
+}
+
+.hs-rank__label--import {
+  margin-top: 12px;
+  color: var(--success);
+}
+
+.hs-rank__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 12px;
+}
+
+.hs-rank__item--export {
+  background: rgba(217, 48, 37, 0.04);
+  border: 1px solid rgba(217, 48, 37, 0.1);
+}
+
+.hs-rank__item--import {
+  background: rgba(26, 158, 92, 0.04);
+  border: 1px solid rgba(26, 158, 92, 0.1);
+}
+
+.hs-rank__code {
+  font-size: 10px;
+  font-family: var(--font-code);
+  color: var(--text-muted);
+}
+
+.hs-rank__name {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.hs-rank__value {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  font-family: var(--font-code);
+}
+
+.hs-rank__item--export .hs-rank__value {
+  color: var(--danger);
+}
+
+.hs-rank__item--import .hs-rank__value {
+  color: var(--success);
+}
