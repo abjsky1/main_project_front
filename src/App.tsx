@@ -20,7 +20,6 @@ import SmartMatching from './pages/smart-matching/SmartMatching';
 import SystemAdmin from './pages/admin/SystemAdmin';
 import Insights from './pages/insights/Insights';
 import MyPage from './pages/mypage/MyPage';
-import MyMatching from './pages/my-matching/MyMatching';
 import MyMatchingDetail from './pages/my-matching/MyMatchingDetail';
 import { getInterests, type InterestDto } from './api/interestApi';
 
@@ -73,6 +72,42 @@ const DEMO_PASSWORDS: Record<string, string> = {
   'logistics@macross.com': 'logistics123',
 };
 
+// 백엔드 로그인 응답 (POST /api/login , GET /api/login/me 가 돌려주는 MemberDto — 비밀번호는 없음)
+interface LoginMember {
+  memberId: string;
+  userEmail: string;
+  companyName: string;
+  managerName: string;
+  businessRegNo: string;
+  userPhone: string;
+  companyAddress: string;
+  status: boolean;
+  signupEntity?: { signupId: string; signupType: string };   // 101 관리자 / 201 수출입기업 / 301 물류운송업체
+  roleEntity?: { roleId: number; roleName: string };         // 1 일반 사용자 / 2 관리자
+}
+
+// 백엔드 회원 정보(LoginMember) → 화면에서 쓰는 User 모양으로 바꾸기 (로그인 , 새로고침 복구 둘 다 사용)
+function toUser(member: LoginMember): User {
+  const signupType = member.signupEntity?.signupType;
+
+  // 회원 유형 (관리자는 companyType 없음)
+  let companyType: CompanyType | undefined;
+  if (signupType === '수출입기업') companyType = '수출입기업';
+  if (signupType === '물류운송업체' || signupType === '물류업체') companyType = '물류업체';
+
+  return {
+    memberId: member.memberId,
+    name: member.managerName,
+    email: member.userEmail,
+    role: member.roleEntity?.roleId === 2 ? 'admin' : 'user',
+    companyType,
+    companyName: member.companyName,
+    businessNumber: member.businessRegNo,
+    phone: member.userPhone,
+    address: member.companyAddress,
+  };
+}
+
 export default function App() {
   // 현재 페이지는 주소(path)에서 결정 → 새로고침해도 같은 화면 유지
   const location = useLocation();
@@ -88,10 +123,31 @@ export default function App() {
   const [shipperRows, setShipperRows] = useState<ShipperCondition[]>([]);
   const [logisticsRows, setLogisticsRows] = useState<LogisticsCondition[]>([]);
 
-  // 관심 국가 (마이페이지에서 설정 → 맞춤 인사이트에서 국가별로 표시)
-  // 두 페이지가 같이 쓰는 값이라 부모인 App 이 보관 , 실제 저장은 DB (GET /api/interest)
+  // 관심 국가 (맞춤 인사이트 위쪽에서 설정 → 아래에 국가별로 표시)
+  // 로그인한 회원이 바뀔 때 불러오려고 부모인 App 이 보관 , 실제 저장은 DB (GET /api/interest)
   const [interests, setInterests] = useState<InterestDto[]>([]);
   const memberId = user?.memberId;
+
+  // 처음 열 때(새로고침 포함) 로그인 상태 복구
+  // 브라우저에 AccessToken 쿠키가 남아 있으면 GET /api/login/me 가 회원 정보를 돌려줌 (없거나 만료면 빈 응답)
+  useEffect(() => {
+    let ignore = false;
+
+    async function restoreLogin() {
+      try {
+        const response = await axios.get<LoginMember>('/api/login/me', { withCredentials: true });
+        if (!ignore && response.data) setUser(toUser(response.data));
+      } catch (error) {
+        console.log('로그인 상태 복구 실패 : ', error);
+      }
+    }
+
+    restoreLogin();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   // 로그인한 회원이 바뀌면(로그인 / 로그아웃) 그 회원의 관심 국가를 DB 에서 불러옴
   useEffect(() => {
@@ -119,9 +175,6 @@ export default function App() {
     };
   }, [memberId]);
 
-  // 맞춤 인사이트에 넘길 국가 이름 목록 (이름이 없으면 '국가 #번호')
-  const interestCountryNames = interests.map((interest) => interest.countryName ?? `국가 #${interest.countryId}`);
-
   // 로그인 (LoginModal 에서 호출)
   // 돌려주는 값 : 실패하면 오류 문구(글자), 성공하면 null → LoginModal 이 오류 문구를 화면에 표시
   // [TS] Promise<string | null> : async 함수가 나중에 돌려줄 값이 "글자 또는 null" 이라는 표시
@@ -133,72 +186,17 @@ export default function App() {
 
     try {
 
-      // 1. Spring 로그인 API 호출
-          const response = await axios.post('/api/login',{userEmail: email,userPassword: password},
+      // 1. Spring 로그인 API 호출 (성공하면 쿠키 2개 + 회원 정보 , 실패하면 빈 응답)
+      // [TS] axios.post<LoginMember> : 응답(response.data)이 LoginMember 모양이라는 표시
+          const response = await axios.post<LoginMember>('/api/login',{userEmail: email,userPassword: password},
             {withCredentials: true}); // 프론트와 백엔드가 HTTP 요청을 주고받을 때 쿠키를 함께 보내고 받을 수 있게 하는 설정
       // 2. 로그인 실패
       if (!response.data) {
         return '이메일 또는 비밀번호가 올바르지 않습니다.';
       }
-      // 3. 로그인 성공 회원
-      const member =
-        response.data;
-      // 4. 회원 유형 확인
-      let companyType: CompanyType | undefined;
-
-      // 백엔드 응답 구조 확인
-      console.log('로그인 회원 정보 : ', member);
-
-      // signupId 또는 signupType 둘 다 대응
-      // a ?? b : a 가 없으면(null/undefined) b 사용 / ?. : 앞 값이 없으면 에러 대신 undefined
-      const signupId =
-        member.signupId ??
-        member.signupEntity?.signupId;
-
-      const signupType =
-        member.signupType ??
-        member.signupEntity?.signupType;
-
-      // 수출입기업
-      if (
-        signupId === 201 ||
-        signupType === '수출입기업'
-      ) {
-        companyType = '수출입기업';
-      }
-
-      // 물류업체
-      if (
-        signupId === 301 ||
-        signupType === '물류운송업체' ||
-        signupType === '물류업체'
-      ) {
-        companyType = '물류업체';
-      }
-      // 5. React User 저장 (백엔드 필드 이름 → 화면에서 쓰는 User 모양으로 바꿔 담기)
-      setUser({
-        memberId: member.memberId,
-
-        name: member.managerName,
-
-        email: member.userEmail,
-
-        role:
-          member.roleEntity?.roleId === 2
-            ? 'admin'
-            : 'user',
-
-        companyType: companyType,
-
-        companyName: member.companyName,
-
-        businessNumber: member.businessRegNo,
-
-        phone: member.userPhone,
-
-        address: member.companyAddress
-      });
-      // 6. 로그인 창 닫기
+      // 3. React User 저장 (백엔드 필드 이름 → 화면에서 쓰는 User 모양으로 바꿔 담기)
+      setUser(toUser(response.data));
+      // 4. 로그인 창 닫기
       setShowLogin(false);
       return null;
     } catch (error) {
@@ -254,16 +252,15 @@ export default function App() {
       {/* MatchingSettings 의 key : 로그인한 회원이 바뀌면 key 가 바뀌어서 페이지를 새로 만듦 (이전 회원 입력값 초기화) */}
       <main className="app-main">
         <Routes>
-          <Route path={PAGE_PATHS.dashboard} element={<Dashboard user={user} />} />
+          {/* 첫 화면 = 내 매칭 + 매칭 상세 (/1001 처럼 숫자 주소 — :matchId 자리의 번호를 상세 페이지가 useParams 로 꺼냄) */}
+          <Route path={PAGE_PATHS.dashboard} element={<Dashboard user={user} onLoginClick={() => setShowLogin(true)} />} />
+          <Route path="/:matchId" element={<MyMatchingDetail user={user} />} />
           <Route path={PAGE_PATHS.trade} element={<TradeAnalysis />} />
-          <Route path={PAGE_PATHS.insights} element={<Insights user={user} countries={interestCountryNames} />} />
+          <Route path={PAGE_PATHS.insights} element={<Insights user={user} interests={interests} onInterestsChange={setInterests} />} />
           <Route path={PAGE_PATHS['matching-settings']} element={<MatchingSettings key={user?.memberId ?? user?.email ?? 'guest'} user={user} shipperRows={shipperRows} logisticsRows={logisticsRows} onShipperRowsChange={setShipperRows} onLogisticsRowsChange={setLogisticsRows} />} />
-          {/* 내 매칭 목록 + 상세 (:matchId 자리에 매칭 번호 — 상세 페이지가 useParams 로 꺼냄) */}
-          <Route path={PAGE_PATHS['my-matching']} element={<MyMatching user={user} />} />
-          <Route path={`${PAGE_PATHS['my-matching']}/:matchId`} element={<MyMatchingDetail user={user} />} />
           <Route path={PAGE_PATHS.matching} element={<SmartMatching user={user} />} />
           <Route path={PAGE_PATHS.admin} element={<SystemAdmin user={user} />} />
-          <Route path={PAGE_PATHS.mypage} element={<MyPage user={user} onUserChange={setUser} interests={interests} onInterestsChange={setInterests} />} />
+          <Route path={PAGE_PATHS.mypage} element={<MyPage user={user} onUserChange={setUser} />} />
           {/* 없는 주소는 대시보드로 */}
           <Route path="*" element={<Navigate to={PAGE_PATHS.dashboard} replace />} />
         </Routes>

@@ -1,13 +1,12 @@
 /* =====================================================================
-   내 매칭 상세 (주소: /my-matching/:matchId , 예: /my-matching/1001)
+   내 매칭 상세 (주소: /:matchId , 예: /1001 — 메인 페이지 "내 매칭" 표의 [상세보기])
    - 상대 기업의 [기본 기업정보] · [사업자 확인 정보] · [매칭 관련 정보] · [운송 조건 비교]
-   - 화주 : 매칭 요청 보내기 / 거절      운송사 : 수락 / 거절
+   - 화주 : 매칭 요청 보내기 / 거절      운송사 : 수락(= 매칭 성사) / 거절
    ⚠️ 지금은 더미 데이터(myMatchingData.ts)로 동작하는 회의용 예시
    ===================================================================== */
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import type { User } from '../../types/user';
-import { PAGE_PATHS } from '../../routes';
 import PageHeader from '../../components/common/PageHeader';
 import AccessGuard from '../../components/common/AccessGuard';
 import {
@@ -31,13 +30,31 @@ function bizTone(status: BizCheck['status']) {
 }
 
 export default function MyMatchingDetail({ user }: { user: User | null }) {
-  // useParams : 주소 /my-matching/1001 의 1001 을 꺼냄 (B_react View.jsx 의 const { id } = useParams() 와 같음)
+  // useParams : 주소 /1001 의 1001 을 꺼냄 (B_react View.jsx 의 const { id } = useParams() 와 같음)
   const { matchId } = useParams();
   const navigate = useNavigate();
   const { matches, updateMatch } = useMyMatchingDemo();
   const [notice, setNotice] = useState('');   // 버튼을 누른 뒤 결과 안내
 
-  const backToList = () => navigate(PAGE_PATHS['my-matching']);
+  // 메인 페이지 아래쪽에서 넘어오므로 , 상세 페이지는 맨 위부터 보이게
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [matchId]);
+
+  // 숫자가 아닌 주소(예: /abc)는 없는 페이지 → 메인으로
+  // (/:matchId 는 한 칸짜리 주소를 모두 받기 때문에 여기서 한 번 더 확인)
+  if (!/^\d+$/.test(matchId ?? '')) {
+    return <Navigate to="/" replace />;
+  }
+
+  const isShipper = user?.companyType === '수출입기업';
+  const match = matches.find((m) => m.id === Number(matchId));
+
+  // 메인 페이지로 돌아가기 : 이 매칭의 조건이 왼쪽 목록에서 골라진 상태로 (?condition=번호)
+  const backToList = () => {
+    if (!match) return navigate('/');
+    navigate(`/?condition=${isShipper ? match.conditionId : match.logisticsConditionId}`);
+  };
 
   // 기업 회원이 아니면 안내 화면
   if (!user || user.role === 'admin') {
@@ -49,9 +66,6 @@ export default function MyMatchingDetail({ user }: { user: User | null }) {
     );
   }
 
-  const isShipper = user.companyType === '수출입기업';
-  const match = matches.find((m) => m.id === Number(matchId));
-
   // 내 매칭인지 확인 (운송사는 화주가 요청을 보낸 건만 볼 수 있음)
   const isMine = !!match && (isShipper
     ? match.shipperMemberId === user.memberId
@@ -60,7 +74,7 @@ export default function MyMatchingDetail({ user }: { user: User | null }) {
   if (!match || !isMine) {
     return (
       <div className="page-container">
-        <button onClick={backToList} className="mm-back-btn">← 내 매칭 목록</button>
+        <button onClick={backToList} className="mm-back-btn">← 내 매칭</button>
         <div className="mm-empty">
           <p>매칭 정보를 찾을 수 없습니다.</p>
           <p className="mm-empty__sub">주소가 잘못되었거나 내 매칭이 아닙니다.</p>
@@ -103,9 +117,9 @@ export default function MyMatchingDetail({ user }: { user: User | null }) {
 
   // 화주 : 매칭 요청 보내기
   const handleRequest = () => {
-    if (!window.confirm(`${partner.companyName}에 매칭을 요청할까요?\n운송사가 수락하면 관리자 최종 확인으로 넘어갑니다.`)) return;
+    if (!window.confirm(`${partner.companyName}에 매칭을 요청할까요?\n운송사가 수락하면 매칭이 성사됩니다.`)) return;
     updateMatch(match.id, shipperAccept);
-    setNotice('매칭 요청을 보냈습니다. 운송사가 수락하면 관리자 최종 확인으로 넘어가요.');
+    setNotice('매칭 요청을 보냈습니다. 운송사가 수락하면 매칭이 성사돼요.');
   };
 
   // 화주 : 이 운송사 거절
@@ -117,9 +131,9 @@ export default function MyMatchingDetail({ user }: { user: User | null }) {
 
   // 운송사 : 요청 수락
   const handleAccept = () => {
-    if (!window.confirm(`${partner.companyName}의 매칭 요청을 수락할까요?\n수락하면 관리자 최종 확인으로 넘어갑니다.`)) return;
+    if (!window.confirm(`${partner.companyName}의 매칭 요청을 수락할까요?\n수락하면 바로 매칭이 성사됩니다.`)) return;
     updateMatch(match.id, logisticsAccept);
-    setNotice('요청을 수락했습니다. 관리자 최종 확인을 기다려 주세요.');
+    setNotice('요청을 수락했습니다. 매칭이 성사되었어요.');
   };
 
   // 운송사 : 요청 거절
@@ -135,14 +149,12 @@ export default function MyMatchingDetail({ user }: { user: User | null }) {
     shipperRejected: '화주가 거절한 매칭입니다.',
     requested: isShipper ? '운송사의 응답을 기다리고 있어요.' : '',
     logisticsRejected: `운송사가 요청을 거절했어요.${match.logistics.rejectReason ? ` (사유: ${match.logistics.rejectReason})` : ''}`,
-    adminReview: '화주와 운송사가 모두 수락했어요. 관리자 최종 확인을 기다리는 중입니다.',
-    completed: '매칭이 완료되었습니다. 담당자 연락처로 운송 일정을 협의하세요.',
-    adminRejected: `관리자가 반려했어요.${match.adminRejectReason ? ` (사유: ${match.adminRejectReason})` : ''}`,
+    completed: '매칭이 성사되었습니다. 담당자 연락처로 운송 일정을 협의하세요.',
   };
 
   return (
     <div className="page-container">
-      <button onClick={backToList} className="mm-back-btn">← 내 매칭 목록</button>
+      <button onClick={backToList} className="mm-back-btn">← 내 매칭</button>
 
       {/* 제목 : 상대 기업 + 총점 */}
       <div className="mm-detail-head">

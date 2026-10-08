@@ -1,62 +1,43 @@
 /* =====================================================================
    매칭 관리 페이지 (주소: /matching , 관리자 전용)
-   - DB 에 저장된 매칭 결과를 카드 목록으로 보여주고, 관리자가 승인 / 반려
-   - 데이터 준비(여러 API 조회 + 화면용 변환)는 matchMapper.ts 가 담당
+   - 새 매칭 흐름(화주 요청 → 운송사 수락 = 매칭 성사)은 관리자 승인 단계가 없어서 , 이 화면은 진행 상황 확인용
+   - 위 : 상태별 건수 5칸 (누르면 아래 목록을 그 상태만 보기)
+   - 아래 : 매칭 목록 표 — 한 줄에 업체 · 화물 조건 · 운송사 제공 조건 · 점수 · 상태를 모두 (세부 탭 없음)
+   ⚠️ 회원 화면(메인 페이지 "내 매칭")과 같은 더미 데이터(my-matching/myMatchingData.ts)를 사용
+      → 회원이 요청 / 수락 / 거절하면 이 화면 숫자도 바로 바뀜 (같은 브라우저)
    ===================================================================== */
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { User } from '../../types/user';
 import AccessGuard from '../../components/common/AccessGuard';
 import PageHeader from '../../components/common/PageHeader';
-import MatchStats from './components/MatchStats';
-import MatchCard from './components/MatchCard';
-import RejectReasonModal from './components/RejectReasonModal';
-import { loadMatchItems } from './matchMapper';
-import type { MatchItem, StatusFilter } from './matchTypes';
+import { getStage, getStageGroup, type MyMatchItem, type Stage } from '../my-matching/myMatchingData';
+import useMyMatchingDemo from '../my-matching/useMyMatchingDemo';
+import MatchStats, { STAT_CARDS, type MatchFilter } from './components/MatchStats';
 import './SmartMatching.css';
-import axios from 'axios';
 
 // [TS] 이 컴포넌트가 받는 props 의 모양 (가이드 2-4)
 interface SmartMatchingProps {
   user: User | null;          // 로그인 안 했으면 null
 }
 
+// 진행 단계 → 관리자 화면 배지 글자 + 색
+const STAGE_BADGE: Record<Stage, { label: string; tone: string }> = {
+  recommended:       { label: '자동 매칭 연결', tone: 'sm-badge--linked' },
+  requested:         { label: '물류 수락 대기', tone: 'sm-badge--requested' },
+  completed:         { label: '매칭 성사', tone: 'sm-badge--completed' },
+  shipperRejected:   { label: '화주 거절', tone: 'sm-badge--failed' },
+  logisticsRejected: { label: '운송사 거절', tone: 'sm-badge--failed' },
+};
+
+// true → 'O' , false → 'X'
+const ox = (value: boolean) => (value ? 'O' : 'X');
+
+// 날짜 '2026-11-20' → '11-20' (표에서 짧게)
+const shortDate = (date: string) => date.slice(5);
+
 export default function SmartMatching({ user }: SmartMatchingProps) {
-  const [matches, setMatches] = useState<MatchItem[]>([]);                // 매칭 카드 목록
-  const [expandedId, setExpandedId] = useState<number | null>(null);      // 펼쳐진 카드 id (없으면 null)
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');  // 상단 상태 카드에서 고른 필터
-
-
-  const [adminRejectModalId, setAdminRejectModalId] = useState<number | null>(null);  // 반려 모달을 띄운 매칭 id
-  const [adminRejectReason, setAdminRejectReason] = useState('');                     // 모달에서 고른 반려 사유
-  const [toast, setToast] = useState<string | null>(null);                            // 잠깐 떴다 사라지는 알림 글자
-
-  // DB에 저장된 매칭 결과를 불러오기 (관리자만)
-  useEffect(() => {
-    // AbortController : 페이지를 떠나면 진행 중인 요청을 취소하는 도구 (가이드 3-4)
-    const controller = new AbortController();
-
-    if (!user || user.role !== 'admin') {
-      setMatches([]);
-      return () => controller.abort();
-    }
-
-    const fetchMatches = async () => {
-      try {
-        const rows = await loadMatchItems(controller.signal);
-        // 취소되지 않았을 때만 화면에 반영 (이미 페이지를 떠났으면 무시)
-        if (rows && !controller.signal.aborted) setMatches(rows);
-      } catch (error) {
-        if (controller.signal.aborted) return;   // 취소해서 난 오류는 무시
-        console.log('매칭 결과 조회 실패 : ', error);
-        setMatches([]);
-      }
-    };
-
-    fetchMatches();
-
-    // 정리 함수 : 페이지를 떠나거나 user 가 바뀌면 이전 요청 취소
-    return () => controller.abort();
-  }, [user]);
+  const { matches } = useMyMatchingDemo();
+  const [filter, setFilter] = useState<MatchFilter>('all');
 
   // 관리자만 접근 가능
   if (!user || user.role !== 'admin') {
@@ -71,162 +52,95 @@ export default function SmartMatching({ user }: SmartMatchingProps) {
     );
   }
 
-  // 알림 글자를 띄우고 4초(4000ms) 뒤에 자동으로 지우기
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 4000); };
+  // 상태별 건수
+  const counts: Record<MatchFilter, number> = { all: matches.length, linked: 0, requested: 0, completed: 0, failed: 0 };
+  for (const m of matches) {
+    counts[getStageGroup(getStage(m))] += 1;
+  }
 
-  /* ---------- 관리자 승인 / 반려 ---------- */
-  const approveByAdmin = async (id: number) => {
+  // 고른 상태만 + 최근 생성 순
+  const rows: MyMatchItem[] = matches
+    .filter((m) => filter === 'all' || getStageGroup(getStage(m)) === filter)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id - a.id);
 
-    try {
-
-      const response = await axios.post(
-        `/api/matching/approve/${id}`
-      );
-
-      if (response.data === true) {
-
-        // DB 저장 성공 후 화면 상태 변경
-        // map 으로 목록을 새로 만들면서, 승인한 카드(id 가 같은 것)만 adminStatus 를 바꿈
-        setMatches((p) =>
-          p.map((m) =>
-            m.id === id
-              ? { ...m, adminStatus: 'approved' }
-              : m
-          )
-        );
-
-        showToast('✓ 매칭이 승인되었습니다.');
-
-      } else {
-
-        showToast('매칭 승인에 실패했습니다.');
-
-      }
-
-    } catch (error) {
-
-      console.log('매칭 승인 실패 : ', error);
-      showToast('매칭 승인 중 오류가 발생했습니다.');
-
-    }
-
-  };
-
-
-  // 관리자 매칭 반려
-  const rejectByAdmin = async (id: number) => {
-
-    try {
-
-      const response = await axios.post(
-        `/api/matching/reject/${id}`
-      );
-
-      if (response.data === true) {
-
-        // DB 저장 성공 후 화면 상태 변경
-        setMatches((p) =>
-          p.map((m) =>
-            m.id === id
-              ? {
-                  ...m,
-                  adminStatus: 'rejected',
-                  finalStatus: 'failed',
-                  adminRejectReason: adminRejectReason
-                }
-              : m
-          )
-        );
-
-        // 모달 닫고 고른 사유 초기화
-        setAdminRejectModalId(null);
-        setAdminRejectReason('');
-
-        showToast('매칭이 반려되었습니다.');
-
-      } else {
-
-        showToast('매칭 반려에 실패했습니다.');
-
-      }
-
-    } catch (error) {
-
-      console.log('매칭 반려 실패 : ', error);
-      showToast('매칭 반려 중 오류가 발생했습니다.');
-
-    }
-
-  };
-
-
-  /* ---------- 상태 필터 ---------- */
-  // filter : 조건이 true 인 카드만 남긴 새 배열 (가이드 4)
-  const filteredMatches = matches.filter((m) => {
-    if (statusFilter === 'all') return true;
-    if (statusFilter === 'pending') return m.adminStatus === 'pending' && m.finalStatus === 'pending';
-    if (statusFilter === 'approved') return m.adminStatus === 'approved' && m.finalStatus === 'pending';
-    if (statusFilter === 'completed') return m.finalStatus === 'completed';
-    if (statusFilter === 'failed') return m.finalStatus === 'failed';
-    return false;
-  });
+  const filterLabel = STAT_CARDS.find((card) => card.key === filter)?.label ?? '전체';
 
   return (
     <div className="page-container">
-      {/* 알림 토스트 */}
-      {toast && <div className="sm-toast">{toast}</div>}
+      <PageHeader
+        eyebrow="Admin · Matching"
+        title="매칭 관리"
+        subtitle="화주가 요청하고 운송사가 수락하면 매칭이 성사됩니다. 관리자는 전체 진행 상황을 확인합니다."
+      />
 
-      {/* 제목 */}
-      <div className="page-header sm-header">
-        <div>
-          <p className="eyebrow">Admin · AI Matching</p>
-          <h1 className="page-title">매칭 관리</h1>
-        </div>
+      {/* 상태별 건수 */}
+      <MatchStats counts={counts} filter={filter} onFilterChange={setFilter} />
+
+      {/* 목록 위 막대 : 지금 보는 상태 + 건수 */}
+      <div className="sm-list-bar">
+        <p className="eyebrow">매칭 목록 · {filterLabel}</p>
+        <span className="sm-count">{rows.length}건</span>
+        <p className="sm-list-bar__note">점수 : 노선 30 · 가용량 25 · HS 20 · 일정 15 · 경험 10 (100점 만점)</p>
       </div>
 
-      {/* 상태별 개수 */}
-      <MatchStats matches={matches} filter={statusFilter} onFilterChange={setStatusFilter} />
-
-      <div className="sm-separator" />
-
-      {/* 매칭 카드 목록 */}
-      <div className="sm-list">
-        {filteredMatches.map((match) => (
-          <MatchCard
-            key={match.id}
-            match={match}
-            expanded={expandedId === match.id}
-            // 이미 펼친 카드를 다시 누르면 접기(null), 아니면 이 카드 펼치기
-            onToggle={() => setExpandedId(expandedId === match.id ? null : match.id)}
-            onApprove={() => approveByAdmin(match.id)}
-            onAdminReject={() => setAdminRejectModalId(match.id)}
-
-          />
-        ))}
-
-        {filteredMatches.length === 0 && (
-          <div className="sm-empty">
-            <p>해당 상태의 매칭 건이 없습니다.</p>
-          </div>
-        )}
+      {/* 매칭 목록 표 (한 줄 = 매칭 1건 , 칸마다 위 · 아래 두 줄) */}
+      <div className="sm-table-wrap">
+        <table className="sm-table">
+          <thead>
+            <tr>
+              {['번호 · 생성', '화주사 → 운송사', '화물 조건 (화주)', '제공 조건 (운송사)', '매칭 점수', '진행 상태'].map((h) => <th key={h}>{h}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((m) => {
+              const stage = getStage(m);
+              const badge = STAGE_BADGE[stage];
+              const { request, offer } = m;
+              return (
+                <tr key={m.id}>
+                  <td>
+                    <p className="sm-cell__main sm-mono">#{m.id}</p>
+                    <p className="sm-cell__sub sm-mono">{m.createdAt.slice(5)}</p>
+                  </td>
+                  <td>
+                    <p className="sm-cell__main">{m.shipper.companyName}</p>
+                    <p className="sm-cell__sub">→ {m.logistics.companyName}</p>
+                  </td>
+                  <td>
+                    <p className="sm-cell__main">{request.departure} → {request.destination}</p>
+                    <p className="sm-cell__sub">
+                      {request.transport} · {request.tradeType} · {request.country} · HS {request.hsCode} · {request.volume}t · 희망 {shortDate(request.schedule)}
+                    </p>
+                  </td>
+                  <td>
+                    <p className="sm-cell__main">가용 {offer.availableCapacity}t · 가능 {shortDate(offer.availableDate)}</p>
+                    <p className="sm-cell__sub">
+                      정기 {ox(offer.regularRoute)} · 직항 {ox(offer.directRoute)} · 리드 {offer.leadTime}일 · 경험 {offer.experience}회
+                    </p>
+                  </td>
+                  <td>
+                    <p className="sm-cell__main">
+                      <span className="sm-score">{m.totalScore}</span><small className="sm-score__max">/100</small>
+                    </p>
+                    <p className="sm-cell__sub sm-mono">
+                      {m.routeScore} · {m.capacityScore} · {m.itemScore} · {m.scheduleScore} · {m.experienceScore}
+                    </p>
+                  </td>
+                  <td>
+                    <span className={`sm-badge ${badge.tone}`}>{badge.label}</span>
+                    {stage === 'logisticsRejected' && m.logistics.rejectReason && (
+                      <p className="sm-cell__sub">사유: {m.logistics.rejectReason}</p>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+            {rows.length === 0 && (
+              <tr><td colSpan={6} className="sm-table__empty">해당 상태의 매칭 건이 없습니다.</td></tr>
+            )}
+          </tbody>
+        </table>
       </div>
-
-      {/* 관리자 반려 모달 */}
-      {adminRejectModalId !== null && (
-        <RejectReasonModal
-          title="매칭 반려"
-          description="반려 사유를 선택하세요"
-          confirmLabel="반려 확인"
-          selected={adminRejectReason}
-          onSelect={setAdminRejectReason}
-          onCancel={() => { setAdminRejectModalId(null); setAdminRejectReason(''); }}
-          onConfirm={() => {
-            if (adminRejectModalId) rejectByAdmin(adminRejectModalId);
-          }}
-        />
-      )}
-
-
     </div>
   );
 }

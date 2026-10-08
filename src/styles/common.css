@@ -233,6 +233,15 @@
   opacity: 0.9;
 }
 
+/* 페이지 안의 안내 상자 (components/common/NoticePanel — AccessGuard 모양 + 낮은 높이 , 연한 배경) */
+.notice-panel {
+  min-height: 320px;
+  padding: 40px 24px;
+  border-radius: 16px;
+  background: var(--tint-bg);
+  border: 1px dashed var(--tint-border);
+}
+
 /* ---------- 차트 범례 / 말풍선 (무역 현황 차트 + 맞춤 인사이트 공통) ---------- */
 .chart-legend {
   display: flex;

@@ -39,7 +39,7 @@ src/
 │   ├── layout/             # Header (+ Header.css)
 │   └── auth/               # LoginModal, SignupModal (+ AuthModal.css)
 └── pages/
-    └── <page>/             # dashboard(=무역 현황), trade, insights(맞춤 인사이트), matching-settings, my-matching(새 매칭 흐름 예시 , 더미), smart-matching, admin, mypage
+    └── <page>/             # dashboard(=첫 화면 "내 매칭"), trade, insights(맞춤 인사이트 + 관심 국가 설정), matching-settings, my-matching(첫 화면 매칭 보드 · 상세 /:matchId , 더미), smart-matching(관리자 매칭 관리), admin, mypage(내 정보 + 고객센터 채팅 데모)
         ├── <Page>.tsx      # 페이지 본체 (상태 + 조립)
         ├── <Page>.css      # 이 페이지 전용 스타일
         ├── components/     # 페이지를 나눈 하위 컴포넌트

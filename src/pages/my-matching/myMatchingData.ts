@@ -1,18 +1,17 @@
 // ⚠️ 더미 데이터 — 교수님 피드백의 "새 매칭 흐름"을 팀 회의에서 보여주기 위한 예시 (프론트만)
 //    회의에서 흐름이 확정되면 백엔드(매칭 API)를 만들고, 이 파일 대신 서버 응답을 사용하세요.
 //
-//  새 매칭 흐름
+//  새 매칭 흐름 (관리자 승인 단계 없음)
 //   ① 화주가 매칭 서비스 이용 동의 → 자동 매칭 (Cscore ↔ Lscore 필수조건 비교 + 점수 계산)
 //   ② 화주에게 필수조건을 통과한 운송사 목록 제공 → 화주가 골라서 매칭 요청 (또는 거절)
-//   ③ 운송사가 요청을 수락 / 거절
-//   ④ 둘 다 수락한 건만 관리자에게 최종 확인 요청 → 승인 = 매칭 완료(COMPLETED) , 반려 = 매칭 실패(FAILED)
-//   (부동산으로 비유하면 : 운송사 = 매물을 올린 집주인 , 화주 = 집을 구하는 사람 , 관리자 = 중개사)
+//   ③ 운송사가 요청을 수락하면 바로 매칭 성사(COMPLETED) , 거절하면 매칭 실패(FAILED)
+//   (관리자는 매칭 관리 화면에서 진행 상황만 확인)
 //
 //  회사 정보는 백엔드 샘플 데이터(MainDBSampleData.sql)의 실제 회원 정보를 사용
 //  - 화주 데모 계정 : ybtex@test.com  → (주)영보월드와이드
 //  - 운송사 데모 계정 : hmm@logis.com → 에이치엠엠(주)
 
-import type { AdminStatus, FinalStatus, LogisticsOffer, MatchItem, MatchRequest, Party, PartyResponse } from '../smart-matching/matchTypes';
+import type { FinalStatus, LogisticsOffer, MatchItem, MatchRequest, Party, PartyResponse } from '../smart-matching/matchTypes';
 
 /* ---------- 타입 ---------- */
 
@@ -23,11 +22,13 @@ export interface BizCheck {
   checkedAt: string;                            // 확인한 날짜
 }
 
-// 내 매칭 1건 = 관리자 "매칭 관리" 의 MatchItem 모양 + 새 흐름에 필요한 칸
-// (상태 칸 4개 shipper.response / logistics.response / adminStatus / finalStatus 는 DB matching 테이블과 같은 뜻)
+// 내 매칭 1건 = MatchItem 모양 + 새 흐름에 필요한 칸
+// (상태 칸 shipper.response / logistics.response / finalStatus 는 DB matching 테이블과 같은 뜻 ,
+//  adminStatus 는 관리자 승인 단계가 없어져서 쓰지 않음 — DB 칸과 모양을 맞추려고 'pending' 으로 남겨 둠)
 // [TS] extends MatchItem : MatchItem 의 칸을 모두 물려받고 아래 칸을 더함
 export interface MyMatchItem extends MatchItem {
-  conditionId: number;        // 화주 매칭 조건 번호 (cscore1Id) — 조건 1개에 추천 운송사가 여러 곳
+  conditionId: number;           // 화주 매칭 조건 번호 (cscore1Id) — 조건 1개에 추천 운송사가 여러 곳
+  logisticsConditionId: number;  // 운송사 매칭 조건 번호 (lscore1Id) — 운송사 화면 왼쪽 조건 목록을 묶는 기준
   shipperMemberId: string;    // 화주 회원 번호
   logisticsMemberId: string;  // 운송사 회원 번호
   shipperBiz: BizCheck;
@@ -40,32 +41,41 @@ export type Stage =
   | 'shipperRejected'    // 화주가 거절
   | 'requested'          // 화주가 요청 → 운송사 응답 대기
   | 'logisticsRejected'  // 운송사가 거절
-  | 'adminReview'        // 둘 다 수락 → 관리자 최종 확인 대기
-  | 'completed'          // 관리자 승인 → 매칭 완료
-  | 'adminRejected';     // 관리자 반려 → 매칭 실패
+  | 'completed';         // 운송사가 수락 → 매칭 성사
 
 /* ---------- 진행 단계 ↔ 상태 칸 4개 (새 흐름의 규칙표 — 백엔드 만들 때 그대로 참고) ---------- */
 
 // [TS] Record<Stage, {...}> : 단계 이름마다 상태 칸 4개의 값을 적어 둔 객체 (가이드 2-8)
-export const STAGE_STATUS: Record<Stage, { shipper: PartyResponse; logistics: PartyResponse; admin: AdminStatus; final: FinalStatus }> = {
-  recommended:       { shipper: 'waiting',  logistics: 'waiting',  admin: 'pending',  final: 'pending' },
-  shipperRejected:   { shipper: 'rejected', logistics: 'waiting',  admin: 'pending',  final: 'failed' },
-  requested:         { shipper: 'accepted', logistics: 'waiting',  admin: 'pending',  final: 'pending' },
-  logisticsRejected: { shipper: 'accepted', logistics: 'rejected', admin: 'pending',  final: 'failed' },
-  adminReview:       { shipper: 'accepted', logistics: 'accepted', admin: 'pending',  final: 'pending' },
-  completed:         { shipper: 'accepted', logistics: 'accepted', admin: 'approved', final: 'completed' },
-  adminRejected:     { shipper: 'accepted', logistics: 'accepted', admin: 'rejected', final: 'failed' },
+export const STAGE_STATUS: Record<Stage, { shipper: PartyResponse; logistics: PartyResponse; final: FinalStatus }> = {
+  recommended:       { shipper: 'waiting',  logistics: 'waiting',  final: 'pending' },
+  shipperRejected:   { shipper: 'rejected', logistics: 'waiting',  final: 'failed' },
+  requested:         { shipper: 'accepted', logistics: 'waiting',  final: 'pending' },
+  logisticsRejected: { shipper: 'accepted', logistics: 'rejected', final: 'failed' },
+  completed:         { shipper: 'accepted', logistics: 'accepted', final: 'completed' },
 };
 
-// 상태 칸 4개 → 진행 단계 (위에서부터 차례로 확인)
+// 상태 칸 3개 → 진행 단계 (위에서부터 차례로 확인)
 export function getStage(m: MatchItem): Stage {
   if (m.finalStatus === 'completed') return 'completed';
-  if (m.adminStatus === 'rejected') return 'adminRejected';
   if (m.shipper.response === 'rejected') return 'shipperRejected';
   if (m.logistics.response === 'rejected') return 'logisticsRejected';
   if (m.shipper.response === 'waiting') return 'recommended';
   if (m.logistics.response === 'waiting') return 'requested';
-  return 'adminReview';
+  return 'completed';
+}
+
+// 진행 단계 → 관리자 매칭 관리의 분류 (전체 칸을 빼고 4가지)
+//   linked    : 자동 매칭 연결 (쌍방 검토 — 화주가 아직 요청 전)
+//   requested : 화주사만 승인 (운송사 수락 대기)
+//   completed : 최종 매칭 성사
+//   failed    : 최종 매칭 실패 (화주 거절 또는 운송사 거절)
+export type StageGroup = 'linked' | 'requested' | 'completed' | 'failed';
+
+export function getStageGroup(stage: Stage): StageGroup {
+  if (stage === 'recommended') return 'linked';
+  if (stage === 'requested') return 'requested';
+  if (stage === 'completed') return 'completed';
+  return 'failed';
 }
 
 /* ---------- 버튼을 눌렀을 때 상태 바꾸기 (기존 값을 복사하고 일부 칸만 바꾼 새 객체를 돌려줌) ---------- */
@@ -80,9 +90,9 @@ export function shipperReject(m: MyMatchItem): MyMatchItem {
   return { ...m, shipper: { ...m.shipper, response: 'rejected' }, finalStatus: 'failed' };
 }
 
-// 운송사 : 요청 수락 → 관리자 최종 확인으로 넘어감
+// 운송사 : 요청 수락 → 바로 매칭 성사
 export function logisticsAccept(m: MyMatchItem): MyMatchItem {
-  return { ...m, logistics: { ...m.logistics, response: 'accepted' } };
+  return { ...m, logistics: { ...m.logistics, response: 'accepted' }, finalStatus: 'completed' };
 }
 
 // 운송사 : 요청 거절
@@ -98,8 +108,8 @@ export function requestLockReason(m: MyMatchItem, all: MyMatchItem[]): string | 
   for (const other of all) {
     if (other.id === m.id || other.conditionId !== m.conditionId) continue;   // 같은 화물 조건의 다른 운송사만 확인
     const stage = getStage(other);
-    if (stage === 'completed') return '이 화물 조건은 다른 운송사와 매칭이 완료됐어요.';
-    if (stage === 'requested' || stage === 'adminReview') return '진행 중인 요청이 끝나면 다른 운송사에 요청할 수 있어요.';
+    if (stage === 'completed') return '이 화물 조건은 다른 운송사와 매칭이 성사됐어요.';
+    if (stage === 'requested') return '진행 중인 요청이 끝나면 다른 운송사에 요청할 수 있어요.';
   }
   return null;
 }
@@ -167,8 +177,8 @@ interface CandidateInput {
   offer: { hsCode: string; regularRoute: boolean; directRoute: boolean; leadTime: number; availableDate: string; availableCapacity: number; experience: number; refrigeration: boolean; hazmat: boolean; heavy: boolean; special: boolean };
   stage: Stage;
   createdAt: string;
+  logisticsConditionId?: number;    // 운송사 조건 번호 (안 넣으면 매칭 번호 + 4000)
   logisticsRejectReason?: string;   // 운송사가 거절한 사유
-  adminRejectReason?: string;       // 관리자가 반려한 사유
 }
 
 // 모든 회사의 사업자 확인 결과 (예시) — 실제로는 국세청 API 로 사업자등록번호를 조회해서 채움
@@ -232,14 +242,14 @@ function makeMatch(input: CandidateInput): MyMatchItem {
     experienceScore: scores.experience,
     totalScore: scores.route + scores.capacity + scores.item + scores.schedule + scores.experience,
     matchFactors,
-    adminStatus: status.admin,
-    adminRejectReason: input.adminRejectReason,
+    adminStatus: 'pending',
     finalStatus: status.final,
     shipper: toParty(condition.shipper, status.shipper),
     logistics: toParty(logistics, status.logistics, input.logisticsRejectReason),
     request,
     offer: logisticsOffer,
     conditionId: condition.conditionId,
+    logisticsConditionId: input.logisticsConditionId ?? input.id + 4000,
     shipperMemberId: condition.shipper.memberId,
     logisticsMemberId: logistics.memberId,
     shipperBiz: BIZ_OK,
@@ -251,7 +261,7 @@ function makeMatch(input: CandidateInput): MyMatchItem {
 
 const INITIAL_MATCHES: MyMatchItem[] = [
   // 조건 101 (영보월드와이드 · 부산항 → 롱비치항) : 추천 5곳 , 아직 아무 곳에도 요청 안 함
-  makeMatch({ id: 1001, condition: C101, logistics: HMM, stage: 'recommended', createdAt: '2026-10-07 09:12',
+  makeMatch({ id: 1001, condition: C101, logistics: HMM, stage: 'recommended', createdAt: '2026-10-07 09:12', logisticsConditionId: 501,
     scores: { route: 30, capacity: 25, item: 20, schedule: 12, experience: 8 },
     offer: { hsCode: '3304991000', regularRoute: true, directRoute: true, leadTime: 14, availableDate: '2026-11-18', availableCapacity: 40, experience: 312, refrigeration: false, hazmat: false, heavy: true, special: false } }),
   makeMatch({ id: 1002, condition: C101, logistics: GLOVIS, stage: 'recommended', createdAt: '2026-10-07 09:12',
@@ -267,8 +277,8 @@ const INITIAL_MATCHES: MyMatchItem[] = [
     scores: { route: 20, capacity: 20, item: 20, schedule: 7, experience: 4 },
     offer: { hsCode: '3304991000', regularRoute: false, directRoute: true, leadTime: 21, availableDate: '2026-12-01', availableCapacity: 25, experience: 64, refrigeration: false, hazmat: false, heavy: false, special: false } }),
 
-  // 조건 102 (영보월드와이드 · 인천공항 → 나리타공항) : 롯데 거절 → 케이씨티씨 수락 → 관리자 최종 확인 대기
-  makeMatch({ id: 1006, condition: C102, logistics: KCTC, stage: 'adminReview', createdAt: '2026-10-03 14:20',
+  // 조건 102 (영보월드와이드 · 인천공항 → 나리타공항) : 롯데 거절 → 케이씨티씨에 요청 → 운송사 응답 대기
+  makeMatch({ id: 1006, condition: C102, logistics: KCTC, stage: 'requested', createdAt: '2026-10-03 14:20',
     scores: { route: 30, capacity: 25, item: 20, schedule: 13, experience: 6 },
     offer: { hsCode: '8542311000', regularRoute: true, directRoute: true, leadTime: 2, availableDate: '2026-10-27', availableCapacity: 3.5, experience: 158, refrigeration: false, hazmat: false, heavy: false, special: true } }),
   makeMatch({ id: 1007, condition: C102, logistics: LOTTE, stage: 'logisticsRejected', createdAt: '2026-10-03 14:20', logisticsRejectReason: '일정 불일치',
@@ -278,11 +288,11 @@ const INITIAL_MATCHES: MyMatchItem[] = [
     scores: { route: 20, capacity: 18, item: 12, schedule: 9, experience: 4 },
     offer: { hsCode: '8542390000', regularRoute: false, directRoute: true, leadTime: 4, availableDate: '2026-11-02', availableCapacity: 2, experience: 31, refrigeration: false, hazmat: false, heavy: false, special: true } }),
 
-  // 조건 103 (영보월드와이드 · 호치민항 → 인천항) : 한진 관리자 반려 → 현대글로비스 매칭 완료
+  // 조건 103 (영보월드와이드 · 호치민항 → 인천항) : 한진 거절 → 현대글로비스 매칭 성사
   makeMatch({ id: 1009, condition: C103, logistics: GLOVIS, stage: 'completed', createdAt: '2026-09-28 11:05',
     scores: { route: 30, capacity: 25, item: 20, schedule: 15, experience: 9 },
     offer: { hsCode: '7306402000', regularRoute: true, directRoute: true, leadTime: 6, availableDate: '2026-10-15', availableCapacity: 80, experience: 640, refrigeration: true, hazmat: false, heavy: true, special: false } }),
-  makeMatch({ id: 1010, condition: C103, logistics: HANJIN, stage: 'adminRejected', createdAt: '2026-09-27 16:40', adminRejectReason: '단가 협의 실패',
+  makeMatch({ id: 1010, condition: C103, logistics: HANJIN, stage: 'logisticsRejected', createdAt: '2026-09-27 16:40', logisticsRejectReason: '단가 협의 실패',
     scores: { route: 25, capacity: 22, item: 20, schedule: 12, experience: 7 },
     offer: { hsCode: '7306402000', regularRoute: true, directRoute: false, leadTime: 7, availableDate: '2026-10-17', availableCapacity: 45, experience: 210, refrigeration: false, hazmat: false, heavy: true, special: false } }),
   makeMatch({ id: 1011, condition: C103, logistics: CJ, stage: 'recommended', createdAt: '2026-09-27 16:40',
@@ -290,10 +300,10 @@ const INITIAL_MATCHES: MyMatchItem[] = [
     offer: { hsCode: '7306401000', regularRoute: false, directRoute: true, leadTime: 8, availableDate: '2026-10-20', availableCapacity: 35, experience: 150, refrigeration: false, hazmat: true, heavy: true, special: false } }),
 
   // 다른 화주가 에이치엠엠(주)에 보낸 요청 (운송사 데모 계정 화면에 보임)
-  makeMatch({ id: 1012, condition: C201, logistics: HMM, stage: 'requested', createdAt: '2026-10-06 15:30',
+  makeMatch({ id: 1012, condition: C201, logistics: HMM, stage: 'requested', createdAt: '2026-10-06 15:30', logisticsConditionId: 502,
     scores: { route: 25, capacity: 25, item: 20, schedule: 12, experience: 8 },
     offer: { hsCode: '3901101000', regularRoute: true, directRoute: false, leadTime: 3, availableDate: '2026-11-04', availableCapacity: 60, experience: 312, refrigeration: false, hazmat: false, heavy: true, special: false } }),
-  makeMatch({ id: 1013, condition: C202, logistics: HMM, stage: 'completed', createdAt: '2026-09-25 10:00',
+  makeMatch({ id: 1013, condition: C202, logistics: HMM, stage: 'completed', createdAt: '2026-09-25 10:00', logisticsConditionId: 503,
     scores: { route: 30, capacity: 22, item: 20, schedule: 12, experience: 8 },
     offer: { hsCode: '8708290000', regularRoute: true, directRoute: true, leadTime: 14, availableDate: '2026-10-19', availableCapacity: 40, experience: 312, refrigeration: false, hazmat: false, heavy: true, special: false } }),
 ];
@@ -301,7 +311,8 @@ const INITIAL_MATCHES: MyMatchItem[] = [
 /* ---------- 브라우저 저장 (데모용) ---------- */
 // 계정을 바꿔 가며 시연할 수 있도록 바뀐 상태를 localStorage 에 저장 (화주가 요청 → 운송사 계정에서 보임)
 
-const STORAGE_KEY = 'macross:my-matching-demo:v1';
+// v2 : 관리자 승인 단계를 없앤 새 흐름 (v1 에 저장된 예전 상태는 읽지 않음)
+export const STORAGE_KEY = 'macross:my-matching-demo:v2';
 
 // 처음 데모 데이터의 복사본 (JSON 으로 바꿨다가 되돌리면 완전히 새 객체가 됨)
 function initialMatches(): MyMatchItem[] {
@@ -339,4 +350,74 @@ export function resetDemoMatches(): MyMatchItem[] {
     // 무시
   }
   return initialMatches();
+}
+
+/* ---------- 메인 페이지 "내 매칭" 왼쪽 조건 목록 ---------- */
+
+// 왼쪽 목록 한 줄 = 내 매칭 조건 1개 + 그 조건의 매칭들
+export interface ConditionSummary {
+  id: number;              // 화주 : conditionId , 운송사 : logisticsConditionId
+  departure: string;
+  destination: string;
+  hsCode: string;
+  date: string;            // 화주 : 희망 일정 , 운송사 : 운송 가능일
+  rows: MyMatchItem[];     // 오른쪽 표에 보여줄 매칭 (정렬 끝난 상태)
+  actionCount: number;     // 내가 답해야 하는 건수 (운송사 : 응답 필요 요청 수)
+}
+
+// 날짜 빠른 순 정렬 ('2026-10-15' 같은 글자는 글자 순서 = 날짜 순서)
+function byDate(a: ConditionSummary, b: ConditionSummary) {
+  return a.date.localeCompare(b.date);
+}
+
+// 화주 : 내 화물 조건별로 묶기 (추천 운송사는 점수 높은 순)
+export function getShipperConditions(matches: MyMatchItem[], memberId?: string): ConditionSummary[] {
+  const mine = matches.filter((m) => m.shipperMemberId === memberId);
+  const ids: number[] = [];
+  for (const m of mine) {
+    if (!ids.includes(m.conditionId)) ids.push(m.conditionId);
+  }
+
+  return ids.map((id) => {
+    // [...배열].sort : 복사본을 정렬 (원본 배열은 그대로)
+    const rows = [...mine.filter((m) => m.conditionId === id)].sort((a, b) => b.totalScore - a.totalScore);
+    const request = rows[0].request;   // 같은 조건이라 화물 정보는 모두 같음
+    return {
+      id,
+      departure: request.departure,
+      destination: request.destination,
+      hsCode: request.hsCode,
+      date: request.schedule,
+      rows,
+      actionCount: 0,
+    };
+  }).sort(byDate);
+}
+
+// 운송사 : 내 운송 조건별로 묶기
+// 오른쪽 표에는 화주가 실제로 요청을 보낸 것만 (추천만 된 단계 · 화주가 거절한 건은 운송사에게 안 보임)
+// 응답이 필요한 요청을 위로
+export function getLogisticsConditions(matches: MyMatchItem[], memberId?: string): ConditionSummary[] {
+  const mine = matches.filter((m) => m.logisticsMemberId === memberId);
+  const ids: number[] = [];
+  for (const m of mine) {
+    if (!ids.includes(m.logisticsConditionId)) ids.push(m.logisticsConditionId);
+  }
+
+  return ids.map((id) => {
+    const group = mine.filter((m) => m.logisticsConditionId === id);
+    const visible = group.filter((m) => getStage(m) !== 'recommended' && getStage(m) !== 'shipperRejected');
+    const needResponse = visible.filter((m) => getStage(m) === 'requested');
+    const others = visible.filter((m) => getStage(m) !== 'requested');
+    const offer = group[0].offer;
+    return {
+      id,
+      departure: offer.departure,
+      destination: offer.destination,
+      hsCode: offer.hsCode,
+      date: offer.availableDate,
+      rows: [...needResponse, ...others],
+      actionCount: needResponse.length,
+    };
+  }).sort(byDate);
 }

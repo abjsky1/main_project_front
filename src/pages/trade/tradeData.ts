@@ -1,87 +1,55 @@
-// ⚠️ 환율 부분은 더미 데이터 — 백엔드 API 연결 시 이 파일의 값/함수를 서버 응답으로 교체하세요.
-//    (조건 검색 결과는 팀원의 검색 API(/api/condition/search)에 연결되어 실제 데이터를 사용 — useTradeSearch.ts)
+// 무역 데이터 분석 페이지에서 쓰는 목록 / 타입
+// - 환율 : 백엔드 GET /api/exchange/month (환율 CSV 2000~2026 의 월 평균 — useExchangeRates.ts 에서 조회)
+// - 조건 검색 : 팀원의 검색 API(/api/condition/search) — useTradeSearch.ts
 
 // [TS] 'a' | 'b' : 이 글자들 중 하나만 들어갈 수 있는 타입 (가이드 2-3)
-export type Currency = 'USD' | 'EUR' | 'CNH' | 'JPY';
 export type SortField = 'exportAmt' | 'importAmt' | 'balance' | null;   // 정렬 기준 열 (null = 정렬 안 함)
 export type SortDir = 'asc' | 'desc';                                   // asc = 오름차순, desc = 내림차순
 
-/* ───────────── 환율 ───────────── */
+/* ───────────── 누적 무역 카드 ───────────── */
 
-// 상단 카드로 보여주는 주요 통화 4개
-export const MAIN_CURRENCIES: Currency[] = ['USD', 'EUR', 'CNH', 'JPY'];
+// 누적 무역 카드 1개의 데이터 구조 (StatCard 가 이 모양의 값을 props 로 받음)
+// [TS] interface = 객체 모양 설계도 (가이드 2-2)
+export interface KpiStat {
+  label: string;
+  value: string;
+  unit: string;
+  change: number | null;   // 전년 대비 증감률(%) , 비교 데이터가 없으면 null
+  changeLabel: string;
+  accent: string;          // 카드 위쪽 색 띠 색상
+}
 
-// 아래 버튼으로 보여주는 기타 통화
-export const EXTRA_CURRENCIES = ['AED','AUD','BHD','BND','CAD','CHF','DKK','GBP','HKD','IDR','KWD','MYR','NOK','NZD','SAR','SEK','SGD','THB','XOF'];
+/* ───────────── 연도 ───────────── */
 
+// 무역 통계 · 환율 CSV 모두 2000 ~ 2026년 (백엔드 TradestatusService.validateYear 와 같은 범위)
 export const START_YEAR = 2000;
 export const END_YEAR = 2026;
 
-// 연도 선택 목록 [2000, 2001, ... , 2026]
+// 연도 선택 목록 [2026, 2025, ... , 2000] (최근 연도가 위로)
 export const YEARS: number[] = [];
-for (let year = START_YEAR; year <= END_YEAR; year++) {
+for (let year = END_YEAR; year >= START_YEAR; year--) {
   YEARS.push(year);
 }
 
 export const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 
-// seed(씨앗 숫자)가 같으면 항상 같은 순서의 가짜 난수를 만드는 함수 (dashboardData.ts 의 seededRng 와 같음)
-// 계산식은 난수 공식이라 몰라도 됩니다. rng() 를 부를 때마다 0~1 사이 숫자가 나옵니다.
-function seededRandom(seed: number) {
-  let s = seed;
-  return () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
-}
+/* ───────────── 환율 ───────────── */
 
-// 통화별 가짜 월별 환율 (2000년 1월 ~ 2025년 12월)
-// base : 시작 환율 , currency : 통화 코드 (글자 코드 합을 seed 로 써서 통화마다 다른 그래프)
-function genRates(base: number, currency: string): number[] {
-  // seed = 통화 코드 글자들의 문자 코드 합 (예: 'USD' → 85 + 83 + 68)
-  let seed = 0;
-  for (let i = 0; i < currency.length; i++) {
-    seed = seed + currency.charCodeAt(i);
-  }
-  const rng = seededRandom(seed);
-  const data: number[] = [];
-  let val = base;
-  const years = END_YEAR - START_YEAR;
-  for (let i = 0; i < years * 12; i++) {
-    val = val * (1 + (rng() - 0.49) * 0.015);   // 매달 조금씩 오르내림
-    data.push(Math.round(val * 100) / 100);     // 소수점 2자리로 반올림
-  }
-  return data;
-}
+// 상단 카드로 보여주는 주요 통화 4개 (카드는 보기 전용 — 통화 고르기는 아래 버튼으로)
+export const MAIN_CURRENCIES = ['USD', 'EUR', 'CNH', 'JPY'];
 
-// 통화 코드 → 월별 환율 배열
-// [TS] Record<string, number[]> : 키는 글자, 값은 숫자 배열인 객체 (가이드 2-8)
-const RATE_DATA: Record<string, number[]> = {
-  USD: genRates(1180, 'USD'), EUR: genRates(1320, 'EUR'),
-  CNH: genRates(160, 'CNH'), JPY: genRates(9.2, 'JPY'),
-  AED: genRates(320, 'AED'), AUD: genRates(820, 'AUD'),
-  BHD: genRates(3100, 'BHD'), BND: genRates(850, 'BND'),
-  CAD: genRates(900, 'CAD'), CHF: genRates(1250, 'CHF'),
-  DKK: genRates(175, 'DKK'), GBP: genRates(1550, 'GBP'),
-  HKD: genRates(150, 'HKD'), IDR: genRates(0.085, 'IDR'),
-  KWD: genRates(3800, 'KWD'), MYR: genRates(290, 'MYR'),
-  NOK: genRates(135, 'NOK'), NZD: genRates(730, 'NZD'),
-  SAR: genRates(315, 'SAR'), SEK: genRates(125, 'SEK'),
-  SGD: genRates(870, 'SGD'), THB: genRates(34, 'THB'),
-};
-
-// 특정 통화의 특정 연도 12개월 환율
-// 배열은 2000년 1월부터 차례로 들어 있으므로, (연도 - 2000) × 12 번째부터 12개를 잘라냄
-// 데이터가 없는 통화(XOF 등)는 0 이 12개인 배열
-// 데이터 범위(2000~2025년)를 벗어난 연도(예: 2026)는 잘라낼 게 없어서 빈 배열 [] 이 됨
-export function getRatesForYear(currency: string, year: number): number[] {
-  const offset = (year - START_YEAR) * 12;
-  return RATE_DATA[currency]?.slice(offset, offset + 12) ?? Array(12).fill(0);
-}
+// 아래 작은 버튼으로 보여주는 통화 = 환율 CSV 의 3글자 통화 코드 (주요 통화 포함 , 기준 통화 KRW 는 제외)
+export const ALL_CURRENCIES = [
+  'AED', 'AUD', 'BHD', 'BND', 'CAD', 'CHF', 'CNH', 'DKK', 'EUR', 'GBP', 'HKD',
+  'IDR', 'JPY', 'KWD', 'MYR', 'NOK', 'NZD', 'SAR', 'SEK', 'SGD', 'THB', 'USD',
+];
 
 // 통화별 표시 정보 (이름, 국기, 단위)
 export const CURRENCY_INFO: Record<string, { name: string; flag: string; unit: string }> = {
   USD: { name: '미국 달러', flag: '🇺🇸', unit: '원/USD' },
   EUR: { name: '유로', flag: '🇪🇺', unit: '원/EUR' },
-  CNH: { name: '중국 위안(역외)', flag: '🇨🇳', unit: '원/CNH' },
-  JPY: { name: '일본 엔', flag: '🇯🇵', unit: '원/JPY' },
+  CNH: { name: '중국 위안', flag: '🇨🇳', unit: '원/CNH' },
+  JPY: { name: '일본 엔', flag: '🇯🇵', unit: '원/100엔' },
   AED: { name: '아랍에미리트 디르함', flag: '🇦🇪', unit: '원/AED' },
   AUD: { name: '호주 달러', flag: '🇦🇺', unit: '원/AUD' },
   BHD: { name: '바레인 디나르', flag: '🇧🇭', unit: '원/BHD' },

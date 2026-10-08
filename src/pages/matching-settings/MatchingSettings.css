@@ -80,12 +80,15 @@
   color: var(--brand-purple);
 }
 
-/* 동의 전 안내 문구 */
+/* 동의 전 안내 문구 (아래 입력폼은 잠긴 채로 보임) */
 .ms-consent-needed {
-  padding-top: 48px;
-  padding-bottom: 48px;
-  text-align: center;
-  color: var(--text-muted);
+  margin-bottom: 24px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.05);
+  border: 1px dashed rgba(100, 50, 220, 0.25);
 }
 
 .ms-consent-needed p {

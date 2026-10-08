@@ -1,13 +1,17 @@
 /* =====================================================================
    무역 데이터 분석 페이지 (주소: /trade , 누구나 볼 수 있음)
    - 탭 2개 : [조건 검색 & 조회] TradeSearchTab , [환율 동향 & 실거래가] ExchangeRateTab
-   - 현재는 tradeData.ts 의 더미 데이터를 사용
+   - 조건 검색 탭일 때 탭 줄 오른쪽에 누적 무역 현황 카드 3개 (TradeKpi — 예전 첫 화면에서 옮김)
+   - 환율은 백엔드 /api/exchange/month (실제 환율 CSV) , 조건 검색은 /api/condition/search
    ===================================================================== */
 import { useState } from 'react';
 import PageHeader from '../../components/common/PageHeader';
 import TradeSearchTab from './components/TradeSearchTab';
 import ExchangeRateTab from './components/ExchangeRateTab';
+import TradeKpi from './components/TradeKpi';
 import useTradeSearch from './useTradeSearch';
+import useExchangeRates from './useExchangeRates';
+import { END_YEAR } from './tradeData';
 import './TradeAnalysis.css';
 
 type TabType = 'search' | 'exchange';
@@ -25,30 +29,39 @@ export default function TradeAnalysis() {
   // 탭을 바꿔도 값이 유지되도록 상태는 여기(부모)에서 보관
   // (탭 컴포넌트는 탭을 바꾸면 사라졌다가 다시 생기므로, 그 안에 state 를 두면 초기화됨 — 가이드 3-1)
   const search = useTradeSearch();
+  const exchange = useExchangeRates();
+  const [kpiYear, setKpiYear] = useState(END_YEAR);              // 누적 무역 현황 연도
   const [activeCurrency, setActiveCurrency] = useState<string>('USD');
-  const [selectedYear, setSelectedYear] = useState(2026);
+  const [selectedYear, setSelectedYear] = useState(END_YEAR);    // 환율 · 수출입 추이 연도
 
   return (
     <div className="page-container">
       <PageHeader eyebrow="Analysis" title="무역 데이터 분석" />
 
-      {/* 탭 */}
-      <div className="tab-group trade-tabs">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={activeTab === tab.id ? 'tab-btn is-active' : 'tab-btn'}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* 탭 + (조건 검색 탭이면) 오른쪽에 누적 무역 현황 */}
+      <div className="trade-top">
+        <div className="tab-group trade-tabs">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={activeTab === tab.id ? 'tab-btn is-active' : 'tab-btn'}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'search' && <TradeKpi year={kpiYear} onYearChange={setKpiYear} />}
       </div>
 
       {activeTab === 'search' && <TradeSearchTab search={search} />}
 
       {activeTab === 'exchange' && (
         <ExchangeRateTab
+          rates={exchange.table}
+          ratesLoading={exchange.loading}
+          ratesError={exchange.error}
           activeCurrency={activeCurrency}
           onCurrencyChange={setActiveCurrency}
           selectedYear={selectedYear}

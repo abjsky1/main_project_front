@@ -2,9 +2,18 @@
    무역 데이터 분석 (TradeAnalysis.tsx 와 components/ 폴더)
    ===================================================================== */
 
-/* ---------- 탭 ---------- */
+/* ---------- 탭 줄 : 왼쪽 탭 + 오른쪽 누적 무역 현황 (TradeKpi) ---------- */
+.trade-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 24px;
+}
+
 .trade-tabs {
-  margin-bottom: 32px;
+  flex-shrink: 0;
 }
 
 .trade-tabs .tab-btn {
@@ -14,6 +23,110 @@
 
 .trade-tabs .tab-btn.is-active {
   box-shadow: 0 1px 5px rgba(100, 50, 220, 0.12);
+}
+
+/* ---------- 누적 무역 현황 (TradeKpi.tsx + StatCard.tsx) — 예전 첫 화면 카드를 작게 ---------- */
+.trade-kpi {
+  flex: 1 1 560px;
+  max-width: 720px;
+}
+
+.trade-kpi__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* 연도 선택 (2000 ~ 2026) */
+.trade-kpi__year {
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.06);
+  border: 1px solid rgba(100, 50, 220, 0.15);
+}
+
+.trade-kpi__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stat-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgba(100, 50, 220, 0.035);
+  border: 1px solid rgba(100, 50, 220, 0.12);
+}
+
+.stat-card .eyebrow {
+  font-size: 10px;
+}
+
+/* 카드 위쪽 얇은 강조선 (색은 --accent 변수로 받음) */
+.stat-card__accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), #06b6d4);
+}
+
+.stat-card__value {
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.stat-card__unit {
+  margin-left: 4px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.stat-card__change {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-card__change-text {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* 증감 배지: 상승(빨강) / 하락(초록) */
+.change-badge {
+  padding: 1px 6px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.change-badge.is-up {
+  background: rgba(217, 48, 37, 0.08);
+  color: var(--danger);
+}
+
+.change-badge.is-down {
+  background: rgba(26, 158, 92, 0.1);
+  color: var(--success);
 }
 
 /* 섹션 라벨 (검색 조건, 검색 결과) */
@@ -34,8 +147,8 @@
 }
 
 /* 검색 조건 칸 배치
-   - 좁은 화면 : 2칸 (국가 · HS 코드는 한 줄씩 넓게 , 시작 · 종료 기간은 나란히)
-   - 넓은 화면 : 국가 - HS 코드 - 시작 기간 - 종료 기간 한 줄 (HS 코드 칸만 2배 넓게) */
+   - 좁은 화면 : 2칸 (국가 · HS 코드 · 검색 버튼은 한 줄씩 넓게 , 시작 · 종료 기간은 나란히)
+   - 넓은 화면 : 국가 - HS 코드 - 시작 기간 - 종료 기간 - [검색] 한 줄 */
 .trade-search-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -44,17 +157,19 @@
 }
 
 .trade-search-grid__country,
-.trade-search-grid__hs {
+.trade-search-grid__hs,
+.trade-search-grid__action {
   grid-column: 1 / -1;            /* 좁은 화면 : 한 줄 전체 */
 }
 
 @media (min-width: 900px) {
   .trade-search-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr) auto;
   }
 
   .trade-search-grid__country,
-  .trade-search-grid__hs {
+  .trade-search-grid__hs,
+  .trade-search-grid__action {
     grid-column: auto;            /* 넓은 화면 : 한 칸씩 차례대로 */
   }
 }
@@ -84,14 +199,12 @@ select.trade-input {
   cursor: pointer;
 }
 
-.trade-search-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
-}
-
+/* [검색] 버튼 : 입력칸(높이 약 40px)과 같은 높이 */
 .trade-search-btn {
-  padding: 8px 24px;
+  width: 100%;
+  height: 40px;
+  padding: 0 28px;
+  white-space: nowrap;
   border-radius: 9999px;
   font-size: var(--fs-sm);
   line-height: var(--lh-sm);
@@ -420,41 +533,15 @@ select.trade-input {
 
 /* =====================================================================
    환율 동향 탭 (ExchangeRateTab.tsx)
+   위 : 주요 통화 카드 4개 → 연도 + 통화 버튼 → 반반 그래프 (수출입 추이 | 환율 추이)
    ===================================================================== */
-.year-picker {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 28px;
-}
 
-.year-picker label {
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  color: var(--text-secondary);
-}
-
-.year-picker select {
-  padding: 8px 16px;
-  border-radius: 12px;
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-  font-weight: 600;
-  outline: none;
-  border: 1px solid rgba(100, 50, 220, 0.15);
-  background: #fff;
-  color: var(--text-primary);
-}
-
-/* ---------- 주요 통화 카드 ---------- */
+/* ---------- 주요 통화 카드 (보기 전용) ---------- */
 .currency-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 @media (min-width: 768px) {
@@ -466,17 +553,8 @@ select.trade-input {
 .currency-card {
   padding: 16px;
   border-radius: 16px;
-  text-align: left;
-  background: #fff;
-  border: 1px solid var(--clean-border);
-  box-shadow: none;
-  transition: all 150ms var(--ease);
-}
-
-.currency-card.is-active {
-  background: linear-gradient(135deg, rgba(147, 51, 234, 0.07), rgba(6, 182, 212, 0.05));
-  border: 1.5px solid rgba(147, 51, 234, 0.25);
-  box-shadow: 0 4px 16px rgba(147, 51, 234, 0.1);
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.05), rgba(6, 182, 212, 0.04));
+  border: 1px solid rgba(100, 50, 220, 0.12);
 }
 
 .currency-card__head {
@@ -493,7 +571,17 @@ select.trade-input {
   color: var(--text-primary);
 }
 
+.currency-card__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* 전월 대비 : 상승(빨강) / 하락(초록) */
 .currency-card__change {
+  flex-shrink: 0;
   margin-left: auto;
   padding: 2px 6px;
   border-radius: 9999px;
@@ -509,14 +597,11 @@ select.trade-input {
 }
 
 .currency-card__rate {
+  font-family: var(--font-code);
   font-size: var(--fs-xl);
   line-height: var(--lh-xl);
   font-weight: 700;
   color: var(--text-primary);
-}
-
-.currency-card.is-active .currency-card__rate {
-  color: var(--brand-purple);
 }
 
 .currency-card__unit {
@@ -525,18 +610,60 @@ select.trade-input {
   color: var(--text-muted);
 }
 
-/* ---------- 기타 통화 버튼 ---------- */
-.currency-chips {
+/* ---------- 연도 + 통화 버튼 ---------- */
+.rate-controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 24px;
+  gap: 12px 20px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--clean-border);
+}
+
+.year-picker {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.year-picker label {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  color: var(--text-secondary);
+}
+
+.year-picker select {
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  border: 1px solid rgba(100, 50, 220, 0.15);
+  background: #fff;
+  color: var(--text-primary);
+}
+
+.currency-chips {
+  display: flex;
+  flex: 1 1 0%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
 
 .currency-chip {
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 9999px;
+  font-family: var(--font-code);
   font-size: var(--fs-xs);
   line-height: var(--lh-xs);
   font-weight: 600;
@@ -546,79 +673,93 @@ select.trade-input {
   transition: all 150ms var(--ease);
 }
 
+.currency-chip:hover {
+  color: var(--brand-purple);
+  border-color: rgba(100, 50, 220, 0.2);
+}
+
 .currency-chip.is-active {
-  background: rgba(6, 182, 212, 0.1);
-  color: var(--brand-cyan);
-  border: 1px solid rgba(6, 182, 212, 0.25);
+  background: var(--brand-gradient);
+  color: #fff;
+  border-color: transparent;
 }
 
-/* ---------- 환율 그래프 ---------- */
-.rate-chart {
-  margin-bottom: 32px;
-}
-
-.rate-chart__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-.rate-chart__title {
-  font-size: var(--fs-base);
-  line-height: var(--lh-base);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.rate-chart__unit {
-  margin-bottom: 16px;
+.rate-message {
+  margin-bottom: 12px;
   font-size: var(--fs-xs);
   line-height: var(--lh-xs);
   color: var(--text-muted);
 }
 
-.rate-chart__accent {
-  width: 40px;
+.rate-message.is-error {
+  color: var(--danger);
+}
+
+/* ---------- 반반 그래프 (왼쪽 수출입 추이 | 오른쪽 환율 추이) ---------- */
+.trade-chart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 900px) {
+  .trade-chart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.trade-chart-card {
+  min-width: 0;
+  padding: 20px 20px 12px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--clean-border);
+}
+
+/* 그래프 제목 영역 (TradeTrendChart.tsx 와 환율 그래프 공통) */
+.trend-section__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.trend-section__head .eyebrow {
+  margin-bottom: 4px;
+}
+
+.trend-section__title {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.trend-section__unit {
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+/* (차트 범례 .chart-legend / .legend-* 와 말풍선 .chart-tooltip 은 맞춤 인사이트와 같이 쓰므로 styles/common.css 에 있음) */
+
+.trend-section__accent {
+  width: 48px;
   height: 2px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   border-radius: 9999px;
   background: linear-gradient(90deg, #9333ea, #06b6d4);
 }
 
-/* ---------- 월 평균 환율 ---------- */
-.monthly-rates {
-  padding: 20px;
-  border-radius: 16px;
-  background: rgba(100, 50, 220, 0.035);
-  border: 1px solid rgba(100, 50, 220, 0.12);
-}
-
-.monthly-rates__title {
-  margin-bottom: 12px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.monthly-rates__grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.monthly-rates__cell {
-  text-align: center;
-}
-
-.monthly-rates__month {
-  font-size: 10px;
+/* 환율 데이터가 없을 때 / 불러오는 중 (그래프와 같은 높이) */
+.rate-chart__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 280px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
   color: var(--text-muted);
-}
-
-.monthly-rates__value {
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  font-family: var(--font-code);
-  font-weight: 700;
-  color: var(--brand-purple);
 }

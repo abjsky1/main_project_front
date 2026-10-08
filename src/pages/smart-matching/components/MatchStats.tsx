@@ -1,29 +1,37 @@
-import type { MatchItem, StatusFilter } from '../matchTypes';
+import type { StageGroup } from '../../my-matching/myMatchingData';
+
+// 상단 숫자 카드 필터 : 전체 + 진행 단계 분류 4가지
+export type MatchFilter = 'all' | StageGroup;
 
 interface MatchStatsProps {
-  matches: MatchItem[];
-  filter: StatusFilter;
-  onFilterChange: (filter: StatusFilter) => void;
+  counts: Record<MatchFilter, number>;    // 카드마다 건수
+  filter: MatchFilter;
+  onFilterChange: (filter: MatchFilter) => void;
 }
 
-// 상태별 개수 카드 5개 (누르면 해당 상태만 보기)
-export default function MatchStats({ matches, filter, onFilterChange }: MatchStatsProps) {
-  // 개수 = filter 로 조건에 맞는 카드만 남긴 배열의 length
-  const stats: { key: StatusFilter; label: string; value: number }[] = [
-    { key: 'all', label: '전체', value: matches.length },
-    { key: 'pending', label: '검토 대기', value: matches.filter((m) => m.adminStatus === 'pending').length },
-    { key: 'approved', label: '쌍방 검토 중', value: matches.filter((m) => m.adminStatus === 'approved' && m.finalStatus === 'pending').length },
-    { key: 'completed', label: '최종 성사', value: matches.filter((m) => m.finalStatus === 'completed').length },
-    { key: 'failed', label: '실패', value: matches.filter((m) => m.finalStatus === 'failed').length },
-  ];
+// 카드 5개 (순서대로) — 누르면 해당 상태만 아래 목록에 보기
+export const STAT_CARDS: { key: MatchFilter; label: string; sub: string }[] = [
+  { key: 'all', label: '전체', sub: '전체 매칭 건수' },
+  { key: 'linked', label: '자동 매칭 연결', sub: '쌍방 검토 중' },
+  { key: 'requested', label: '화주사만 승인', sub: '물류 매칭 수락 대기' },
+  { key: 'completed', label: '최종 매칭 성사', sub: '운송사 수락 완료' },
+  { key: 'failed', label: '최종 매칭 실패', sub: '화주 · 운송사 거절' },
+];
 
+// 상태별 개수 카드 5개
+export default function MatchStats({ counts, filter, onFilterChange }: MatchStatsProps) {
   return (
     <div className="sm-stats">
-      {stats.map((s) => (
-        <button key={s.key} onClick={() => onFilterChange(s.key)} className={filter === s.key ? 'sm-stat is-active' : 'sm-stat'}>
-          {/* tone-pending, tone-failed ... 처럼 상태별 글자색 클래스 */}
-          <p className={`sm-stat__value tone-${s.key}`}>{s.value}</p>
-          <p className="sm-stat__label">{s.label}</p>
+      {STAT_CARDS.map((card) => (
+        <button
+          key={card.key}
+          onClick={() => onFilterChange(card.key)}
+          className={filter === card.key ? 'sm-stat is-active' : 'sm-stat'}
+        >
+          {/* tone-linked, tone-failed ... 처럼 상태별 글자색 클래스 */}
+          <p className={`sm-stat__value tone-${card.key}`}>{counts[card.key]}</p>
+          <p className="sm-stat__label">{card.label}</p>
+          <p className="sm-stat__sub">{card.sub}</p>
         </button>
       ))}
     </div>

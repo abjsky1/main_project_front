@@ -6,6 +6,8 @@
      2. CSV 가 준비되면 내가 DB 에 저장한 조건 목록을 불러옴 (conditionApi.ts)
      3. [+ 조건 추가] → 입력값 검사 → 서버 저장 → 목록 다시 불러오기
    - 입력폼 화면은 components/ShipperConditionForm, LogisticsConditionForm 이 그림
+   - 매칭 서비스 참여 동의 : 체크 상태를 브라우저에 회원별로 저장 → 새로고침해도 유지
+     동의 전에도 입력폼 · 등록 목록은 보이지만 , 입력과 [+ 조건 추가]는 잠김
    ===================================================================== */
 import { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
@@ -33,6 +35,26 @@ interface MatchingSettingsProps {
   onLogisticsRowsChange: (rows: LogisticsCondition[]) => void;
 }
 
+// 매칭 서비스 참여 동의 저장 (브라우저 localStorage , 회원마다 따로)
+// ⚠️ 백엔드에 회원별 동의 칸이 생기면 이 두 함수를 API 호출로 바꾸면 됨
+const consentKey = (memberId?: string) => `macross:matching-consent:${memberId ?? 'guest'}`;
+
+function loadConsent(memberId?: string): boolean {
+  try {
+    return localStorage.getItem(consentKey(memberId)) === 'true';
+  } catch {
+    return false;   // localStorage 를 못 쓰는 환경이면 동의 안 한 상태로
+  }
+}
+
+function saveConsent(memberId: string | undefined, checked: boolean) {
+  try {
+    localStorage.setItem(consentKey(memberId), String(checked));
+  } catch {
+    // 저장에 실패해도 지금 화면의 체크 상태는 그대로 동작
+  }
+}
+
 // 섹션 제목 (작은 라벨 + 그라데이션 선)
 const SectionTitle = ({ children }: { children: string }) => (
   <div className="ms-section-title">
@@ -42,7 +64,9 @@ const SectionTitle = ({ children }: { children: string }) => (
 );
 
 export default function MatchingSettings({ user, shipperRows, logisticsRows, onShipperRowsChange, onLogisticsRowsChange }: MatchingSettingsProps) {
-  const [consented, setConsented] = useState(false);                     // 매칭 서비스 참여 동의 체크
+  // 매칭 서비스 참여 동의 체크 — 처음 값은 브라우저에 저장된 값 (App 이 회원이 바뀌면 key 로 이 페이지를 새로 만듦)
+  // useState(() => 값) : 처음 한 번만 함수를 실행해서 시작 값을 만듦
+  const [consented, setConsented] = useState(() => loadConsent(user?.memberId));
   const [shipperForm, setShipperForm] = useState(emptyShipper());         // 수출입기업 입력폼 값
   const [logisticsForm, setLogisticsForm] = useState(emptyLogistics());   // 물류업체 입력폼 값
 
@@ -191,6 +215,13 @@ export default function MatchingSettings({ user, shipperRows, logisticsRows, onS
 
   const isShipper = user.companyType === '수출입기업';
 
+  // 동의 체크 바꾸기 + 브라우저에 저장
+  const toggleConsent = () => {
+    const next = !consented;
+    setConsented(next);
+    saveConsent(user.memberId, next);
+  };
+
   /* ---------- 저장 / 삭제 ---------- */
 
   // 저장 공통 흐름: 요청 → 성공 확인 → 폼 비우기 → 목록 다시 조회
@@ -290,60 +321,56 @@ export default function MatchingSettings({ user, shipperRows, logisticsRows, onS
       )}
 
       {/* 매칭 서비스 참여 동의 */}
-      <ConsentBox checked={consented} onToggle={() => setConsented(!consented)} />
+      <ConsentBox checked={consented} onToggle={toggleConsent} />
 
+      {/* 동의 전 : 안내 문구만 (입력폼 · 목록은 아래에 계속 보이고 , 입력과 [+ 조건 추가]는 잠김) */}
       {!consented && (
-        <div className="ms-consent-needed">
+        <div className="ms-consent-needed" role="status">
           <p>매칭 서비스 참여에 동의하시면 조건을 설정할 수 있습니다.</p>
         </div>
       )}
 
-      {/* 동의했을 때만 입력폼 + 등록 목록 표시 */}
-      {consented && (
-        <>
-          {/* 수출입기업 화면 */}
-          {isShipper && (
-            <div>
-              <SectionTitle>수출입기업 매칭 조건</SectionTitle>
-              <ShipperConditionForm
-                form={shipperForm}
-                countries={countries}
-                routes={routes}
-                disabled={formDisabled}
-                addDisabled={addDisabled}
-                // 입력칸이 바뀌면 routeUtils 의 함수로 새 폼 값을 만들어서 저장 (p = 바뀌기 전 폼 값)
-                onFieldChange={(key, val) => setShipperForm((p) => changeFormField(p, key, val))}
-                onDepartureChange={(val: string, pt: PortType) => setShipperForm((p) => changeDeparture(p, val, pt))}
-                onDestinationChange={(val: string, pt: PortType) => setShipperForm((p) => changeDestination(p, val, pt))}
-                onAdd={addShipperRow}
-              />
-              {shipperRows.length > 0 && (
-                <ShipperConditionTable rows={shipperRows} deleteDisabled={busy || loading} onDelete={deleteRow} />
-              )}
-            </div>
+      {/* 입력폼 + 등록 목록 (동의 여부와 관계없이 항상 표시) — 수출입기업 화면 */}
+      {isShipper && (
+        <div>
+          <SectionTitle>수출입기업 매칭 조건</SectionTitle>
+          <ShipperConditionForm
+            form={shipperForm}
+            countries={countries}
+            routes={routes}
+            disabled={formDisabled}
+            addDisabled={addDisabled}
+            // 입력칸이 바뀌면 routeUtils 의 함수로 새 폼 값을 만들어서 저장 (p = 바뀌기 전 폼 값)
+            onFieldChange={(key, val) => setShipperForm((p) => changeFormField(p, key, val))}
+            onDepartureChange={(val: string, pt: PortType) => setShipperForm((p) => changeDeparture(p, val, pt))}
+            onDestinationChange={(val: string, pt: PortType) => setShipperForm((p) => changeDestination(p, val, pt))}
+            onAdd={addShipperRow}
+          />
+          {shipperRows.length > 0 && (
+            <ShipperConditionTable rows={shipperRows} deleteDisabled={busy || loading} onDelete={deleteRow} />
           )}
+        </div>
+      )}
 
-          {/* 물류업체 화면 */}
-          {!isShipper && (
-            <div>
-              <SectionTitle>물류업체 매칭 조건</SectionTitle>
-              <LogisticsConditionForm
-                form={logisticsForm}
-                countries={countries}
-                routes={routes}
-                disabled={formDisabled}
-                addDisabled={addDisabled}
-                onFieldChange={(key, val) => setLogisticsForm((p) => changeFormField(p, key, val))}
-                onDepartureChange={(val: string, pt: PortType) => setLogisticsForm((p) => changeDeparture(p, val, pt))}
-                onDestinationChange={(val: string, pt: PortType) => setLogisticsForm((p) => changeDestination(p, val, pt))}
-                onAdd={addLogisticsRow}
-              />
-              {logisticsRows.length > 0 && (
-                <LogisticsConditionTable rows={logisticsRows} deleteDisabled={busy || loading} onDelete={deleteRow} />
-              )}
-            </div>
+      {/* 물류업체 화면 */}
+      {!isShipper && (
+        <div>
+          <SectionTitle>물류업체 매칭 조건</SectionTitle>
+          <LogisticsConditionForm
+            form={logisticsForm}
+            countries={countries}
+            routes={routes}
+            disabled={formDisabled}
+            addDisabled={addDisabled}
+            onFieldChange={(key, val) => setLogisticsForm((p) => changeFormField(p, key, val))}
+            onDepartureChange={(val: string, pt: PortType) => setLogisticsForm((p) => changeDeparture(p, val, pt))}
+            onDestinationChange={(val: string, pt: PortType) => setLogisticsForm((p) => changeDestination(p, val, pt))}
+            onAdd={addLogisticsRow}
+          />
+          {logisticsRows.length > 0 && (
+            <LogisticsConditionTable rows={logisticsRows} deleteDisabled={busy || loading} onDelete={deleteRow} />
           )}
-        </>
+        </div>
       )}
     </div>
   );

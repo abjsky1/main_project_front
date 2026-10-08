@@ -10,7 +10,9 @@ import type { AdminStatus, FinalStatus, MatchItem, PartyResponse } from './match
    백엔드 매칭 결과(DTO) → 화면용 MatchItem 변환
    - 매칭 1건을 화면에 그리려면 여러 API 결과가 필요해서, 여기서 한꺼번에 조회하고 합칩니다.
      · 매칭 결과(점수/상태)  · 화주 조건 1/2/3번  · 물류 조건 1/2/3번  · 국가/경로 CSV
-   - SmartMatching.tsx 에서 loadMatchItems() 하나만 호출하면 카드 목록이 완성됩니다.
+   - loadMatchItems() 하나만 호출하면 매칭 목록이 완성됩니다.
+   ⚠️ 지금 매칭 관리 화면은 새 매칭 흐름(관리자 승인 없음)의 더미 데이터(my-matching/myMatchingData.ts)를 사용해서
+      이 파일은 쓰이지 않습니다. 백엔드 매칭 API 가 새 흐름으로 바뀌면 SmartMatching.tsx 에서 다시 연결하세요.
    ===================================================================== */
 
 // 국가 id → 국가 이름 (CSV 에 없으면 '국가 #id')

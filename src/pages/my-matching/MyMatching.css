@@ -1,19 +1,224 @@
 /* =====================================================================
-   내 매칭 (MyMatching.tsx , MyMatchingDetail.tsx 와 components/)
+   내 매칭 (메인 페이지의 components/MatchingBoard.tsx , 상세 MyMatchingDetail.tsx)
    색 · 표 모양은 무역 데이터 분석 표 , 관리자 매칭 관리 배지와 같은 스타일
    ===================================================================== */
 
-/* ---------- 제목 + [데모 초기화] ---------- */
-.mm-head {
+/* ---------- 메인 페이지 "내 매칭" 보드 (MatchingBoard.tsx) ----------
+   왼쪽(1) 조건 목록 : 오른쪽(3) 표 — 두 칸 모두 10줄 높이로 같고 , 넘치면 안에서 스크롤 */
+/* 상세에서 돌아와 보드로 스크롤할 때 , 위쪽 고정 헤더(56px)에 가리지 않게 */
+.mb-wrap {
+  scroll-margin-top: 72px;
+}
+
+.mb-board {
+  --mb-row: 56px;                /* 한 줄 높이 (왼쪽 목록 · 오른쪽 표 공통) */
+  --mb-head: 40px;                /* 표 머리글 줄 높이 */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 900px) {
+  .mb-board {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+  }
+}
+
+.mb-panel {
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--clean-border);
+}
+
+/* 칸 제목 줄 (두 칸 높이를 맞추려고 고정 높이) */
+.mb-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--clean-border);
+}
+
+.mb-panel__route {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mb-panel__route small {
+  margin-left: 8px;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.mb-panel__count {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.08);
+}
+
+/* 스크롤 영역 : 머리글 1줄 + 10줄 */
+.mb-panel__body {
+  height: calc(var(--mb-head) + var(--mb-row) * 10);
+  overflow-y: auto;
+}
+
+/* 왼쪽 : 정렬 안내 줄 (오른쪽 표 머리글과 같은 높이 , 스크롤해도 위에 고정) */
+.mb-list__sort {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  height: var(--mb-head);
+  padding: 0 16px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  color: var(--text-muted);
+  background: #fbfaff;
+  box-shadow: inset 0 -1px 0 var(--clean-border);
+}
+
+.mb-list__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: var(--mb-row);
+  padding: 0 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--row-sep);
+  border-left: 3px solid transparent;
+  transition: background-color 150ms var(--ease);
+}
+
+.mb-list__item:hover {
+  background: rgba(100, 50, 220, 0.025);
+}
+
+.mb-list__item.is-selected {
+  background: rgba(100, 50, 220, 0.06);
+  border-left-color: var(--brand-purple);
+}
+
+.mb-list__text {
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* 부산항 → 롱비치항 */
+.mb-list__route {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* HS 코드 · 희망 일정 (작게) */
+.mb-list__meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--text-muted);
+}
+
+.mb-list__item.is-selected .mb-list__route {
+  color: var(--brand-purple);
+}
+
+.mb-list__badge {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  font-size: 10px;
+  line-height: 16px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--divider);
+}
+
+.mb-list__badge.is-action {
+  color: #fff;
+  background: var(--brand-gradient);
+}
+
+/* 오른쪽 표 : 머리글 고정 + 한 줄 높이를 왼쪽 목록과 같게 */
+.mb-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: var(--mb-head);
+  padding: 0 16px;
+  background: #fbfaff;
+  box-shadow: inset 0 -1px 0 var(--clean-border);
+}
+
+.mb-table thead tr {
+  border-bottom: none;
+}
+
+.mb-table td {
+  height: var(--mb-row);
+  padding: 0 16px;
+}
+
+.mb-table tbody tr:last-child {
+  border-bottom: 1px solid var(--row-sep);
+}
+
+.mb-table__action {
+  text-align: right;
+}
+
+.mb-table__empty {
+  padding: 48px 16px !important;
+  text-align: center;
+  white-space: normal !important;
+  color: var(--text-muted) !important;
+}
+
+/* 보드 아래 안내 + [데모 초기화] */
+.mb-foot {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
+  margin-top: 12px;
+}
+
+.mb-foot__note {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
 }
 
 .mm-reset-btn {
   flex-shrink: 0;
-  margin-bottom: 32px;            /* .page-header 의 아래 여백과 맞춤 */
   padding: 6px 14px;
   border-radius: 9999px;
   font-size: var(--fs-xs);
@@ -29,92 +234,7 @@
   border-color: rgba(217, 48, 37, 0.3);
 }
 
-/* ---------- 새 매칭 흐름 4단계 안내 (FlowGuide) ---------- */
-.mm-flow {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-@media (min-width: 900px) {
-  .mm-flow {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-.mm-flow__item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--input-bg);
-  border: 1px solid var(--clean-border);
-}
-
-/* 내가 하는 단계 */
-.mm-flow__item.is-mine {
-  background: rgba(100, 50, 220, 0.05);
-  border-color: rgba(100, 50, 220, 0.3);
-}
-
-.mm-flow__num {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-muted);
-  background: #fff;
-  border: 1px solid var(--clean-border);
-}
-
-.mm-flow__item.is-mine .mm-flow__num {
-  color: #fff;
-  border: none;
-  background: var(--brand-gradient);
-}
-
-.mm-flow__title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.mm-flow__me {
-  padding: 1px 8px;
-  border-radius: 9999px;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--brand-purple);
-  background: rgba(100, 50, 220, 0.1);
-}
-
-.mm-flow__desc {
-  margin-top: 2px;
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  color: var(--text-muted);
-}
-
-/* 회의용 예시 안내 */
-.mm-demo-note {
-  margin-bottom: 24px;
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  color: var(--text-muted);
-}
-
-/* 매칭이 없을 때 / 찾을 수 없을 때 */
+/* 매칭을 찾을 수 없을 때 (상세 페이지) */
 .mm-empty {
   padding: 40px 24px;
   border-radius: 16px;
@@ -131,49 +251,6 @@
   font-size: var(--fs-xs);
   line-height: var(--lh-xs);
   color: var(--text-muted);
-}
-
-/* ---------- 화물 조건별 묶음 (목록) ---------- */
-.mm-groups > :not(:last-child) {
-  margin-bottom: 28px;
-}
-
-.mm-condition__head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.mm-condition__route {
-  margin-top: 4px;
-  font-size: var(--fs-lg);
-  line-height: var(--lh-lg);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.mm-condition__meta {
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  color: var(--text-muted);
-}
-
-.mm-condition__count {
-  flex-shrink: 0;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  font-weight: 700;
-  color: var(--brand-purple);
-  background: rgba(100, 50, 220, 0.08);
-}
-
-.mm-condition__count.is-action {
-  color: #fff;
-  background: var(--brand-gradient);
 }
 
 /* ---------- 표 (무역 데이터 분석 표와 같은 모양) ---------- */
@@ -318,7 +395,6 @@
 
 .mm-badge--pending { background: rgba(100, 50, 220, 0.08); color: #7c3aed; }
 .mm-badge--waiting { background: rgba(6, 182, 212, 0.1); color: #0e7490; }
-.mm-badge--review { background: #fef3c7; color: #92400e; }
 .mm-badge--completed { background: #dcfce7; color: #166534; }
 .mm-badge--failed { background: #fee2e2; color: #991b1b; }
 .mm-badge--muted { background: var(--divider); color: var(--text-muted); }
@@ -383,10 +459,10 @@
   -webkit-text-fill-color: var(--text-muted);
 }
 
-/* 진행 상황 4칸 (ProgressSteps) */
+/* 진행 상황 3칸 (ProgressSteps) */
 .mm-steps {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 20px;
 }

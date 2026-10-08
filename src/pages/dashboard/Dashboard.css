@@ -1,5 +1,6 @@
 /* =====================================================================
-   대시보드 (Dashboard.tsx 와 components/ 폴더)
+   메인 페이지 (Dashboard.tsx) — 대표 이미지 + 인사말
+   (아래 "내 매칭" 보드 스타일은 pages/my-matching/MyMatching.css)
    ===================================================================== */
 
 /* ---------- 대표 이미지 배너 (헤더 바로 아래 , 화면 가로 전체) ----------
@@ -54,7 +55,7 @@
 
 /* ---------- 페이지 제목 ---------- */
 .dashboard-header {
-  margin-bottom: 36px;
+  margin-bottom: 24px;
 }
 
 .dashboard-header .eyebrow {
@@ -64,147 +65,3 @@
 .dashboard-header .page-title {
   line-height: 1.25;
 }
-
-/* ---------- KPI 카드 영역 ---------- */
-.dashboard-kpi-title {
-  margin-bottom: 12px;
-}
-
-.dashboard-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 40px;
-}
-
-@media (min-width: 1024px) {
-  .dashboard-kpi-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-/* StatCard.tsx */
-.stat-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px;
-  overflow: hidden;
-  border-radius: 16px;
-  background: rgba(100, 50, 220, 0.035);
-  border: 1px solid rgba(100, 50, 220, 0.12);
-}
-
-/* 카드 위쪽 얇은 강조선 (색은 --accent 변수로 받음) */
-.stat-card__accent {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  background: linear-gradient(90deg, var(--accent), #06b6d4);
-}
-
-.stat-card__value {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1;
-  color: var(--text-primary);
-}
-
-.stat-card__unit {
-  margin-left: 6px;
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-  font-weight: 400;
-  color: var(--text-muted);
-}
-
-.stat-card__sublabel {
-  margin-top: 6px;
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  color: var(--text-muted);
-}
-
-.stat-card__change {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.stat-card__change-text {
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  color: var(--text-muted);
-}
-
-/* 증감 배지: 상승(빨강) / 하락(초록) */
-.change-badge {
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  font-weight: 700;
-}
-
-.change-badge.is-up {
-  background: rgba(217, 48, 37, 0.08);
-  color: var(--danger);
-}
-
-.change-badge.is-down {
-  background: rgba(26, 158, 92, 0.1);
-  color: var(--success);
-}
-
-/* ---------- 수출입 추이 차트 (TradeTrendChart.tsx) ---------- */
-.trend-section {
-  margin-bottom: 40px;
-}
-
-.trend-section__head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.trend-section__head .eyebrow {
-  margin-bottom: 4px;
-}
-
-.trend-section__title {
-  font-size: var(--fs-lg);
-  line-height: var(--lh-lg);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.trend-section__unit {
-  margin-top: 2px;
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  color: var(--text-muted);
-}
-
-/* (차트 범례 .chart-legend / .legend-* 와 말풍선 .chart-tooltip 은 맞춤 인사이트와 같이 쓰므로 styles/common.css 에 있음) */
-
-.trend-section__accent {
-  width: 48px;
-  height: 2px;
-  margin-bottom: 20px;
-  border-radius: 9999px;
-  background: linear-gradient(90deg, #9333ea, #06b6d4);
-}
-
-.trend-section__separator {
-  height: 1px;
-  margin-top: 20px;
-  background: linear-gradient(90deg, rgba(100, 50, 220, 0.15), transparent);
-}
-

@@ -53,11 +53,10 @@ interface MatchingNotification {
 
 // 메뉴 전체 목록 — 아래 visibleNavItems 에서 로그인 상태에 맞는 것만 골라서 보여줌
 const ALL_NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard', label: '무역 현황' },
+  { id: 'dashboard', label: '내 매칭' },      // 첫 화면 (비회원 · 관리자에게는 안내 문구)
   { id: 'trade', label: '무역 데이터 분석' },
   { id: 'insights', label: '맞춤 인사이트', authRequired: true, userOnly: true },
   { id: 'matching-settings', label: '매칭 조건 설정', authRequired: true, userOnly: true },
-  { id: 'my-matching', label: '내 매칭', authRequired: true, userOnly: true },
   { id: 'matching', label: '매칭 관리', adminOnly: true },
   { id: 'admin', label: '시스템 관리', adminOnly: true },
 ];
@@ -447,7 +446,7 @@ export default function Header({ currentPage, onNavigate, user, onLoginClick, on
                   title="마이페이지"
                   aria-label="마이페이지"
                 >
-                  {user.name.charAt(0)}
+                  {user.name ? user.name.charAt(0) : '?'}
                 </button>
                 <span className={isAdmin ? 'user-box__role is-admin' : 'user-box__role'}>{roleLabel}</span>
               </div>

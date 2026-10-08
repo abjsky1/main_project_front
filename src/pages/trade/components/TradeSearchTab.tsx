@@ -33,7 +33,7 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
       {/* 검색 조건 */}
       <div className="trade-search-card">
         <p className="eyebrow trade-section-label">검색 조건</p>
-        {/* 국가 - HS 코드 - 시작 기간 - 종료 기간 한 줄 (좁은 화면에서는 국가 · HS 코드가 한 줄씩 , 기간 2개는 나란히) */}
+        {/* 국가 - HS 코드 - 시작 기간 - 종료 기간 - [검색] 한 줄 (좁은 화면에서는 국가 · HS 코드가 한 줄씩 , 기간 2개는 나란히) */}
         <div className="trade-search-grid">
           <div className="trade-search-grid__country">
             <label className="trade-field-label">국가</label>
@@ -56,12 +56,14 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
             <label className="trade-field-label">종료 기간</label>
             <input type="month" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="trade-input" />
           </div>
-        </div>
-        <div className="trade-search-actions">
-          {/* 검색 중에는 버튼을 잠가서 같은 검색이 두 번 나가지 않게 함 */}
-          <button onClick={handleSearch} disabled={loading} className="trade-search-btn">
-            {loading ? '검색 중...' : '검색'}
-          </button>
+          <div className="trade-search-grid__action">
+            {/* 다른 칸의 라벨 줄과 높이를 맞추는 빈 라벨 (버튼이 입력칸과 같은 줄에 오도록) */}
+            <span className="trade-field-label" aria-hidden="true">&nbsp;</span>
+            {/* 검색 중에는 버튼을 잠가서 같은 검색이 두 번 나가지 않게 함 */}
+            <button onClick={handleSearch} disabled={loading} className="trade-search-btn">
+              {loading ? '검색 중...' : '검색'}
+            </button>
+          </div>
         </div>
         {searchError && <p className="trade-search-message is-error">{searchError}</p>}
       </div>
