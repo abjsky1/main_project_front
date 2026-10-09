@@ -4,7 +4,9 @@
 
 /* 왼쪽(1) 내 정보 : 오른쪽(2) 고객센터 채팅 (화면이 좁으면 1칸) */
 .mypage-grid {
-  --chat-height: 600px;          /* 채팅 영역 높이 (메시지가 많으면 안에서 스크롤) */
+  /* 두 카드(내 정보 · 고객센터 채팅) 높이 — 비밀번호 변경 3줄까지 들어가는 높이
+     (오류 문구는 버튼 옆에 떠서 높이를 늘리지 않음 , 채팅은 메시지가 많으면 안에서 스크롤) */
+  --chat-height: 600px;
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: 16px;
@@ -13,6 +15,14 @@
 @media (min-width: 900px) {
   .mypage-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
+
+  /* 왼쪽 내 정보 카드 높이를 채팅 카드와 같게 고정
+     → 비밀번호 변경 · 정보 수정 칸이 열려도 카드가 늘어나지 않아서 , 옆 고객센터 채팅 길이가 바뀌지 않음
+     (오류 문구가 여러 줄이 되는 등 600px 을 넘으면 카드 안에서 스크롤) */
+  .mypage-card--info {
+    height: var(--chat-height);
+    overflow-y: auto;
   }
 }
 
@@ -93,11 +103,13 @@
   background: rgba(100, 50, 220, 0.1);
 }
 
+
 /* 수정 모드의 입력칸 (이름 · 주소) */
 .mypage-input {
   width: 100%;
   max-width: 320px;
-  padding: 6px 10px;
+  height: 30px;                  /* 줄 높이(41px) 안에 들어가는 높이로 고정 → [수정] 을 눌러도 줄이 늘어나지 않음 */
+  padding: 0 10px;
   border-radius: 10px;
   font-size: var(--fs-sm);
   line-height: var(--lh-sm);
@@ -149,9 +161,11 @@
 
 .mypage-info__row {
   display: flex;
+  align-items: center;           /* 글자 · 입력창 모두 줄 가운데에 */
   justify-content: space-between;
   gap: 16px;
-  padding: 10px 0;
+  min-height: 41px;              /* 줄 높이 고정 : 글자(20px)일 때와 입력창(30px)일 때 똑같이 41px */
+  padding: 5px 0;
   font-size: var(--fs-sm);
   line-height: var(--lh-sm);
   border-bottom: 1px solid var(--row-sep);
@@ -170,6 +184,91 @@
   font-weight: 600;
   text-align: right;
   color: var(--text-primary);
+}
+
+/* ---------- 비밀번호 변경 (내 정보 목록 바로 아래) ---------- */
+/* 내 정보 목록(.mypage-info__row)과 같은 모양의 한 줄로 바로 아래에 붙임 */
+.mypage-password {
+  border-top: 1px solid var(--row-sep);
+}
+
+/* min-height : ●●●● [변경] 일 때와 입력창일 때 줄 높이를 똑같이 (바뀌는 순간 흔들리지 않게) */
+.mypage-password__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 50px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.mypage-password__label {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+/* ●●●● + [변경] 버튼 (오른쪽 정렬) */
+.mypage-password__value {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 9px;              /* ● 글자는 크게 보여서 작게 */
+  letter-spacing: 0.15em;
+  color: var(--text-secondary);
+}
+
+/* 비밀번호 입력창 (높이 30px 고정 → 줄 높이 50px 안에 들어감) */
+.mypage-password__input {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: var(--fs-xs);
+  outline: none;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1px solid var(--clean-border);
+}
+
+.mypage-password__input:focus {
+  border-color: rgba(100, 50, 220, 0.35);
+}
+
+/* 현재 비밀번호 : "비밀번호" 글자 오른쪽 (아래 두 칸과 같은 너비) */
+.mypage-password__input--current {
+  width: calc(50% - 4px);
+}
+
+/* 새 비밀번호 · 확인 : 한 줄에 하나씩 , 현재 비밀번호 칸 바로 아래에 오른쪽 끝을 맞춰서 */
+.mypage-password__new {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.mypage-password__new .mypage-password__input {
+  width: calc(50% - 4px);
+}
+
+.mypage-password__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* 버튼 왼쪽 빈자리의 오류 문구 (최대 2줄 = 32px → 버튼 높이 안에 들어가서 줄이 늘어나지 않음)
+   white-space: pre-line : 문구 안의 줄바꿈 기호(\n)를 실제 줄바꿈으로 보여 줌 (줄이 꺾이는 위치를 직접 정하려고) */
+.mypage-password__error {
+  flex: 1 1 0%;
+  min-width: 0;
+  white-space: pre-line;
+  font-size: var(--fs-xs);
+  line-height: 16px;
+  color: var(--danger);
 }
 
 /* ---------- 카드 제목 (관리자 채팅방 목록 등) ---------- */
@@ -636,30 +735,30 @@
   border: 1px solid rgba(217, 48, 37, 0.12);
 }
 
-/* 제목 · 설명 | [회원 탈퇴] 버튼 한 줄 */
+/* 제목 · 설명 | 오른쪽([회원 탈퇴] 버튼 또는 입력창 · 취소 · 탈퇴하기) 한 줄
+   (좁은 화면에서는 오른쪽 묶음이 아래 줄로 내려감) */
 .mypage-withdraw__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-/* 비밀번호 입력 | [취소] [탈퇴하기] 한 줄 */
-.mypage-withdraw__form {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px dashed rgba(217, 48, 37, 0.2);
+  justify-content: space-between;
+  gap: 12px 16px;
 }
 
+/* [회원 탈퇴] 버튼이 있던 자리 : [비밀번호 입력창] [취소] [탈퇴하기] */
+.mypage-withdraw__form {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 비밀번호 입력창 : 모서리는 비밀번호 변경 입력창(.mypage-password__input)과 같은 10px
+   높이는 옆의 버튼들과 같게 (위아래 여백 6px) → 버튼과 바뀌어도 줄 높이가 그대로 */
 .mypage-withdraw__input {
-  flex: 0 1 280px;
-  padding: 8px 14px;
-  border-radius: 9999px;
+  width: 200px;
+  padding: 6px 12px;
+  border-radius: 10px;
   font-size: var(--fs-sm);
   line-height: var(--lh-sm);
   outline: none;

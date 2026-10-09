@@ -14,6 +14,14 @@ export async function updateMyInfo(memberId: string, managerName: string, compan
   return response.data;
 }
 
+// PUT /api/mypage/password : 비밀번호 변경 , 성공하면 true
+// - 어떤 회원인지는 서버가 로그인 쿠키(AccessToken)로 정함 → withCredentials: true 로 쿠키를 같이 보냄
+// - 현재 비밀번호가 틀리거나 , 새 비밀번호가 6~20자가 아니거나 , 지금과 같거나 , 쿠키가 만료됐으면 false
+export async function changePassword(currentPassword: string, newPassword: string) {
+  const response = await axios.put<boolean>('/api/mypage/password', { currentPassword, newPassword }, { withCredentials: true });
+  return response.data;
+}
+
 // POST /api/mypage/withdraw : 회원 탈퇴 , 성공하면 true
 // - 어떤 회원인지는 서버가 로그인 쿠키(AccessToken)로 정함 → withCredentials: true 로 쿠키를 같이 보냄
 // - 비밀번호가 틀리거나 , 쿠키가 만료됐거나 , 관리자 계정이면 false
