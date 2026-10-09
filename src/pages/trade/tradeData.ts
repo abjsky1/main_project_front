@@ -8,15 +8,13 @@ export type SortDir = 'asc' | 'desc';                                   // asc =
 
 /* ───────────── 누적 무역 카드 ───────────── */
 
-// 누적 무역 카드 1개의 데이터 구조 (StatCard 가 이 모양의 값을 props 로 받음)
+// 누적 무역 요약 띠의 한 칸 (TradeKpi 가 사용)
 // [TS] interface = 객체 모양 설계도 (가이드 2-2)
 export interface KpiStat {
   label: string;
   value: string;
   unit: string;
   change: number | null;   // 전년 대비 증감률(%) , 비교 데이터가 없으면 null
-  changeLabel: string;
-  accent: string;          // 카드 위쪽 색 띠 색상
 }
 
 /* ───────────── 연도 ───────────── */

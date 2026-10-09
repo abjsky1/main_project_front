@@ -2,14 +2,9 @@
    무역 데이터 분석 (TradeAnalysis.tsx 와 components/ 폴더)
    ===================================================================== */
 
-/* ---------- 탭 줄 : 왼쪽 탭 + 오른쪽 누적 무역 현황 (TradeKpi) ---------- */
+/* ---------- 탭 줄 (두 탭 모두 같은 위치) ---------- */
 .trade-top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px 24px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .trade-tabs {
@@ -25,21 +20,40 @@
   box-shadow: 0 1px 5px rgba(100, 50, 220, 0.12);
 }
 
-/* ---------- 누적 무역 현황 (TradeKpi.tsx + StatCard.tsx) — 예전 첫 화면 카드를 작게 ---------- */
-.trade-kpi {
-  flex: 1 1 560px;
-  max-width: 720px;
-}
-
-.trade-kpi__head {
-  display: flex;
+/* ---------- 누적 무역 현황 요약 띠 (TradeKpi.tsx) ----------
+   [연도 · 누적 기간] | 총 수출액 | 총 수입액 | 무역 수지  — 얇은 한 줄 , 칸 사이는 세로 구분선 */
+.kpi-strip {
+  display: grid;
+  /* 연도 칸 : 나머지 칸의 0.7배 (내용보다 좁아지지는 않음) */
+  grid-template-columns: minmax(max-content, 0.7fr) repeat(3, minmax(0, 1fr));
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
+  padding: 12px 0;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--clean-border);
 }
 
-/* 연도 선택 (2000 ~ 2026) */
-.trade-kpi__year {
+.kpi-strip > * {
+  padding: 0 20px;
+  text-align: center;           /* 각 칸의 내용을 가운데로 */
+}
+
+/* 두 번째 칸부터 왼쪽에 구분선 */
+.kpi-strip > * + * {
+  border-left: 1px solid var(--clean-border);
+}
+
+/* 첫 칸 : 연도 선택 + 누적 기간 */
+.kpi-strip__year {
+  position: relative;           /* 목록(menu)을 버튼 바로 아래에 띄우는 기준 */
+  display: inline-block;
+}
+
+.kpi-strip__year-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 2px 8px;
   border-radius: 8px;
   font-size: var(--fs-xs);
@@ -52,81 +66,126 @@
   border: 1px solid rgba(100, 50, 220, 0.15);
 }
 
-.trade-kpi__grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+.kpi-strip__year-trigger:focus-visible {
+  border-color: var(--brand-purple);
 }
 
-.stat-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px 14px;
-  overflow: hidden;
-  border-radius: 12px;
-  background: rgba(100, 50, 220, 0.035);
-  border: 1px solid rgba(100, 50, 220, 0.12);
+.kpi-strip__year-chevron {
+  flex-shrink: 0;
+  transition: transform 150ms var(--ease);
 }
 
-.stat-card .eyebrow {
-  font-size: 10px;
+.kpi-strip__year-chevron.is-open {
+  transform: rotate(180deg);
 }
 
-/* 카드 위쪽 얇은 강조선 (색은 --accent 변수로 받음) */
-.stat-card__accent {
+/* 연도 목록 : 7개 정도만 보이고 나머지는 스크롤 */
+.kpi-strip__year-menu {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent), #06b6d4);
+  top: 100%;
+  left: 50%;
+  z-index: 20;
+  min-width: 100%;
+  max-height: 200px;
+  margin-top: 4px;
+  padding: 4px;
+  overflow-y: auto;
+  transform: translateX(-50%);
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--clean-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
-.stat-card__value {
-  font-size: var(--fs-xl);
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1;
+.kpi-strip__year-option {
+  padding: 4px 12px;
+  border-radius: 6px;
   white-space: nowrap;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: background-color 150ms var(--ease);
+}
+
+.kpi-strip__year-option:not(.is-selected):hover {
+  background: var(--input-bg);
+}
+
+.kpi-strip__year-option.is-selected {
+  font-weight: 700;
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.06);
+}
+
+.kpi-strip__period-text {
+  margin-top: 4px;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* 나머지 3칸 : 항목 이름 + 값 · 단위 · 증감 배지 */
+.kpi-strip__label {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-secondary);
+}
+
+.kpi-strip__value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px 8px;
+  margin-top: 2px;
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--text-primary);
 }
 
-.stat-card__unit {
-  margin-left: 4px;
-  font-size: 11px;
+.kpi-strip__unit {
+  margin-left: -4px;            /* 숫자에 바짝 붙임 */
+  font-size: var(--fs-xs);
   font-weight: 400;
+  letter-spacing: 0;
   color: var(--text-muted);
 }
 
-.stat-card__change {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.stat-card__change-text {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-/* 증감 배지: 상승(빨강) / 하락(초록) */
-.change-badge {
+/* 증감 배지 : 상승(빨강) / 하락(초록) */
+.kpi-strip__change {
   padding: 1px 6px;
   border-radius: 9999px;
   font-size: 11px;
+  line-height: 16px;
   font-weight: 700;
+  letter-spacing: 0;
+  color: var(--text-muted);
+  background: var(--divider);
 }
 
-.change-badge.is-up {
+.kpi-strip__change.is-up {
   background: rgba(217, 48, 37, 0.08);
   color: var(--danger);
 }
 
-.change-badge.is-down {
+.kpi-strip__change.is-down {
   background: rgba(26, 158, 92, 0.1);
   color: var(--success);
+}
+
+/* 좁은 화면 : 2칸씩 두 줄 (구분선 대신 위아래 간격) */
+@media (max-width: 767px) {
+  .kpi-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 12px;
+  }
+
+  .kpi-strip > * + * {
+    border-left: none;
+  }
 }
 
 /* 섹션 라벨 (검색 조건, 검색 결과) */

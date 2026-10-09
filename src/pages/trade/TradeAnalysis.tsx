@@ -1,7 +1,7 @@
 /* =====================================================================
    무역 데이터 분석 페이지 (주소: /trade , 누구나 볼 수 있음)
    - 탭 2개 : [조건 검색 & 조회] TradeSearchTab , [환율 동향 & 실거래가] ExchangeRateTab
-   - 조건 검색 탭일 때 탭 줄 오른쪽에 누적 무역 현황 카드 3개 (TradeKpi — 예전 첫 화면에서 옮김)
+   - 조건 검색 탭일 때 탭 바로 아래에 누적 무역 현황 요약 띠 (TradeKpi — 예전 첫 화면 카드를 한 줄로)
    - 환율은 백엔드 /api/exchange/month (실제 환율 CSV) , 조건 검색은 /api/condition/search
    ===================================================================== */
 import { useState } from 'react';
@@ -38,7 +38,7 @@ export default function TradeAnalysis() {
     <div className="page-container">
       <PageHeader eyebrow="Analysis" title="무역 데이터 분석" />
 
-      {/* 탭 + (조건 검색 탭이면) 오른쪽에 누적 무역 현황 */}
+      {/* 탭 (두 탭 모두 같은 위치) */}
       <div className="trade-top">
         <div className="tab-group trade-tabs">
           {TABS.map((tab) => (
@@ -51,9 +51,10 @@ export default function TradeAnalysis() {
             </button>
           ))}
         </div>
-
-        {activeTab === 'search' && <TradeKpi year={kpiYear} onYearChange={setKpiYear} />}
       </div>
+
+      {/* 조건 검색 탭 : 탭 아래 누적 무역 현황 요약 띠 */}
+      {activeTab === 'search' && <TradeKpi year={kpiYear} onYearChange={setKpiYear} />}
 
       {activeTab === 'search' && <TradeSearchTab search={search} />}
 
