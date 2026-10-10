@@ -1,3 +1,4 @@
+
 import type { CountryData, RouteData } from '../../../api/referenceData';
 import type { LogisticsForm, PortType } from '../matchingTypes';
 import { getCountryId } from '../routeUtils';
@@ -32,6 +33,15 @@ interface LogisticsConditionFormProps {
 export default function LogisticsConditionForm({
   form, countries, routes, disabled, addDisabled, onFieldChange, onDepartureChange, onDestinationChange, onAdd,
 }: LogisticsConditionFormProps) {
+
+  // [추가] 오늘 날짜 구하기 (브라우저 현지 날짜 기준)
+  const today = new Date();
+
+  const minDate =
+    `${today.getFullYear()}-` +
+    `${String(today.getMonth() + 1).padStart(2, '0')}-` +
+    `${String(today.getDate()).padStart(2, '0')}`;
+
   return (
     <fieldset disabled={disabled} className="ms-form">
       <div className="ms-form-grid">
@@ -49,9 +59,18 @@ export default function LogisticsConditionForm({
         <FormField label="평균 리드타임 (일)">
           <input type="number" value={form.leadTime} onChange={(e) => onFieldChange('leadTime', e.target.value)} placeholder="예: 14" className="ms-input" />
         </FormField>
+
+        {/* [수정] 오늘 이전 날짜 선택 제한 */}
         <FormField label="운송 가능일">
-          <input type="date" value={form.availableDate} onChange={(e) => onFieldChange('availableDate', e.target.value)} className="ms-input" />
+          <input
+            type="date"
+            min={minDate}
+            value={form.availableDate}
+            onChange={(e) => onFieldChange('availableDate', e.target.value)}
+            className="ms-input"
+          />
         </FormField>
+
         <FormField label="가용 물량 (톤)">
           <input type="number" value={form.availableCapacity} onChange={(e) => onFieldChange('availableCapacity', e.target.value)} placeholder="예: 50" className="ms-input" />
         </FormField>

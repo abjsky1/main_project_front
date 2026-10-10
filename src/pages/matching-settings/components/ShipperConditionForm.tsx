@@ -33,6 +33,13 @@ interface ShipperConditionFormProps {
 export default function ShipperConditionForm({
   form, countries, routes, disabled, addDisabled, onFieldChange, onDepartureChange, onDestinationChange, onAdd,
 }: ShipperConditionFormProps) {
+  // [추가] 오늘 날짜 구하기 (한국 시간 등 브라우저 현지 날짜 기준)
+  const today = new Date();
+
+  const minDate =
+    `${today.getFullYear()}-` +
+    `${String(today.getMonth() + 1).padStart(2, '0')}-` +
+    `${String(today.getDate()).padStart(2, '0')}`;
   return (
     // <fieldset disabled> : 안에 있는 입력칸/버튼을 한 번에 모두 비활성화하는 HTML 태그
     <fieldset disabled={disabled} className="ms-form">
@@ -55,7 +62,7 @@ export default function ShipperConditionForm({
           <input type="number" value={form.volume} onChange={(e) => onFieldChange('volume', e.target.value)} placeholder="예: 12.5" className="ms-input" />
         </FormField>
         <FormField label="희망 일정">
-          <input type="date" value={form.schedule} onChange={(e) => onFieldChange('schedule', e.target.value)} className="ms-input" />
+          <input type="date" min={minDate} value={form.schedule} onChange={(e) => onFieldChange('schedule', e.target.value)} className="ms-input" />
         </FormField>
       </div>
 

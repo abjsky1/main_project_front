@@ -36,18 +36,45 @@ function readNumber(value: string, label: string, integer = false, allowZero = f
 }
 
 // 날짜 입력칸 검사 ('2025-12-31' 형식이고 실제로 있는 날짜인지)
+// [수정] 날짜 입력값 검사
 function checkDate(value: string): string {
+
   const message = '올바른 운송 날짜를 입력해 주세요.';
+
   const date = new Date(`${value}T00:00:00Z`);
 
-  // 1) 정규식 : 숫자4-숫자2-숫자2 모양인지 (^ = 시작, \d{4} = 숫자 4개, $ = 끝)
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error(message);
-  // 2) 날짜로 바꿀 수 없는 값인지
-  if (Number.isNaN(date.getTime())) throw new Error(message);
-  // 3) 없는 날짜인지 (예: 2025-02-30 은 자바스크립트가 3월 2일로 바꿔 버리므로, 다시 글자로 바꿔서 비교)
-  if (date.toISOString().slice(0, 10) !== value) throw new Error(message);
+  // 1. 날짜 형식 확인
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error(message);
+  }
+
+  // 2. 올바른 날짜인지 확인
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(message);
+  }
+
+  // 3. 실제 존재하는 날짜인지 확인
+  if (date.toISOString().slice(0, 10) !== value) {
+    throw new Error(message);
+  }
+
+  // [추가] 4. 오늘 날짜 구하기
+  const today = new Date();
+
+  const todayString =
+    `${today.getFullYear()}-` +
+    `${String(today.getMonth() + 1).padStart(2, '0')}-` +
+    `${String(today.getDate()).padStart(2, '0')}`;
+
+  // [추가] 5. 과거 날짜라면 등록 차단
+  if (value < todayString) {
+
+    throw new Error('과거 날짜는 선택할 수 없습니다. 오늘 이후의 날짜를 선택해 주세요.');
+
+  }
 
   return value;
+
 }
 
 // 오류 객체 → 화면에 보여줄 안내 문구

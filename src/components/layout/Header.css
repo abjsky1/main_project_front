@@ -383,3 +383,31 @@
 
   background: #f6f6f8;
 }
+
+/* ---------- 내 매칭 확인하기 버튼 ---------- */
+
+.matching-popup__go-btn {
+  display: block;
+
+  width: 100%;
+
+  margin-top: 12px;
+  padding: 11px 16px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: var(--brand-gradient);
+  color: #fff;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: opacity 150ms var(--ease);
+}
+
+.matching-popup__go-btn:hover {
+  opacity: 0.9;
+}
