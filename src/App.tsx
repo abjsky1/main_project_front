@@ -4,7 +4,7 @@
    - <Routes> 로 주소에 맞는 페이지를 보여줌 (주소 목록은 routes.ts)
    - 여러 페이지가 같이 쓰는 값(매칭 조건 목록 등)도 여기서 보관해서 props 로 내려줌
    ===================================================================== */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import type { CompanyType, User } from './types/user';
@@ -22,6 +22,7 @@ import Insights from './pages/insights/Insights';
 import MyPage from './pages/mypage/MyPage';
 import MyMatchingDetail from './pages/my-matching/MyMatchingDetail';
 import { getInterests, type InterestDto } from './api/interestApi';
+
 
 // 다른 파일에서 '../App' 으로 타입을 가져오던 코드와의 호환용
 export type { Page, UserRole, CompanyType, User } from './types/user';
@@ -115,6 +116,7 @@ export default function App() {
   const currentPage = pathToPage(location.pathname);
   // [TS] useState<User | null>(null) : User 객체 또는 null 을 담는 state (처음엔 null = 비로그인)
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);     // 로그인 모달 열림 여부
   const [showSignup, setShowSignup] = useState(false);   // 회원가입 모달 열림 여부
   const [registeredUsers, setRegisteredUsers] = useState<User[]>(DEMO_USERS);
@@ -130,24 +132,53 @@ export default function App() {
 
   // 처음 열 때(새로고침 포함) 로그인 상태 복구
   // 브라우저에 AccessToken 쿠키가 남아 있으면 GET /api/login/me 가 회원 정보를 돌려줌 (없거나 만료면 빈 응답)
-  useEffect(() => {
-    let ignore = false;
+  // 새로고침 시 로그인 상태 복구
+  useEffect(() => {let ignore = false;
 
-    async function restoreLogin() {
-      try {
-        const response = await axios.get<LoginMember>('/api/login/me', { withCredentials: true });
-        if (!ignore && response.data) setUser(toUser(response.data));
-      } catch (error) {
+  async function restoreLogin() {
+    try {
+      // 1. AccessToken으로 회원 정보 조회
+      let response = await axios.get<LoginMember>(
+        '/api/login/me',
+        { withCredentials: true }
+      );
+
+      if (ignore) return;
+
+      // 2. 빈 응답이면 RefreshToken으로 재발급
+      if (!response.data) {
+        response = await axios.post<LoginMember>(
+          '/api/login/reissue',
+          {},
+          { withCredentials: true }
+        );
+      }
+
+      if (ignore) return;
+
+      // 3. 회원 정보가 있으면 로그인 상태 복구
+      if (response.data) {
+        setUser(toUser(response.data));
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      if (!ignore) {
         console.log('로그인 상태 복구 실패 : ', error);
       }
+    } finally {
+      if (!ignore) {
+        setLoading(false);
+      }
     }
+  }
 
-    restoreLogin();
+  restoreLogin();
 
-    return () => {
-      ignore = true;
-    };
-  }, []);
+  return () => {
+    ignore = true;
+  };
+}, []);
 
   // 로그인한 회원이 바뀌면(로그인 / 로그아웃) 그 회원의 관심 국가를 DB 에서 불러옴
   useEffect(() => {
@@ -178,47 +209,139 @@ export default function App() {
   // 로그인 (LoginModal 에서 호출)
   // 돌려주는 값 : 실패하면 오류 문구(글자), 성공하면 null → LoginModal 이 오류 문구를 화면에 표시
   // [TS] Promise<string | null> : async 함수가 나중에 돌려줄 값이 "글자 또는 null" 이라는 표시
-  const handleLogin =
-  async (
+    const handleLogin = async (
     email: string,
     password: string
   ): Promise<string | null> => {
-
     try {
+      // 1. 로그인 요청
+      const loginResponse = await axios.post<boolean>(
+        '/api/login',
+        {
+          userEmail: email,
+          userPassword: password,
+        },
+        { withCredentials: true }
+      );
 
-      // 1. Spring 로그인 API 호출 (성공하면 쿠키 2개 + 회원 정보 , 실패하면 빈 응답)
-      // [TS] axios.post<LoginMember> : 응답(response.data)이 LoginMember 모양이라는 표시
-          const response = await axios.post<LoginMember>('/api/login',{userEmail: email,userPassword: password},
-            {withCredentials: true}); // 프론트와 백엔드가 HTTP 요청을 주고받을 때 쿠키를 함께 보내고 받을 수 있게 하는 설정
-      // 2. 로그인 실패
-      if (!response.data) {
+      if (loginResponse.data !== true) {
         return '이메일 또는 비밀번호가 올바르지 않습니다.';
       }
-      // 3. React User 저장 (백엔드 필드 이름 → 화면에서 쓰는 User 모양으로 바꿔 담기)
-      setUser(toUser(response.data));
-      // 4. 로그인 창 닫기
+
+      // 2. 로그인한 회원 정보 조회
+      const memberResponse = await axios.get<LoginMember>(
+        '/api/login/me',
+        { withCredentials: true }
+      );
+
+      if (!memberResponse.data) {
+        return '로그인 후 회원 정보를 확인하지 못했습니다.';
+      }
+
+      // 3. 화면에 사용할 회원 정보 저장
+      setUser(toUser(memberResponse.data));
       setShowLogin(false);
+
       return null;
     } catch (error) {
-      console.log(error);
+      console.log('로그인 오류 : ', error);
       return '로그인 중 오류가 발생했습니다.';
     }
   };
 
   // 회원가입 (SignupModal 에서 호출) — 현재는 화면 안의 목록에만 추가 (서버 저장 X)
   // (prev) => [...prev, newUser] : 이전 목록을 복사하고 끝에 새 회원 추가
-  const handleSignup = (newUser: User, password: string) => {
+const handleSignup = async (
+  newUser: User,
+  password: string
+): Promise<string | null> => {
+  try {
+    // 현재 프로젝트의 유형 ID 기준.
+    // 실제 signup 테이블의 값이 201/301인지 확인해야 합니다.
+    const signupId =
+      newUser.companyType === '수출입기업' ? '201' : '301';
+
+    const response = await axios.post<boolean>(
+      '/api/signup',
+      {
+        userEmail: newUser.email.trim(),
+        userPassword: password,
+        companyName: newUser.companyName,
+        managerName: newUser.name,
+        businessRegNo: newUser.businessNumber,
+        userPhone: newUser.phone,
+        companyAddress: newUser.address,
+        signupEntity: { signupId },
+      },
+      { withCredentials: true }
+    );
+
+    if (response.data !== true) {
+      return '회원가입에 실패했습니다.';
+    }
+
+    // 서버 저장 성공 후 이메일 목록만 갱신
     setRegisteredUsers((prev) => [...prev, newUser]);
-    setRegisteredPasswords((prev) => ({ ...prev, [newUser.email]: password }));
-  };
+
+    return null;
+  } catch (error) {
+    console.log('회원가입 요청 실패');
+
+    return '회원가입 중 오류가 발생했습니다. 입력 정보와 서버 상태를 확인해주세요.';
+  }
+};
 
   // 프론트 로그인 상태 비우기 → 첫 화면(/)으로 이동 (로그아웃 · 회원 탈퇴가 같이 사용)
-  const clearLoginState = () => {
-    setShipperRows([]);
-    setLogisticsRows([]);
-    setUser(null);
-    navigate(PAGE_PATHS.dashboard);
+    const clearLoginState = useCallback(() => {
+      setShipperRows([]);
+      setLogisticsRows([]);
+      setInterests([]);
+      setUser(null);
+      navigate(PAGE_PATHS.dashboard);
+    }, [navigate]);
+
+    // 로그인 중 15분마다 토큰 재발급
+useEffect(() => {
+  if (!memberId) return;
+
+  let ignore = false;
+  let running = false;
+
+  const timer = window.setInterval(async () => {
+    if (running) return;
+
+    running = true;
+
+    try {
+      const response = await axios.post<LoginMember>(
+        '/api/login/reissue',
+        {},
+        { withCredentials: true }
+      );
+
+      if (ignore) return;
+
+      // 빈 응답이면 인증 유지 불가
+      if (!response.data) {
+        window.clearInterval(timer);
+        alert('로그인이 만료되었습니다. 다시 로그인해 주세요.');
+        clearLoginState();
+      }
+    } catch (error) {
+      if (!ignore) {
+        // 네트워크 오류만으로 로그아웃시키지 않음
+        console.log('토큰 재발급 실패 : ', error);
+      }
+    } finally {
+      running = false;
+    }
+  }, 15 * 60 * 1000);
+
+  return () => {
+    ignore = true;
+    window.clearInterval(timer);
   };
+}, [memberId, clearLoginState]);
 
   // 로그아웃 : 서버에 로그아웃 요청(쿠키 · 레디스 토큰 삭제) → 프론트 로그인 상태 비우기
   const handleLogout = async () => {
@@ -240,6 +363,14 @@ export default function App() {
     console.log('로그아웃 오류 : ', error);
   }
 };
+
+  if (loading) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        로그인 상태 확인 중...
+      </div>
+    );
+  }
 
   return (
     <div className="app-root">

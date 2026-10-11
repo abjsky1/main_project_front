@@ -5,7 +5,7 @@ import AuthField from './AuthField';
 import './AuthModal.css';
 
 interface SignupModalProps {
-  onSignup: (user: User, password: string) => void;
+  onSignup: (user: User,password: string) => Promise<string | null>;
   onClose: () => void;
   onLoginClick: () => void;
   existingEmails: string[];
@@ -28,7 +28,7 @@ export default function SignupModal({ onSignup, onClose, onLoginClick, existingE
   // 칸별 오류 문구 { email: '유효한 이메일을...', password: '...' }
   // [TS] Record<string, string> : 키도 글자, 값도 글자인 객체 (가이드 2-8)
   const [errors, setErrors] = useState<Record<string, string>>({});
-
+  const [submitting, setSubmitting] = useState(false);
   // 특정 칸(k)의 오류 문구만 지우기 — [k] 는 변수 k 의 값을 칸 이름으로 사용
   const clearError = (k: string) => setErrors((p) => ({ ...p, [k]: '' }));
 
@@ -58,11 +58,48 @@ export default function SignupModal({ onSignup, onClose, onLoginClick, existingE
 
   const handleNext = () => { if (validateStep1()) setStep(2); };
 
-  const handleSubmit = () => {
-    if (!validateStep2()) return;
-    onSignup({ name, email, role: 'user', companyType, companyName, businessNumber, phone, address }, password);
+const handleSubmit = async () => {
+  if (submitting || !validateStep2()) return;
+
+  setSubmitting(true);
+
+  try {
+    const errorMessage = await onSignup(
+      {
+        name,
+        email: email.trim(),
+        role: 'user',
+        companyType,
+        companyName,
+        businessNumber,
+        phone,
+        address,
+      },
+      password
+    );
+
+    // 서버 저장 실패 시 완료 화면으로 이동하지 않음
+    if (errorMessage) {
+      setErrors((prev) => ({
+        ...prev,
+        submit: errorMessage,
+      }));
+      return;
+    }
+
+    // 서버 저장 성공 시 완료 화면 표시
+    setPassword('');
+    setPasswordConfirm('');
     setStep('done');
-  };
+  } catch {
+    setErrors((prev) => ({
+      ...prev,
+      submit: '회원가입 요청을 완료하지 못했습니다.',
+    }));
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   return (
     <div className="auth-backdrop auth-backdrop--scroll" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -153,10 +190,27 @@ export default function SignupModal({ onSignup, onClose, onLoginClick, existingE
               />
               {errors.address && <p className="auth-field-error">{errors.address}</p>}
             </div>
-            <div className="signup-actions">
-              <button onClick={() => setStep(1)} className="signup-prev-btn">← 이전</button>
-              <button onClick={handleSubmit} className="auth-primary-btn">가입 완료</button>
-            </div>
+            {errors.submit && (
+          <p className="auth-field-error">{errors.submit}</p>
+        )}
+
+        <div className="signup-actions">
+          <button
+            onClick={() => setStep(1)}
+            className="signup-prev-btn"
+            disabled={submitting}
+          >
+            ← 이전
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            className="auth-primary-btn"
+            disabled={submitting}
+          >
+            {submitting ? '가입 처리 중...' : '가입 완료'}
+          </button>
+        </div>
           </div>
         )}
 
