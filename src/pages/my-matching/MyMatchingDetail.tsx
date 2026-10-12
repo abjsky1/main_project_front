@@ -495,6 +495,11 @@ export default function MyMatchingDetail({
       // 7. 변경된 상태를 서버에서 다시 조회
       refreshMatch();
 
+      // 8. 매칭 상태가 변경되었으므로 헤더 알림 갱신
+      window.dispatchEvent(
+        new Event('macross:matching-updated')
+      );
+
     } catch (error) {
 
       console.error('매칭 상태 변경 오류:', error);
