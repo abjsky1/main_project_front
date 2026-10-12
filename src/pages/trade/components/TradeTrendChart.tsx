@@ -94,7 +94,7 @@ export default function TradeTrendChart({
         // { data } : 응답 객체에서 data 칸만 꺼내기 (구조분해 — response.data 와 같음)
         const { data } =
           await axios.get<MonthlyTradeResponse[]>(
-            '/api/cumulative/monthly',
+            'http://localhost:8080/api/cumulative/monthly',
             {
               params: { year },
             }
