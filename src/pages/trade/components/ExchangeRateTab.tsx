@@ -91,9 +91,7 @@ export default function ExchangeRateTab({
 
   // SSE 구독
   useEffect(() => {
-    const eventSource = new EventSource(
-      'http://localhost:8080/api/exchangerate/subscribe'
-    );
+    const eventSource = new EventSource('http://localhost:8080/api/exchangerate/subscribe');
 
     eventSource.addEventListener('notice', (e) => {
       try {

@@ -716,7 +716,7 @@ select.trade-input {
   flex: 1 1 0%;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .currency-chip {
