@@ -17,7 +17,9 @@ import PageHeader from '../../components/common/PageHeader';
 import NoticePanel from '../../components/common/NoticePanel';
 import MatchingBoard from '../my-matching/components/MatchingBoard';
 
-import heroImage from '../../assets/macross_wide.png';   // 2560×1020 원본 → 1280×510 으로 표시 (고해상도 화면에서 선명)
+// 대표 이미지 사진 2장 (Unsplash 무료 사진 — 상업적 사용 가능 , 출처 표기 필요 없음)
+import shipperImage from '../../assets/hero-shipper.jpg';   // 왼쪽 : 창고 내부 (화주 쪽) 1600×1067
+import carrierImage from '../../assets/hero-carrier.jpg';   // 오른쪽 : 위에서 본 컨테이너선 (운송사 쪽) 1600×1152
 import './Dashboard.css';
 
 // [TS] App.tsx 에서 받는 props 의 모양 (가이드 2-4)
@@ -44,20 +46,36 @@ export default function Dashboard({ user, onLoginClick }: DashboardProps) {
 
   return (
     <>
-      {/* 대표 이미지 (화주 ↔ Macross ↔ 운송사) — 화면 가로 전체 배너 */}
+      {/* 대표 이미지 (왼쪽 화주 창고 ↔ 오른쪽 운송사 선박을 사선으로 나눔 + 가운데 소개 문구) — 화면 가로 전체 배너 */}
+      {/* stage(무대) : 1280×510 비율로 고정된 가운데 그림 , 바깥 양옆은 이어지는 색으로 채움 (Dashboard.css) */}
       <section className="dashboard-hero">
         <div className="dashboard-hero__stage">
-          <img
-            src={heroImage}
-            alt="Macross — 화주와 운송사를 연결하는 물류 매칭 플랫폼"
-            width={1280}
-            height={510}
-            className="dashboard-hero__img"
-          />
+          <div className="dashboard-hero__seam" />
+          <div className="dashboard-hero__half dashboard-hero__half--left">
+            <img src={shipperImage} alt="" className="dashboard-hero__img" />
+          </div>
+          <div className="dashboard-hero__half dashboard-hero__half--right">
+            <img src={carrierImage} alt="" className="dashboard-hero__img" />
+          </div>
+          <div className="dashboard-hero__vignette" />
+
+          {/* 가운데 문구 */}
+          <div className="dashboard-hero__copy">
+            <span className="dashboard-hero__eyebrow">LOGISTICS MATCHING PLATFORM</span>
+            <h2 className="dashboard-hero__title">
+              화주와 운송사를,<br />
+              <span className="dashboard-hero__highlight">가장 빠르게</span> 잇다.
+            </h2>
+            <p className="dashboard-hero__desc">내 화물 조건에 맞는 운송사를 자동으로 찾아 연결해 드립니다.</p>
+          </div>
+
+          {/* 아래 양쪽 이름표 */}
+          <span className="dashboard-hero__side dashboard-hero__side--left">화주 <em>SHIPPER</em></span>
+          <span className="dashboard-hero__side dashboard-hero__side--right">운송사 <em>CARRIER</em></span>
         </div>
       </section>
 
-      <div className="page-container dashboard-body">
+      <div className="page-container">
         <PageHeader
           eyebrow="My Matching"
           title={greeting}
