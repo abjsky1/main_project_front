@@ -53,6 +53,14 @@ react(),
           target: 'http://localhost:8080',
           changeOrigin: true,
         },
+        // 고객센터 채팅 웹소켓 (STOMP) — 화면은 ws://localhost:8443/ws-chat 로 연결 → 백엔드 /ws-chat 로 전달
+        // ws: true : 일반 HTTP 요청뿐 아니라 웹소켓 연결도 넘겨줌
+        // (백엔드 WebSocketConfig 가 http://localhost:8443 에서 온 연결만 받음 — 브라우저가 보내는 Origin 은 이 주소 그대로)
+        '/ws-chat': {
+          target: 'http://localhost:8080',
+          ws: true,
+          changeOrigin: true,
+        },
 
       },
       host: process.env.FIGMA_DEV_SERVER_HOST || true,
