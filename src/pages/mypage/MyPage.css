@@ -311,6 +311,7 @@
 
 /* 채팅이 들어가는 카드 : 안쪽 여백 없이 , 높이 고정 */
 .mypage-card--chat {
+  position: relative;   /* 오류 안내(.chat-window__error)를 채팅창 위에 띄우는 기준 */
   height: var(--chat-height);
   padding: 0;
   overflow: hidden;
@@ -446,6 +447,37 @@
   color: var(--brand-purple);
 }
 
+/* [상담 종료] : [닫기] 와 같은 모양 , 빨간 글자 */
+.chat-window__end {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--danger);
+  border: 1px solid rgba(217, 48, 37, 0.25);
+}
+
+.chat-window__end:hover {
+  background: rgba(217, 48, 37, 0.05);
+}
+
+/* 오류 안내 : 채팅창 위쪽(제목 아래)에 띄움 */
+.chat-window__error {
+  position: absolute;
+  top: 68px;
+  left: 50%;
+  z-index: 1;
+  margin-top: 0;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1px solid rgba(217, 48, 37, 0.25);
+}
+
 /* 메시지 목록 (남는 높이를 모두 차지 , 안에서 스크롤) */
 .chat-window__list {
   flex: 1 1 0%;
@@ -460,6 +492,17 @@
   text-align: center;
   font-size: 11px;
   color: var(--text-muted);
+}
+
+/* SYSTEM 메시지 ("상담이 시작되었습니다" 등) : 가운데 작은 알약 */
+.chat-system {
+  width: fit-content;
+  margin: 4px auto 12px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--tint-bg-hover);
 }
 
 .chat-msg {
@@ -558,6 +601,38 @@
 .chat-window__send:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* 서버와 연결 중일 때 잠긴 입력칸 */
+.chat-window__input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* 상담이 종료된 방 : 입력칸 대신 안내 (+ 회원은 [새 상담 시작]) */
+.chat-window__closed {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 65px;
+  padding: 12px 16px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+  border-top: 1px solid var(--clean-border);
+  background: #fff;
+}
+
+.chat-window__restart {
+  padding: 7px 16px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand-gradient);
 }
 
 /* ---------- 관리자 : 채팅방 목록(왼쪽) + 대화(오른쪽) ---------- */
@@ -666,6 +741,26 @@
   flex-shrink: 0;
   font-size: 10px;
   color: var(--text-muted);
+}
+
+/* 회사명 옆 상태 표시 (종료 / 탈퇴) */
+.admin-chat__tag {
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 16px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--divider);
+}
+
+/* 목록 위 오류 안내 */
+.admin-chat__error {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--row-sep);
 }
 
 .admin-chat__preview {

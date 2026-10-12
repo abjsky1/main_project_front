@@ -3,9 +3,9 @@
    - 왼쪽(1) 내 정보 : 로그인할 때 받은 회원 정보 표시 + 이름 · 주소 수정 (PUT /api/mypage/{memberId})
                        + 비밀번호 변경 (PUT /api/mypage/password)
    - 오른쪽(2) 고객센터 채팅 상담
-       기업 회원 : [고객센터 채팅상담] 버튼 → 내 채팅방 (components/SupportChat)
-       관리자    : 채팅방 목록 + 고른 방의 대화 (components/AdminChatConsole)
-       ⚠️ 채팅은 프론트 데모 (브라우저 저장 — chatData.ts)
+       기업 회원 : [고객센터 채팅상담] 버튼 → 내 채팅방 (components/SupportChat + useSupportChat)
+       관리자    : 채팅방 목록 + 고른 방의 대화 (components/AdminChatConsole + useAdminChat)
+       → 대화는 DB 에 저장 (api/chatApi) , 새 메시지는 웹소켓(STOMP)으로 실시간 전달
    - 관심 국가 설정은 맞춤 인사이트 페이지 위쪽으로 옮김
    - 회원 탈퇴 (기업 회원만) : 비밀번호 확인 → POST /api/mypage/withdraw → 성공하면 로그아웃 상태로 첫 화면
    ===================================================================== */
@@ -339,9 +339,9 @@ export default function MyPage({ user, onUserChange, onWithdrawn }: MyPageProps)
         </section>
 
         {/* ---------- 고객센터 채팅 상담 ---------- */}
-        {/* key : 다른 회원으로 바뀌면 채팅 화면을 새로 그림 (열려 있던 채팅창 닫힘) */}
+        {/* key : 다른 회원으로 바뀌면 채팅 화면을 새로 그림 (열려 있던 채팅창 닫힘 , 웹소켓도 새로 연결) */}
         {isCompany
-          ? <SupportChat key={user.memberId ?? user.email} user={user} />
+          ? <SupportChat key={user.memberId ?? user.email} />
           : <AdminChatConsole />}
       </div>
 

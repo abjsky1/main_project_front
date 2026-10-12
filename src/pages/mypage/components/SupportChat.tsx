@@ -1,27 +1,39 @@
 import { useEffect, useState } from 'react';
-import type { User } from '../../../types/user';
-import { unreadCount } from '../chatData';
 import useSupportChat from '../useSupportChat';
 import ChatWindow from './ChatWindow';
 
 // 회원용 고객센터 채팅 상담 (마이페이지 오른쪽)
-// [고객센터 채팅상담] 버튼 → 내 채팅방이 열림 (처음이면 채팅방을 만들고 고객센터 인사가 들어감)
-// ⚠️ 프론트 데모 — 대화는 이 브라우저에만 저장 (관리자 계정으로 로그인하면 같은 대화가 보임)
-export default function SupportChat({ user }: { user: User }) {
-  const { rooms, openRoom, sendMessage, markRead } = useSupportChat();
-  const [open, setOpen] = useState(false);
+// [고객센터 채팅상담] 버튼
+//   - 상담 중이면 → 채팅창을 바로 엶
+//   - 처음이거나 지난 상담이 종료됐으면 → 상담 시작(POST /api/chat/my-room/open) 후 엶
+// 메시지는 웹소켓으로 실시간 전달 (useSupportChat) — 어느 회원인지는 서버가 로그인 쿠키로 확인
+export default function SupportChat() {
+  const { room, messages, loading, connected, error, startChat, sendMessage, endChat, markAsRead } = useSupportChat();
+  const [open, setOpen] = useState(false);   // 채팅창 열림 여부
 
-  const room = rooms.find((r) => r.memberId === user.memberId);
-  const unread = room ? unreadCount(room, 'member') : 0;
+  const unread = room?.unreadCount ?? 0;
 
   // 채팅창이 열려 있을 때 고객센터 답장이 오면 바로 읽음 처리
   useEffect(() => {
-    if (open && room && unread > 0) markRead(room.memberId, 'member');
-  }, [open, room, unread, markRead]);
+    if (open && unread > 0) markAsRead();
+  }, [open, unread, markAsRead]);
 
-  const startChat = () => {
-    openRoom(user);
-    setOpen(true);
+  // [고객센터 채팅상담]
+  const handleOpen = async () => {
+    // 1. 상담 중이면 바로 열기
+    if (room?.status) {
+      setOpen(true);
+      return;
+    }
+    // 2. 아니면 상담 시작 → 성공하면 열기
+    const success = await startChat();
+    if (success) setOpen(true);
+  };
+
+  // [상담 종료] — 실수로 누르지 않도록 한 번 더 확인
+  const handleEnd = () => {
+    if (!window.confirm('상담을 종료할까요?\n종료한 뒤에도 [새 상담 시작]으로 다시 문의할 수 있습니다.')) return;
+    endChat();
   };
 
   // 채팅창이 닫혀 있을 때 : 안내 + [고객센터 채팅상담] 버튼
@@ -39,14 +51,18 @@ export default function SupportChat({ user }: { user: User }) {
           매칭 조건 설정 , 매칭 요청 · 수락 , 회원 정보 등 궁금한 점을 고객센터에 물어보세요.
           <br />평일 09:00 ~ 18:00 에 답변드립니다.
         </p>
-        <button onClick={startChat} disabled={!user.memberId} className="support-intro__btn">
+        <button onClick={handleOpen} disabled={loading} className="support-intro__btn">
           고객센터 채팅상담
           {unread > 0 && <span className="support-intro__badge">{unread}</span>}
         </button>
-        {room && room.messages.length > 1 && (
-          <p className="support-intro__hint">이전 상담 내용이 있어요. 버튼을 누르면 이어서 대화할 수 있습니다.</p>
+        {room && (
+          <p className="support-intro__hint">
+            {room.status
+              ? '상담이 진행 중이에요. 버튼을 누르면 이어서 대화할 수 있습니다.'
+              : '지난 상담은 종료되었어요. 버튼을 누르면 새 상담이 시작됩니다.'}
+          </p>
         )}
-        {!user.memberId && <p className="mypage-error">회원 번호가 없어 상담을 시작할 수 없습니다. 다시 로그인해 주세요.</p>}
+        {error && <p className="mypage-error">{error}</p>}
       </section>
     );
   }
@@ -55,13 +71,22 @@ export default function SupportChat({ user }: { user: User }) {
     <section className="mypage-card mypage-card--chat">
       <ChatWindow
         title="MACROSS 고객센터"
-        subtitle="평일 09:00 ~ 18:00 · 이 브라우저에 저장되는 예시 채팅"
-        messages={room.messages}
-        me="member"
+        subtitle={connected ? '평일 09:00 ~ 18:00' : '서버와 연결 중...'}
+        messages={messages}
+        me="MEMBER"
         partnerLabel="MACROSS 고객센터"
-        onSend={(text) => sendMessage(room.memberId, 'member', text)}
+        connecting={!connected}
+        closedNotice={room.status ? undefined : (
+          <>
+            <span>상담이 종료되었습니다.</span>
+            <button onClick={startChat} className="chat-window__restart">새 상담 시작</button>
+          </>
+        )}
+        onSend={sendMessage}
+        onEnd={room.status ? handleEnd : undefined}
         onClose={() => setOpen(false)}
       />
+      {error && <p className="mypage-error chat-window__error">{error}</p>}
     </section>
   );
 }

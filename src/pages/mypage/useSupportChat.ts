@@ -1,76 +1,167 @@
-import { useEffect, useState } from 'react';
-import type { User } from '../../types/user';
-import { loadRooms, newMessageId, saveRooms, STORAGE_KEY, WELCOME_TEXT, type ChatRoom, type ChatSender } from './chatData';
+import { useEffect, useRef, useState } from 'react';
+import { Client } from '@stomp/stompjs';
+import {
+  CHAT_SEND_DESTINATION, chatRoomTopic, closeRoom, getChatSocketUrl, getMessages, getMyRoom, markRead, openMyRoom,
+  type MessageDto, type MessageSendDto, type RoomDto,
+} from '../../api/chatApi';
 
-// 고객센터 채팅 데모 데이터를 다루는 훅 (회원 화면 · 관리자 화면이 같이 사용)
-// - 처음 : 브라우저에 저장된 채팅방을 불러옴
-// - 다른 탭에서 메시지를 보내면 storage 이벤트로 바로 다시 불러옴 (같은 브라우저의 회원 탭 ↔ 관리자 탭)
-// ⚠️ 백엔드 채팅 API 가 생기면 이 훅 안을 axios 호출(조회 / 보내기 / 읽음 처리)로 바꾸면 화면 코드는 그대로 쓸 수 있음
+// 회원용 고객센터 채팅 훅 (SupportChat 화면이 사용 , 관리자 화면은 useAdminChat)
+// - REST (chatApi)  : 내 채팅방 불러오기 · 상담 시작/종료 · 읽음 처리
+// - 웹소켓 (STOMP)  : 내 방 주소(/sub/chat/room/{방번호})를 구독해서 새 메시지를 실시간으로 받음 , 보내기도 웹소켓으로
+//   → B_react day062 ChatRoom.jsx 와 같은 방식 (new Client → onConnect 에서 subscribe → activate , 화면이 사라지면 deactivate)
+// - 누가 보냈는지는 서버가 웹소켓 연결 때 쿠키로 확인 → 화면은 방 번호와 내용만 보냄
 export default function useSupportChat() {
-  // useState(() => 값) : 처음 한 번만 함수를 실행해서 시작 값을 만듦
-  const [rooms, setRooms] = useState<ChatRoom[]>(() => loadRooms());
+  const [room, setRoom] = useState<RoomDto | null>(null);       // 내 채팅방 (상담을 한 번도 안 했으면 null)
+  const [messages, setMessages] = useState<MessageDto[]>([]);   // 이번 상담 메시지
+  const [loading, setLoading] = useState(true);                 // 처음 불러오는 중
+  const [connected, setConnected] = useState(false);            // 웹소켓 연결 여부 (false 면 입력칸 잠금)
+  const [error, setError] = useState('');
+  // useRef : 다시 그려져도 값이 유지되는 상자 — 보내기 함수에서 연결 객체를 쓰려고 (day062 의 clientRef 와 같음)
+  const clientRef = useRef<Client | null>(null);
 
-  // 다른 탭에서 저장하면 다시 불러오기
+  const roomId = room?.roomId;
+
+  // 1. 처음 한 번 : 내 채팅방 불러오기 (안 읽음 수 · 진행 중인 상담이 있는지 보여 주려고)
   useEffect(() => {
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === STORAGE_KEY) setRooms(loadRooms());
+    let ignore = false;   // 응답 전에 화면이 사라지면 true → 늦게 온 응답 무시 (가이드 3-4)
+
+    async function fetchMyRoom() {
+      try {
+        const myRoom = await getMyRoom();
+        if (ignore) return;
+        setRoom(myRoom);
+        setMessages(myRoom?.messages ?? []);
+      } catch (error) {
+        console.log('내 채팅방 조회 실패 : ', error);
+        if (!ignore) setError('채팅방을 불러오지 못했습니다.');
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+
+    fetchMyRoom();
+
+    return () => {
+      ignore = true;
     };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  // 바꾼 목록을 화면 + 브라우저에 저장
-  // (항상 저장된 최신 목록을 읽어서 바꿈 → 다른 탭에서 방금 보낸 메시지를 덮어쓰지 않도록)
-  const update = (change: (list: ChatRoom[]) => ChatRoom[]) => {
-    const next = change(loadRooms());
-    setRooms(next);
-    saveRooms(next);
-  };
+  // 2. 방 번호가 생기면 웹소켓 연결 + 내 방 구독
+  //    방이 없으면(상담을 한 번도 안 함) 연결하지 않음 → [고객센터 채팅상담] 으로 방이 생기면 그때 연결
+  useEffect(() => {
+    if (roomId == null) return;
 
-  // 회원 : 내 채팅방 열기 (없으면 만들고 고객센터 인사를 넣음)
-  const openRoom = (user: User) => {
-    if (!user.memberId) return;
-    update((list) => {
-      if (list.some((room) => room.memberId === user.memberId)) return list;
-      const now = new Date().toISOString();
-      const room: ChatRoom = {
-        memberId: user.memberId!,
-        memberName: user.name,
-        companyName: user.companyName ?? '-',
-        companyType: user.companyType ?? '-',
-        messages: [{ id: newMessageId(), from: 'admin', text: WELCOME_TEXT, at: now }],
-        adminReadAt: now,
-        memberReadAt: now,
-      };
-      return [...list, room];
+    const client = new Client({
+      // 2-1. 연결 주소 : ws://지금주소/ws-chat → Vite 프록시 → 백엔드 (로그인 쿠키가 같이 가서 서버가 회원을 확인)
+      brokerURL: getChatSocketUrl(),
+      // 2-2. 끊기면 5초 뒤 자동으로 다시 연결 (다시 연결할 때도 쿠키로 다시 확인)
+      reconnectDelay: 5000,
+      // 2-3. 연결 성공 (다시 연결됐을 때도 실행)
+      onConnect: () => {
+        setConnected(true);
+
+        // 내 방 구독 : 새 메시지 · 상담 시작/종료 안내가 오면 실행
+        client.subscribe(chatRoomTopic(roomId), (frame) => {
+          const message: MessageDto = JSON.parse(frame.body);   // JSON 글자 → 객체 (day062 와 같음)
+
+          // 대화에 추가 — 이미 있는 메시지면 그대로 (상담 시작 응답과 웹소켓으로 같은 메시지가 올 수 있음)
+          // setMessages(prev => ...) : 항상 최신 목록에 추가 (day062 [원인2] 의 해결 방법)
+          setMessages((prev) => (prev.some((m) => m.messageId === message.messageId) ? prev : [...prev, message]));
+
+          // 방 상태 · 안 읽음 수 갱신 (고객센터(ADMIN)가 보낸 메시지만 회원의 "안 읽음" — 서버와 같은 규칙)
+          setRoom((prev) => prev && {
+            ...prev,
+            status: message.roomStatus,
+            lastMessage: message,
+            unreadCount: message.senderType === 'ADMIN' ? prev.unreadCount + 1 : prev.unreadCount,
+          });
+        });
+
+        // 연결되기 전 · 끊겨 있던 동안 온 메시지 채우기 (구독을 시작한 "뒤" 에 목록을 다시 받아야 빠지는 메시지가 없음)
+        getMessages(roomId)
+          .then((list) => {
+            if (!list) return;
+            // 서버 목록 + (목록을 받는 사이에 웹소켓으로 먼저 도착한 더 새로운 메시지)
+            const lastId = list.length > 0 ? list[list.length - 1].messageId : 0;
+            setMessages((prev) => [...list, ...prev.filter((m) => m.messageId > lastId)]);
+          })
+          .catch((error) => console.log('메시지 다시 받기 실패 : ', error));
+      },
+      // 2-4. 연결이 끊김 (reconnectDelay 뒤에 자동으로 다시 연결 시도)
+      onWebSocketClose: () => setConnected(false),
     });
+
+    // 2-5. 연결 시작 + 보내기 함수에서 쓰려고 보관
+    client.activate();
+    clientRef.current = client;
+
+    // 2-6. 화면이 사라지면(로그아웃 · 다른 페이지로 이동 포함) 연결 끊기
+    return () => {
+      client.deactivate();
+      clientRef.current = null;
+      setConnected(false);
+    };
+  }, [roomId]);
+
+  // 3. 상담 시작 : 방이 없으면 만들고 , 종료된 방이면 다시 켬 (이미 상담 중이면 그대로)
+  //    방 번호가 처음 생기면 2번이 웹소켓을 연결함
+  //    돌려주는 값 : 성공하면 true
+  const startChat = async () => {
+    try {
+      setError('');
+      const openedRoom = await openMyRoom();
+      if (!openedRoom) {
+        setError('상담을 시작하지 못했습니다. 다시 로그인해 주세요.');
+        return false;
+      }
+      setRoom(openedRoom);
+      setMessages(openedRoom.messages ?? []);   // 다시 켠 방이면 이번 상담 메시지부터 (새 창)
+      return true;
+    } catch (error) {
+      console.log('상담 시작 실패 : ', error);
+      setError('상담을 시작하지 못했습니다.');
+      return false;
+    }
   };
 
-  // 메시지 보내기 (from : 회원이 보내면 'member' , 고객센터가 보내면 'admin')
-  // 보낸 사람은 자기 메시지까지 읽은 것으로 처리
-  const sendMessage = (memberId: string, from: ChatSender, text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    const now = new Date().toISOString();
-    update((list) => list.map((room) => {
-      if (room.memberId !== memberId) return room;
-      return {
-        ...room,
-        messages: [...room.messages, { id: newMessageId(), from, text: trimmed, at: now }],
-        adminReadAt: from === 'admin' ? now : room.adminReadAt,
-        memberReadAt: from === 'member' ? now : room.memberReadAt,
-      };
-    }));
+  // 4. 메시지 보내기 : 웹소켓으로 발행
+  //    화면에 바로 추가하지 않음 → 서버가 저장한 뒤 구독 주소로 돌려준 메시지가 2번 구독에서 추가됨 (저장 안 된 메시지가 뜨지 않게)
+  const sendMessage = (content: string) => {
+    const client = clientRef.current;
+    // 연결이 안 됐으면 보내지 않음 (day062 : client.connected 확인)
+    if (roomId == null || client == null || !client.connected) return;
+
+    // [TS] MessageSendDto : 서버가 받는 모양 { roomId , content } — 보낸 사람은 넣지 않음
+    const body: MessageSendDto = { roomId, content };
+    client.publish({ destination: CHAT_SEND_DESTINATION, body: JSON.stringify(body) });
   };
 
-  // 읽음 처리 (채팅방을 보고 있는 사람 기준)
-  const markRead = (memberId: string, reader: ChatSender) => {
-    const now = new Date().toISOString();
-    update((list) => list.map((room) => {
-      if (room.memberId !== memberId) return room;
-      return reader === 'admin' ? { ...room, adminReadAt: now } : { ...room, memberReadAt: now };
-    }));
+  // 5. 상담 종료 : 성공하면 종료 안내가 웹소켓으로도 옴 (roomStatus: false)
+  const endChat = async () => {
+    if (roomId == null) return;
+    try {
+      const success = await closeRoom(roomId);
+      if (success) {
+        setRoom((prev) => prev && { ...prev, status: false });
+      } else {
+        setError('상담을 종료하지 못했습니다.');
+      }
+    } catch (error) {
+      console.log('상담 종료 실패 : ', error);
+      setError('상담을 종료하지 못했습니다.');
+    }
   };
 
-  return { rooms, openRoom, sendMessage, markRead };
+  // 6. 읽음 처리 : 채팅창을 보고 있을 때 화면(SupportChat)이 부름 → 안 읽음 0
+  const markAsRead = async () => {
+    if (roomId == null) return;
+    setRoom((prev) => prev && { ...prev, unreadCount: 0 });   // 화면에서 먼저 0 으로 (뱃지가 바로 사라지게)
+    try {
+      await markRead(roomId);
+    } catch (error) {
+      console.log('읽음 처리 실패 : ', error);   // 실패해도 다음 메시지가 올 때 다시 읽음 처리됨
+    }
+  };
+
+  return { room, messages, loading, connected, error, startChat, sendMessage, endChat, markAsRead };
 }
