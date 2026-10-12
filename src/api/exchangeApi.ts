@@ -15,7 +15,7 @@ let cached: Promise<ExchangeMonthDto[]> | null = null;
 
 export function getMonthlyExchangeRates(): Promise<ExchangeMonthDto[]> {
   if (!cached) {
-    cached = axios.get<ExchangeMonthDto[]>('/api/exchange/month')
+    cached = axios.get<ExchangeMonthDto[]>('http://localhost:8080/api/exchange/month')
       .then((response) => response.data)
       .catch((error) => {
         cached = null;   // 실패하면 기억을 지워서 다음에 다시 요청할 수 있게
