@@ -81,7 +81,7 @@ export default function TradeKpi({ year, onYearChange }: TradeKpiProps) {
 
     async function fetchTrade() {
       try {
-        const { data } = await axios.get<TradestatusResponse>('/api/cumulative/trade', { params: { year } });
+        const { data } = await axios.get<TradestatusResponse>('http://localhost:8080/api/cumulative/trade', { params: { year } });
         if (!ignore) setTrade(data);
       } catch (error) {
         if (!ignore) console.error('누적 무역 조회 실패:', error);
