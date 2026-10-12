@@ -81,48 +81,8 @@ interface MatchingSettingsProps {
 }
 
 
-// [2] 매칭 서비스 참여 동의 저장
-// 브라우저에 회원별로 저장
-const consentKey = (memberId?: string) => {
-
-  return `macross:matching-consent:${memberId ?? 'guest'}`;
-
-};
-
-
-// 저장된 동의 여부 가져오기
-function loadConsent(memberId?: string): boolean {
-
-  try {
-
-    return localStorage.getItem(consentKey(memberId)) === 'true';
-
-  } catch {
-
-    return false;
-
-  }
-
-}
-
-
-// 동의 여부 저장하기
-function saveConsent(
-  memberId: string | undefined,
-  checked: boolean
-) {
-
-  try {
-
-    localStorage.setItem(consentKey(memberId), String(checked));
-
-  } catch {
-
-    // 브라우저 저장 실패 시 별도 동작 없음
-
-  }
-
-}
+// [2] 매칭 서비스 참여 동의는 페이지에 들어올 때마다 새로 받음
+// 브라우저에 동의 체크 상태를 저장하지 않음
 
 
 // [3] 섹션 제목
@@ -156,9 +116,7 @@ export default function MatchingSettings({
 
 
   // 매칭 참여 동의
-  const [consented, setConsented] = useState(
-    () => loadConsent(user?.memberId)
-  );
+  const [consented, setConsented] = useState(false);
 
 
   // 수출입기업 입력폼
@@ -211,6 +169,11 @@ export default function MatchingSettings({
   const memberId = user?.memberId;
 
   const companyType = user?.companyType;
+
+  // 다른 계정으로 전환하면 참여 동의를 다시 받음
+  useEffect(() => {
+    setConsented(false);
+  }, [memberId]);
 
 
   // [5] DB에 저장된 내 매칭 조건 목록 조회
@@ -530,7 +493,6 @@ export default function MatchingSettings({
 
     setConsented(next);
 
-    saveConsent(user.memberId, next);
 
   };
 

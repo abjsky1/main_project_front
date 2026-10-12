@@ -4,7 +4,7 @@ interface ConsentBoxProps {
 }
 
 // 매칭 서비스 참여 동의 체크 박스
-// 체크 상태(checked)는 부모(MatchingSettings)가 보관하고 (브라우저에도 저장) , 누르면 onToggle 로 알림
+// 체크 상태(checked)는 부모(MatchingSettings)가 보관하고 누르면 onToggle 호출
 export default function ConsentBox({ checked, onToggle }: ConsentBoxProps) {
   return (
     <div className={checked ? 'consent-box is-checked' : 'consent-box'}>
