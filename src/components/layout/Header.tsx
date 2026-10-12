@@ -68,109 +68,107 @@ export default function Header({
   const isAdmin = user?.role === 'admin';
 
 
-  // [1] 확인할 매칭 알림 개수
+  // [1] 확인할 전체 매칭 알림 개수 (알림창 안에서 표시)
   const [matchingCount, setMatchingCount] = useState(0);
 
+  // [2] 아직 읽지 않은 알림 개수 (벨 위 숫자)
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  // [2] 알림창 열림 여부
+  // [3] 알림창 열림 여부
   const [notificationOpen, setNotificationOpen] = useState(false);
 
+  // [4] 로그인 회원별 읽은 알림 ID를 브라우저에 저장
+  const readKey = (memberId: string) => `macross:read-matching-notifications:${memberId}`;
 
-  // [3] 로그인 회원의 매칭 알림 조회
-  const matchingRead = async () => {
+  const getReadIds = (memberId: string): number[] => {
+    try {
+      const saved = localStorage.getItem(readKey(memberId));
+      const parsed: unknown = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed)
+        ? parsed.filter((id): id is number => typeof id === 'number')
+        : [];
+    } catch {
+      return [];
+    }
+  };
 
-    // 로그인하지 않았거나 관리자면 조회하지 않음
+  // [5] 로그인 회원의 매칭 알림 조회
+  // markAsRead가 true이면 지금 조회된 알림을 '읽음' 처리
+  const matchingRead = async (markAsRead = false) => {
+
     if (!user?.memberId || isAdmin) {
-
       setMatchingCount(0);
-
+      setUnreadCount(0);
       return;
-
     }
 
-
     try {
-
-      // 로그인 회원의 매칭 결과 조회
       const response = await axios.get<MatchingNotification[]>(
         `/api/matching/member/${user.memberId}`,
-        {
-          withCredentials: true
-        }
+        { withCredentials: true }
       );
 
       const data = response.data;
 
+      // 현재 로그인한 회원에게 해당하는 미처리 매칭만 알림 대상
+      let notifications: MatchingNotification[] = [];
 
-      // 화주 회원
       if (user.companyType === '수출입기업') {
-
-        // 아직 요청하지 않은 추천 매칭만 알림 개수에 포함
-        const count = data.filter((matching) => {
-
-          return matching.shipperStatus === 'WAITING'
-            && matching.finalStatus === 'PENDING';
-
-        }).length;
-
-        setMatchingCount(count);
-
+        notifications = data.filter((matching) =>
+          matching.shipperStatus === 'WAITING'
+          && matching.finalStatus === 'PENDING'
+        );
+      } else if (user.companyType === '물류업체') {
+        notifications = data.filter((matching) =>
+          matching.shipperStatus === 'ACCEPTED'
+          && matching.logisticsStatus === 'WAITING'
+          && matching.finalStatus === 'PENDING'
+        );
       }
 
+      // 알림창에는 '확인할 매칭' 전체 건수를 계속 표시
+      setMatchingCount(notifications.length);
 
-      // 물류기업 회원
-      else if (user.companyType === '물류업체') {
+      const readIds = getReadIds(user.memberId);
+      const ids = notifications.map((matching) => matching.matchingId);
 
-        // 화주가 매칭을 요청했고 물류기업 응답을 기다리는 경우
-        const count = data.filter((matching) => {
-
-          return matching.shipperStatus === 'ACCEPTED'
-            && matching.logisticsStatus === 'WAITING'
-            && matching.finalStatus === 'PENDING';
-
-        }).length;
-
-        setMatchingCount(count);
-
+      if (markAsRead) {
+        // 벨을 열었을 때 현재 알림들을 확인한 것으로 기록
+        const updated = Array.from(new Set([...readIds, ...ids]));
+        try {
+          localStorage.setItem(readKey(user.memberId), JSON.stringify(updated));
+        } catch {
+          // 저장이 막혀 있더라도 현재 화면의 숫자는 지움
+        }
+        setUnreadCount(0);
       } else {
-
-        setMatchingCount(0);
-
+        // 과거에 확인한 알림은 빼고 새로운 매칭만 숫자에 표시
+        setUnreadCount(ids.filter((id) => !readIds.includes(id)).length);
       }
 
     } catch (error) {
-
       console.log('매칭 알림 조회 실패 : ', error);
-
       setMatchingCount(0);
-
+      setUnreadCount(0);
     }
-
   };
 
-
-  // [4] 로그인 회원이 변경되면 알림 다시 조회
+  // [6] 로그인 회원이 변경되면 알림 다시 조회
   useEffect(() => {
-
-    matchingRead();
-
+    setMatchingCount(0);
+    setUnreadCount(0);
     setNotificationOpen(false);
-
+    matchingRead();
   }, [user?.memberId, user?.companyType, isAdmin]);
 
-
-  // [5] 알림창 열기 / 닫기
+  // [7] 알림창 열기 / 닫기
   const toggleNotification = () => {
-
-    // 알림창을 열 때 최신 DB 상태 조회
-    if (notificationOpen === false) {
-
-      matchingRead();
-
+    if (!notificationOpen) {
+      // 클릭 즉시 벨 위 숫자를 없애고, 최신 목록도 읽음 처리
+      setUnreadCount(0);
+      matchingRead(true);
     }
-
     setNotificationOpen(!notificationOpen);
-
   };
 
 
@@ -282,11 +280,11 @@ export default function Header({
 
                     🔔
 
-                    {matchingCount > 0 && (
+                    {unreadCount > 0 && (
 
                       <span className="matching-bell__count">
 
-                        {matchingCount}
+                        {unreadCount}
 
                       </span>
 
