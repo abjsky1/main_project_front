@@ -45,7 +45,7 @@ export default function useTradeSearch() {
         if (!ignore) setHsCodes(data);
       } catch (error) {
         console.log('HS 코드 목록 조회 실패 : ', error);
-        if (!ignore) setHsCodeError('HS 코드 목록을 불러오지 못했습니다. 10자리 코드를 직접 입력해 주세요.');
+        if (!ignore) setHsCodeError('HS 코드를 불러오지 못했습니다. 10자리 코드를 직접 입력해 주세요.');
       }
     }
 

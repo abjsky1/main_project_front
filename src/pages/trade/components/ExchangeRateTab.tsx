@@ -3,8 +3,15 @@ import { axisTick, tooltipBoxStyle } from '../../../styles/chartTheme';
 import { ALL_CURRENCIES, CURRENCY_INFO, MAIN_CURRENCIES, MONTHS, YEARS } from '../tradeData';
 import { getRatesForYear, type RateTable } from '../useExchangeRates';
 import TradeTrendChart from './TradeTrendChart';
+import { useEffect, useState } from 'react';
 
 const CHART_FONT = 'Plus Jakarta Sans, sans-serif';
+
+interface LiveRate {
+  currency: string;
+  money: number;
+  inderate: number;
+}
 
 interface ExchangeRateTabProps {
   rates: RateTable;            // 통화별 월 평균 환율 (부모가 한 번 불러서 내려줌)
@@ -22,36 +29,46 @@ function formatRate(value: number) {
 }
 
 // 주요 통화 카드 1개 — 보기 전용 (고른 연도의 마지막 달 환율 + 전월 대비)
-function CurrencyCard({ currency, rates }: { currency: string; rates: (number | null)[] }) {
+function CurrencyCard({
+  currency, rate,
+}: {
+  currency: string;
+  rate?: LiveRate;
+}) {
   const info = CURRENCY_INFO[currency];
-
-  // 값이 있는 마지막 달 찾기 (2026년처럼 연도 중간까지만 있으면 그 달)
-  let last = -1;
-  for (let i = 0; i < rates.length; i++) {
-    if (rates[i] !== null) last = i;
-  }
-  const current = last >= 0 ? rates[last] : null;
-  const prev = last >= 1 ? rates[last - 1] : null;
-  // 전월 대비 변화율(%) — 전월 값이 없으면 null
-  const change = current !== null && prev ? ((current - prev) / prev) * 100 : null;
+  const current = rate?.money ?? null;
+  const change = rate?.inderate ?? null;
 
   let changeClass = 'currency-card__change';
-  if (change !== null && change > 0) changeClass += ' is-up';
+  if (change !== null && change > 0) {
+    changeClass += ' is-up';
+  }
 
   return (
     <div className="currency-card">
       <div className="currency-card__head">
         <span className="currency-card__code">{currency}</span>
         <span className="currency-card__name">{info?.name}</span>
+
         {change !== null && (
           <span className={changeClass}>
-            {change > 0 ? '▲' : change < 0 ? '▼' : ''} {Math.abs(change).toFixed(2)}%
+            {change > 0 ? '▲' : change < 0 ? '▼' : ''}
+            {' '}{Math.abs(change).toFixed(2)}%
           </span>
         )}
       </div>
-      <p className="currency-card__rate">{current !== null ? formatRate(current) : '—'}</p>
+
+      <p className="currency-card__rate">
+        {current !== null
+          ? current.toLocaleString('ko-KR', {
+              minimumFractionDigits: 1,
+              maximumFractionDigits: 1,
+            })
+          : '—'}
+      </p>
+
       <p className="currency-card__unit">
-        {info?.unit}{last >= 0 ? ` · ${last + 1}월 평균` : ' · 데이터 없음'}
+        {info?.unit}
       </p>
     </div>
   );
@@ -65,18 +82,39 @@ function CurrencyCard({ currency, rates }: { currency: string; rates: (number | 
 export default function ExchangeRateTab({
   rates, ratesLoading, ratesError, activeCurrency, onCurrencyChange, selectedYear, onYearChange,
 }: ExchangeRateTabProps) {
+  const [liveRates, setLiveRates] = useState<LiveRate[]>([]);
   const yearRates = getRatesForYear(rates, activeCurrency, selectedYear);
   // 그래프용 데이터 [{ month: '1월', rate: 1180.5 }, ...] (값이 없는 달은 null → 선이 끊김)
   const rateChartData = MONTHS.map((month, i) => ({ month, rate: yearRates[i] }));
   const hasRate = yearRates.some((rate) => rate !== null);
   const unit = CURRENCY_INFO[activeCurrency]?.unit ?? `원/${activeCurrency}`;
 
+  // SSE 구독
+  useEffect(() => {
+    const eventSource = new EventSource('http://localhost:8080/api/exchangerate/subscribe');
+
+    eventSource.addEventListener('notice', (e) => {
+      try {
+        const data: LiveRate[] = JSON.parse(e.data);
+
+        setLiveRates(data);
+        console.log('환율 SSE 수신:', data);
+      } catch (error) {
+        console.error('환율 데이터 변환 실패:', error);
+      }
+    });
+
+    return () => eventSource.close();
+  }, []);
+
   return (
     <div>
       {/* 주요 4개국 통화 카드 (보기 전용) */}
       <div className="currency-grid">
         {MAIN_CURRENCIES.map((c) => (
-          <CurrencyCard key={c} currency={c} rates={getRatesForYear(rates, c, selectedYear)} />
+          <CurrencyCard
+            key={c} currency={c} rate={liveRates.find((item) => item.currency === (c === 'JPY' ? 'JPY(100)' : c))}
+          />
         ))}
       </div>
 
