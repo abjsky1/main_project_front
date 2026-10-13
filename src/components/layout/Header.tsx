@@ -12,7 +12,7 @@ import macrossLogo from '../../assets/main-reference.png';
 import './Header.css';
 
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -68,107 +68,217 @@ export default function Header({
   const isAdmin = user?.role === 'admin';
 
 
-  // [1] 확인할 전체 매칭 알림 개수 (알림창 안에서 표시)
+
+  // [1] 처리해야 하는 전체 매칭 알림 개수
   const [matchingCount, setMatchingCount] = useState(0);
 
-  // [2] 아직 읽지 않은 알림 개수 (벨 위 숫자)
-  const [unreadCount, setUnreadCount] = useState(0);
+  // [추가] 최종 성사된 매칭 건수
+  const [completedCount, setCompletedCount] = useState(0);
 
-  // [3] 알림창 열림 여부
+  // [추가] 아직 확인하지 않은 완료 알림 건수
+  const [newCompletedCount, setNewCompletedCount] = useState(0);
+
+  // [추가] 완료된 매칭 ID 목록
+  const [completedIds, setCompletedIds] = useState<number[]>([]);
+
+  // [2] 알림창 열림 여부
   const [notificationOpen, setNotificationOpen] = useState(false);
 
-  // [4] 로그인 회원별 읽은 알림 ID를 브라우저에 저장
-  const readKey = (memberId: string) => `macross:read-matching-notifications:${memberId}`;
+  // [3] 로그인 회원 정보
+  const memberId = user?.memberId;
+  const companyType = user?.companyType;
 
-  const getReadIds = (memberId: string): number[] => {
-    try {
-      const saved = localStorage.getItem(readKey(memberId));
-      const parsed: unknown = saved ? JSON.parse(saved) : [];
-      return Array.isArray(parsed)
-        ? parsed.filter((id): id is number => typeof id === 'number')
-        : [];
-    } catch {
-      return [];
-    }
-  };
+  // [4] 서버에서 현재 처리해야 할 매칭 조회
+  const matchingRead = useCallback(async () => {
 
-  // [5] 로그인 회원의 매칭 알림 조회
-  // markAsRead가 true이면 지금 조회된 알림을 '읽음' 처리
-  const matchingRead = async (markAsRead = false) => {
-
-    if (!user?.memberId || isAdmin) {
+    // 로그인하지 않았거나 관리자이면 알림 없음
+    if (!memberId || isAdmin) {
       setMatchingCount(0);
-      setUnreadCount(0);
+      setCompletedCount(0);
+      setNewCompletedCount(0);
+      setCompletedIds([]);
       return;
     }
 
     try {
+
+      // 로그인 회원의 매칭 결과 조회
       const response = await axios.get<MatchingNotification[]>(
-        `/api/matching/member/${user.memberId}`,
-        { withCredentials: true }
+        `/api/matching/member/${memberId}`,
       );
 
       const data = response.data;
 
-      // 현재 로그인한 회원에게 해당하는 미처리 매칭만 알림 대상
       let notifications: MatchingNotification[] = [];
 
-      if (user.companyType === '수출입기업') {
+      // 화주기업: 아직 검토하지 않은 추천
+      if (companyType === '수출입기업') {
+
         notifications = data.filter((matching) =>
-          matching.shipperStatus === 'WAITING'
-          && matching.finalStatus === 'PENDING'
+          matching.shipperStatus === 'WAITING' &&
+          matching.finalStatus === 'PENDING'
         );
-      } else if (user.companyType === '물류업체') {
-        notifications = data.filter((matching) =>
-          matching.shipperStatus === 'ACCEPTED'
-          && matching.logisticsStatus === 'WAITING'
-          && matching.finalStatus === 'PENDING'
-        );
+
       }
 
-      // 알림창에는 '확인할 매칭' 전체 건수를 계속 표시
+      // 물류기업: 화주가 요청했고 아직 응답하지 않은 매칭
+      else if (companyType === '물류업체') {
+
+        notifications = data.filter((matching) =>
+          matching.shipperStatus === 'ACCEPTED' &&
+          matching.logisticsStatus === 'WAITING' &&
+          matching.finalStatus === 'PENDING'
+        );
+
+      }
+
+      // 현재 처리해야 하는 매칭 건수
       setMatchingCount(notifications.length);
 
-      const readIds = getReadIds(user.memberId);
-      const ids = notifications.map((matching) => matching.matchingId);
+      // [추가] 최종 성사된 매칭 조회
+      const completed = data.filter((matching) =>
+        matching.finalStatus === 'COMPLETED'
+      );
 
-      if (markAsRead) {
-        // 벨을 열었을 때 현재 알림들을 확인한 것으로 기록
-        const updated = Array.from(new Set([...readIds, ...ids]));
-        try {
-          localStorage.setItem(readKey(user.memberId), JSON.stringify(updated));
-        } catch {
-          // 저장이 막혀 있더라도 현재 화면의 숫자는 지움
-        }
-        setUnreadCount(0);
-      } else {
-        // 과거에 확인한 알림은 빼고 새로운 매칭만 숫자에 표시
-        setUnreadCount(ids.filter((id) => !readIds.includes(id)).length);
-      }
+      // 최종 성사된 매칭 건수 저장
+      setCompletedCount(completed.length);
+
+      // 완료된 매칭 ID 저장
+      setCompletedIds(completed.map((matching) => matching.matchingId));
+
+      // 이미 확인한 완료 알림 가져오기
+      const readKey = `macross:completed-read:${memberId}`;
+      const readIds = (localStorage.getItem(readKey) || '').split(',');
+
+      // 아직 확인하지 않은 완료 매칭 찾기
+      const newCompleted = completed.filter((matching) =>
+        !readIds.includes(String(matching.matchingId))
+      );
+
+      // 새로운 완료 알림 건수 저장
+      setNewCompletedCount(newCompleted.length);
 
     } catch (error) {
-      console.log('매칭 알림 조회 실패 : ', error);
-      setMatchingCount(0);
-      setUnreadCount(0);
-    }
-  };
 
-  // [6] 로그인 회원이 변경되면 알림 다시 조회
+      console.error('매칭 알림 조회 실패:', error);
+
+      setMatchingCount(0);
+      setCompletedCount(0);
+      setNewCompletedCount(0);
+      setCompletedIds([]);
+
+    }
+
+  }, [memberId, companyType, isAdmin]);
+
+
+  // [5] 로그인 회원이 변경되면 알림 다시 조회
   useEffect(() => {
+
     setMatchingCount(0);
-    setUnreadCount(0);
+    setCompletedCount(0);
+    setNewCompletedCount(0);
+    setCompletedIds([]);
     setNotificationOpen(false);
+
     matchingRead();
-  }, [user?.memberId, user?.companyType, isAdmin]);
+
+  }, [matchingRead]);
+
+
+  // [6] 매칭 요청·수락·거절 후 알림 갱신
+  useEffect(() => {
+
+    const refreshMatchingNotification = () => {
+
+      matchingRead();
+
+    };
+
+    window.addEventListener(
+      'macross:matching-updated',
+      refreshMatchingNotification
+    );
+
+    return () => {
+
+      window.removeEventListener(
+        'macross:matching-updated',
+        refreshMatchingNotification
+      );
+
+    };
+
+  }, [matchingRead]);
+
+
+  // [추가] SSE 실시간 매칭 알림 연결
+  useEffect(() => {
+
+    // 1. 로그인하지 않았거나 관리자라면 연결하지 않음
+    if (!memberId || isAdmin) {
+      return;
+    }
+
+    // 2. SSE 서버 연결
+    const eventSource = new EventSource(
+      '/api/matching/stream',
+    );
+
+    // 3. 서버에서 매칭 알림을 받으면 최신 정보 조회
+    eventSource.addEventListener('matching-updated', () => {
+
+      matchingRead();
+
+    });
+
+    // 4. 최초 연결 또는 재연결 시 알림 조회
+    eventSource.onopen = () => {
+
+      matchingRead();
+
+    };
+
+    // 5. 컴포넌트 종료 시 연결 해제
+    return () => {
+
+      eventSource.close();
+
+    };
+
+  }, [memberId, isAdmin, matchingRead]);
+
+
 
   // [7] 알림창 열기 / 닫기
   const toggleNotification = () => {
+
     if (!notificationOpen) {
-      // 클릭 즉시 벨 위 숫자를 없애고, 최신 목록도 읽음 처리
-      setUnreadCount(0);
-      matchingRead(true);
+
+      // 1. 완료 알림을 확인한 것으로 기록
+      if (memberId) {
+
+        const readKey = `macross:completed-read:${memberId}`;
+
+        const oldIds = localStorage.getItem(readKey) || '';
+
+        localStorage.setItem(
+          readKey,
+          oldIds + ',' + completedIds.join(',')
+        );
+
+        // 확인한 완료 알림 건수 초기화
+        setNewCompletedCount(0);
+
+      }
+
+      // 2. 최신 매칭 알림 조회
+      matchingRead();
+
     }
-    setNotificationOpen(!notificationOpen);
+
+    setNotificationOpen((prev) => !prev);
+
   };
 
 
@@ -280,15 +390,13 @@ export default function Header({
 
                     🔔
 
-                    {unreadCount > 0 && (
+                    
+                  {matchingCount + newCompletedCount > 0 && (
+                  <span className="matching-bell__count">
+                  {matchingCount + newCompletedCount}
+                  </span>
+                  )}
 
-                      <span className="matching-bell__count">
-
-                        {unreadCount}
-
-                      </span>
-
-                    )}
 
                   </button>
 
@@ -316,102 +424,105 @@ export default function Header({
                       </div>
 
 
-                      {/* 확인할 매칭이 없으면 */}
-                      {matchingCount === 0 ? (
+                      
+                        {/* 대기 알림과 완료 알림이 모두 없을 때 */}
+                        {matchingCount === 0 && completedCount === 0 ? (
 
-                        <div className="matching-popup__empty">
-
-                          확인할 매칭 알림이 없습니다.
-
-                        </div>
-
-                      ) : (
-
-                        <div className="matching-popup__item">
-
-
-                          {/* 화주 알림 */}
-                          {user.companyType === '수출입기업' && (
-
-                            <>
-
-                              <strong>
-
-                                확인할 매칭 추천이 있습니다!
-
-                              </strong>
-
-                              <p>
-
-                                등록한 화물 조건에 적합한
-                                운송사를 찾았습니다.
-
-                              </p>
-
-                              <p>
-
-                                내 매칭에서 추천 업체와
-                                매칭 적합도를 확인해 보세요.
-
-                              </p>
-
-                            </>
-
-                          )}
-
-
-                          {/* 물류기업 알림 */}
-                          {user.companyType === '물류업체' && (
-
-                            <>
-
-                              <strong>
-
-                                확인할 매칭 요청이 있습니다!
-
-                              </strong>
-
-                              <p>
-
-                                화주기업으로부터 매칭 요청이
-                                도착했습니다.
-
-                              </p>
-
-                              <p>
-
-                                내 매칭에서 요청 내용을 확인하고
-                                수락하거나 거절할 수 있습니다.
-
-                              </p>
-
-                            </>
-
-                          )}
-
-
-                          {/* 알림 건수 */}
-                          <div className="matching-popup__status">
-
-                            확인할 매칭 {matchingCount}건
-
+                          <div className="matching-popup__empty">
+                            확인할 매칭 알림이 없습니다.
                           </div>
 
+                        ) : (
 
-                          {/* 내 매칭으로 이동 버튼 */}
-                          <button
-                            type="button"
-                            className="matching-popup__go-btn"
-                            onClick={goToMyMatching}
-                          >
+                          <>
+                            {/* [1] 처리 대기 중인 매칭 알림 */}
+                            {matchingCount > 0 && (
 
-                            내 매칭 확인하기 →
+                              <div className="matching-popup__item">
 
-                          </button>
+                                {/* 화주기업 알림 */}
+                                {user.companyType === '수출입기업' && (
+                                  <>
+                                    <strong>
+                                      확인할 매칭 추천이 있습니다!
+                                    </strong>
 
-                        </div>
+                                    <p>
+                                      등록한 화물 조건에 적합한 운송사를 찾았습니다.
+                                    </p>
 
-                      )}
+                                    <p>
+                                      내 매칭에서 추천 업체와 매칭 적합도를 확인해 보세요.
+                                    </p>
+                                  </>
+                                )}
+
+                                {/* 물류기업 알림 */}
+                                {user.companyType === '물류업체' && (
+                                  <>
+                                    <strong>
+                                      확인할 매칭 요청이 있습니다!
+                                    </strong>
+
+                                    <p>
+                                      화주기업으로부터 매칭 요청이 도착했습니다.
+                                    </p>
+
+                                    <p>
+                                      내 매칭에서 요청 내용을 확인하고 수락하거나 거절할 수 있습니다.
+                                    </p>
+                                  </>
+                                )}
+
+                                <div className="matching-popup__status">
+                                  확인할 매칭 {matchingCount}건
+                                </div>
+
+                              </div>
+
+                            )}
+
+                            {/* [2] 최종 매칭 성사 알림 */}
+                            {completedCount > 0 && (
+
+                              <div className="matching-popup__item">
+
+                                <strong>
+                                  🎉 매칭이 최종 성사되었습니다!
+                                </strong>
+
+                                <p>
+                                  화주기업과 물류기업 모두 매칭을 수락했습니다.
+                                </p>
+
+                                <p>
+                                  내 매칭에서 최종 성사된 내용을 확인해 보세요.
+                                </p>
+
+                                <div className="matching-popup__status">
+                                  완료된 매칭 {completedCount}건
+                                </div>
+
+                              </div>
+
+                            )}
+
+                            {/* [3] 내 매칭 이동 버튼 */}
+                            <div className="matching-popup__item">
+
+                              <button
+                                type="button"
+                                className="matching-popup__go-btn"
+                                onClick={goToMyMatching}
+                              >
+                                내 매칭 확인하기 →
+                              </button>
+
+                            </div>
+
+                          </>
+
+                        )}
 
                     </div>
 
