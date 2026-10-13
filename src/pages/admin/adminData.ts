@@ -43,25 +43,32 @@ export const MEMBER_TYPE_LABEL: Record<string, string> = {
   '탈퇴 회원': '탈퇴 회원',   // 탈퇴한 회원의 로그 (회원 정보는 삭제되고 로그만 "탈퇴 회원" 공통 계정에 남음)
 };
 
-// 작업 유형별 배지 색 → SystemAdmin.css 의 .action-badge--xxx 클래스
-// key 는 DB action 테이블의 action_id (이름은 바뀔 수 있어서 번호로 구분). 없는 번호는 회색 기본 배지
+// 작업 유형별 배지 색 → SystemAdmin.css 의 .action-badge--xxx 클래스 (색은 3가지만 — 대부분 회색 , 눈여겨볼 것만 색)
+//   ''                    : 회색 — 일반 활동 (기본 배지 , 클래스 없음)
+//   action-badge--success : 초록 — 승인 · 성공 · 권한/상태 부여
+//   action-badge--danger  : 빨강 — 실패 · 삭제 · 거절
+// key 는 DB action 테이블의 action_id (이름은 바뀔 수 있어서 번호로 구분). 목록에 없는 번호도 회색
+// 새 작업을 추가하면 여기에도 한 줄 추가 (색을 고르는 기준은 위 3가지)
 export const ACTION_BADGE_CLASS: Record<number, string> = {
-  1: 'action-badge--download',     // 엑셀 다운로드
-  2: 'action-badge--login',        // 로그인
-  3: 'action-badge--login-try',    // 로그인 실패
-  4: 'action-badge--permission',   // 매칭 승인 (알림 발송)
-  5: 'action-badge--delete',       // 매칭 반려
-  6: 'action-badge--permission',   // 사용자 권한 변경
-  7: 'action-badge--view',         // 기업 정보 수정
-  8: 'action-badge--view',         // 기업 등록
-  9: 'action-badge--view',         // 데이터 조회
-  10: 'action-badge--login',       // 회원 가입
-  11: 'action-badge--delete',      // 회원 탈퇴
-  12: 'action-badge--permission',  // 매칭 수락
-  13: 'action-badge--download',    // 매칭 성공
-  14: 'action-badge--delete',      // 매칭 거절
-  15: 'action-badge--view',        // 매칭 조건 등록
-  16: 'action-badge--delete',      // 매칭 조건 삭제
-  17: 'action-badge--view',        // 매칭 실행
-  18: 'action-badge--permission',  // 사용자 상태 변경
+  1: '',                          // 엑셀 다운로드
+  2: '',                          // 로그인
+  3: 'action-badge--danger',      // 로그인 실패
+  4: 'action-badge--success',     // 매칭 승인 (알림 발송)
+  5: 'action-badge--danger',      // 매칭 반려
+  6: 'action-badge--success',     // 사용자 권한 변경
+  7: '',                          // 기업 정보 수정
+  8: '',                          // 기업 등록
+  9: '',                          // 데이터 조회
+  10: '',                         // 회원 가입
+  11: 'action-badge--danger',     // 회원 탈퇴
+  12: 'action-badge--success',    // 매칭 수락
+  13: 'action-badge--success',    // 매칭 성공
+  14: 'action-badge--danger',     // 매칭 거절
+  15: '',                         // 매칭 조건 등록
+  16: 'action-badge--danger',     // 매칭 조건 삭제
+  17: '',                         // 매칭 실행
+  18: 'action-badge--success',    // 사용자 상태 변경
+  19: '',                         // 비밀번호 변경
+  20: '',                         // 상담 시작
+  21: '',                         // 상담 종료
 };

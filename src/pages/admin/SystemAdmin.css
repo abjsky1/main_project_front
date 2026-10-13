@@ -320,7 +320,8 @@
   color: var(--text-secondary);
 }
 
-/* 작업 유형 배지 */
+/* 작업 유형 배지 — 색은 3가지만 (어떤 작업이 어떤 색인지는 adminData.ts 의 ACTION_BADGE_CLASS)
+   기본(회색) : 일반 활동 / --success(초록) : 승인 · 성공 · 권한/상태 부여 / --danger(빨강) : 실패 · 삭제 · 거절 */
 .action-badge {
   padding: 2px 8px;
   border-radius: 6px;
@@ -331,12 +332,8 @@
   color: #6b7280;
 }
 
-.action-badge--login { background: #eff6ff; color: #1e40af; }
-.action-badge--login-try { background: #fef3c7; color: #92400e; }
-.action-badge--download { background: #f0fdf4; color: #166534; }
-.action-badge--view { background: #f5f3ff; color: #5b21b6; }
-.action-badge--delete { background: #fff1f2; color: #9f1239; }
-.action-badge--permission { background: #ecfdf5; color: #065f46; }
+.action-badge--success { background: #ecfdf5; color: #065f46; }
+.action-badge--danger { background: #fff1f2; color: #9f1239; }
 
 /* 결과 배지 (성공 / 실패) */
 .result-badge {
