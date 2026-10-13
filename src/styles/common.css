@@ -299,3 +299,48 @@
   font-size: var(--fs-xs);
   line-height: var(--lh-xs);
 }
+
+/* ---------- 페이지 번호 버튼 (components/common/Pagination) ----------
+   ‹ 이전  1 2 [3] 4 ... 10  다음 ›  — 지금 페이지는 보라색으로 (option-btn 의 선택 색과 같음) */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.pagination__num,
+.pagination__arrow {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: #fff;
+  border: 1px solid var(--clean-border);
+  transition: all 150ms var(--ease);
+}
+
+.pagination__num:hover,
+.pagination__arrow:hover:not(:disabled) {
+  color: var(--brand-purple);
+  border-color: rgba(100, 50, 220, 0.2);
+}
+
+/* 지금 보고 있는 페이지 */
+.pagination__num.is-active {
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.08);
+  border-color: rgba(100, 50, 220, 0.2);
+}
+
+/* 첫 페이지의 [이전] · 마지막 페이지의 [다음] */
+.pagination__arrow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

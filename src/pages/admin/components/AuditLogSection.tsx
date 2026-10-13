@@ -1,7 +1,8 @@
 import type { KeyboardEvent } from 'react';
 import FilterButton from '../../../components/common/FilterButton';
+import Pagination from '../../../components/common/Pagination';
 import { ACTION_BADGE_CLASS } from '../adminData';
-import type { AuditLogState, LogResultFilter } from '../useAuditLogs';
+import type { AuditLogState, LogPeriodFilter, LogResultFilter } from '../useAuditLogs';
 
 const RESULT_OPTIONS: { val: LogResultFilter; label: string }[] = [
   { val: 'all', label: '전체' },
@@ -9,13 +10,31 @@ const RESULT_OPTIONS: { val: LogResultFilter; label: string }[] = [
   { val: '실패', label: '실패' },
 ];
 
+// 기간 버튼 — val 이 서버로 가는 period 값 ('all' 은 보내지 않음 = 전체 기간)
+const PERIOD_OPTIONS: { val: LogPeriodFilter; label: string }[] = [
+  { val: 'all', label: '전체' },
+  { val: 'today', label: '오늘' },
+  { val: '7days', label: '최근 7일' },
+  { val: '30days', label: '최근 30일' },
+  { val: '6months', label: '최근 6개월' },
+  { val: '1year', label: '최근 1년' },
+];
+
 // "감사 로그 (Audit Log)" 탭
 // state = useAuditLogs() 가 돌려준 객체 (부모 SystemAdmin 이 보관) → 구조분해로 꺼내 씀
+// 한 페이지에 50건씩 , 표 아래 페이지 번호 버튼 (Pagination)
 export default function AuditLogSection({ state }: { state: AuditLogState }) {
   const {
-    logs, loading, loadError, filterOpen, setFilterOpen, filterUser, setFilterUser,
-    filterAction, setFilterAction, filterResult, setFilterResult, filtersActive, search, resetFilters,
+    logs, totalCount, totalPages, page, goToPage, loading, loadError, filterOpen, setFilterOpen,
+    filterUser, setFilterUser, filterAction, setFilterAction, filterResult, setFilterResult,
+    filterPeriod, setFilterPeriod, filtersActive, search, resetFilters,
   } = state;
+
+  // 페이지 번호를 누르면 : 그 페이지로 이동 + 화면 맨 위로 (표 아래에서 눌러도 새 페이지의 첫 줄부터 보이게)
+  const changePage = (nextPage: number) => {
+    goToPage(nextPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // 표가 비었을 때 안내 문구 : 불러오는 중 → 오류 문구(있으면) → 결과 없음
   const emptyMessage = loading ? '감사 로그를 불러오는 중입니다...' : loadError || '해당 조건의 로그가 없습니다.';
@@ -38,7 +57,9 @@ export default function AuditLogSection({ state }: { state: AuditLogState }) {
       <div className="admin-list-bar">
         <div className="admin-list-bar__left">
           <p className="eyebrow">감사 로그</p>
-          <span className="admin-count">{logs.length}건</span>
+          {/* 이번 페이지 건수가 아니라 조건에 맞는 전체 건수 — toLocaleString( ) : 1352 → '1,352' */}
+          <span className="admin-count">총 {totalCount.toLocaleString()}건</span>
+          {totalPages > 1 && <span className="admin-page-info">{page} / {totalPages} 페이지</span>}
         </div>
         <div className="admin-list-bar__right">
           {filtersActive && <button onClick={resetFilters} className="filter-reset-btn">필터 초기화</button>}
@@ -63,6 +84,17 @@ export default function AuditLogSection({ state }: { state: AuditLogState }) {
               {RESULT_OPTIONS.map((s) => (
                 <button key={s.val} onClick={() => setFilterResult(s.val)} className={filterResult === s.val ? 'option-btn is-active' : 'option-btn'}>
                   {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* 기간 : 버튼이 6개라 한 줄 전체를 씀 */}
+          <div className="admin-filter-period">
+            <label className="form-label">기간</label>
+            <div className="admin-filter-options">
+              {PERIOD_OPTIONS.map((p) => (
+                <button key={p.val} onClick={() => setFilterPeriod(p.val)} className={filterPeriod === p.val ? 'option-btn is-active' : 'option-btn'}>
+                  {p.label}
                 </button>
               ))}
             </div>
@@ -105,6 +137,9 @@ export default function AuditLogSection({ state }: { state: AuditLogState }) {
           </tbody>
         </table>
       </div>
+
+      {/* 페이지 번호 버튼 (페이지가 2개 이상일 때만 보임) */}
+      <Pagination page={page} totalPages={totalPages} onChange={changePage} />
     </div>
   );
 }

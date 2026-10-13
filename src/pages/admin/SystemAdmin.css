@@ -79,6 +79,13 @@
   color: var(--brand-purple);
 }
 
+/* 감사 로그 "3 / 28 페이지" */
+.admin-page-info {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
 /* ---------- 필터 패널 ---------- */
 .admin-filter-panel {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -93,6 +100,11 @@
   flex: 1 1 0%;
   padding-top: 8px;
   padding-bottom: 8px;
+}
+
+/* 감사 로그 기간 필터 : 버튼이 6개라 한 줄 전체를 씀 */
+.admin-filter-period {
+  grid-column: 1 / -1;
 }
 
 /* 필터 패널 맨 아래 줄 : [검색] 버튼 (오른쪽 정렬) */
