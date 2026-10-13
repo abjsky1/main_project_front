@@ -87,6 +87,10 @@ interface LoginMember {
   roleEntity?: { roleId: number; roleName: string };         // 1 일반 사용자 / 2 관리자
 }
 
+// 관리자 권한 번호 (DB role 테이블 : 2 = ROLE_ADMIN)
+// 백엔드 RoleEntity 의 ADMIN_ROLE_ID 와 같은 값 — 언어가 달라 상수를 같이 쓸 수 없으니 바꿀 때는 두 곳을 같이 고칠 것
+const ADMIN_ROLE_ID = 2;
+
 // 백엔드 회원 정보(LoginMember) → 화면에서 쓰는 User 모양으로 바꾸기 (로그인 , 새로고침 복구 둘 다 사용)
 function toUser(member: LoginMember): User {
   const signupType = member.signupEntity?.signupType;
@@ -100,7 +104,7 @@ function toUser(member: LoginMember): User {
     memberId: member.memberId,
     name: member.managerName,
     email: member.userEmail,
-    role: member.roleEntity?.roleId === 2 ? 'admin' : 'user',
+    role: member.roleEntity?.roleId === ADMIN_ROLE_ID ? 'admin' : 'user',
     companyType,
     companyName: member.companyName,
     businessNumber: member.businessRegNo,
