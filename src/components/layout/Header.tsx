@@ -105,7 +105,6 @@ export default function Header({
       // 로그인 회원의 매칭 결과 조회
       const response = await axios.get<MatchingNotification[]>(
         `/api/matching/member/${memberId}`,
-        { withCredentials: true }
       );
 
       const data = response.data;
@@ -224,7 +223,6 @@ export default function Header({
     // 2. SSE 서버 연결
     const eventSource = new EventSource(
       '/api/matching/stream',
-      { withCredentials: true }
     );
 
     // 3. 서버에서 매칭 알림을 받으면 최신 정보 조회
