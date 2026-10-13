@@ -93,17 +93,46 @@
   color: var(--text-muted);
 }
 
-/* ---------- 매칭 목록 표 ---------- */
+/* ---------- 매칭 목록 표 ----------
+   화면 폭에 맞춰 고정 : 표 전체 가로 스크롤 없음 , 줄바꿈 없음
+   - table-layout: fixed → 칸 너비를 글자 길이가 아니라 아래에 정한 너비로 (긴 글자가 표를 밀어내지 않음)
+   - 칸보다 긴 글자는 "…" 로 줄임 (.sm-table td p) , 화주사 · 운송사 이름은 마우스를 올리면 전체(title)
+   - 추천 이유 · 주의 사항 칸만 "…" 대신 칸 안에서 옆으로 밀어서 끝까지 봄 (.sm-scroll) */
 .sm-table-wrap {
-  overflow-x: auto;
+  overflow: hidden;   /* 둥근 모서리 밖으로 나가는 부분만 자름 (가로 스크롤 없음) */
   border-radius: 16px;
   border: 1px solid var(--clean-border);
 }
 
 .sm-table {
   width: 100%;
+  table-layout: fixed;
   font-size: var(--fs-sm);
   line-height: var(--lh-sm);
+}
+
+/* 칸 너비 : 글자 길이가 거의 정해진 칸은 px 로 고정 (안에 든 가장 긴 글자 + 좌우 여백 28px 이 들어가는 만큼)
+   3번째 칸(추천 이유 · 주의 사항)은 너비를 정하지 않음 → 표에서 남는 공간을 전부 가짐 (화면이 넓을수록 넓어짐) */
+.sm-table th:nth-child(1) { width: 100px; }   /* #700 / 10-14 04:00 */
+.sm-table th:nth-child(2) { width: 230px; }   /* 가장 긴 회사 이름 "농업회사법인 주식회사 현농프레쉬" 까지 */
+.sm-table th:nth-child(4) { width: 170px; }   /* 경험 306회 · 평균 운송 28일 */
+.sm-table th:nth-child(5) { width: 170px; }   /* 30 · 25 · 20 · 13 · 10 */
+.sm-table th:nth-child(6) { width: 125px; }   /* 물류 수락 대기 배지 */
+
+/* 좁은 화면 : px 칸 합계(795px)만으로 표가 꽉 차서 3번째 칸이 사라지지 않게 % 로 나눔 (합계 75% , 나머지 25% 가 3번째 칸) */
+@media (max-width: 1023px) {
+  .sm-table th:nth-child(1) { width: 10%; }
+  .sm-table th:nth-child(2) { width: 21%; }
+  .sm-table th:nth-child(4) { width: 16%; }
+  .sm-table th:nth-child(5) { width: 15%; }
+  .sm-table th:nth-child(6) { width: 13%; }
+}
+
+/* 칸 안의 글자 줄 : 줄바꿈 없이 칸 너비를 넘으면 "…" */
+.sm-table td p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sm-table th {
@@ -145,6 +174,38 @@
   font-size: 11px;
   line-height: 16px;
   color: var(--text-muted);
+}
+
+/* 화주사 → 운송사 : 두 줄 모두 같은 모양 (위 · 아래 차이 없이) */
+.sm-cell__party {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sm-cell__party + .sm-cell__party {
+  margin-top: 2px;
+}
+
+/* 추천 이유 · 주의 사항 : 칸 안에서만 옆으로 밀리는 상자 (표 전체는 그대로)
+   - 마우스를 올리면 끝까지 밀림 (SmartMatching.tsx 의 slideToEnd) , 터치패드 좌우 밀기 · Shift + 마우스 휠도 됨
+   - 스크롤 막대는 숨기고 , 오른쪽 끝 24px 을 흐리게 해서 "글자가 더 있다" 는 표시만 남김 */
+.sm-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;   /* 스크롤 막대 숨김 (Firefox · 최신 Chrome) */
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+}
+
+.sm-scroll::-webkit-scrollbar {
+  display: none;           /* 스크롤 막대 숨김 (예전 Chrome · Safari) */
+}
+
+/* 이 상자 안의 글자는 "…" 로 줄이지 않고 글자 길이만큼 늘어남
+   오른쪽 여백 24px : 끝까지 밀었을 때 마지막 글자가 흐린 부분에 걸리지 않게 */
+.sm-table td .sm-scroll p {
+  overflow: visible;
+  width: max-content;
+  padding-right: 24px;
 }
 
 .sm-mono {
