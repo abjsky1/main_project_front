@@ -389,11 +389,12 @@ useEffect(() => {
           {/* 첫 화면 = 내 매칭 + 매칭 상세 (/1001 처럼 숫자 주소 — :matchId 자리의 번호를 상세 페이지가 useParams 로 꺼냄) */}
           <Route path={PAGE_PATHS.dashboard} element={<Dashboard user={user} onLoginClick={() => setShowLogin(true)} />} />
           <Route path="/:matchId" element={<MyMatchingDetail user={user} />} />
-          <Route path={PAGE_PATHS.trade} element={<TradeAnalysis />} />
+          {/* 탭이 있는 페이지 : 주소 끝에 탭 이름 (/trade/exchange) → 새로고침해도 같은 탭 , :tab? 의 ? = 없어도 됨 (/trade 는 첫 탭) */}
+          <Route path={`${PAGE_PATHS.trade}/:tab?`} element={<TradeAnalysis />} />
           <Route path={PAGE_PATHS.insights} element={<Insights user={user} interests={interests} onInterestsChange={setInterests} />} />
           <Route path={PAGE_PATHS['matching-settings']} element={<MatchingSettings key={user?.memberId ?? user?.email ?? 'guest'} user={user} shipperRows={shipperRows} logisticsRows={logisticsRows} onShipperRowsChange={setShipperRows} onLogisticsRowsChange={setLogisticsRows} />} />
           <Route path={PAGE_PATHS.matching} element={<SmartMatching user={user} />} />
-          <Route path={PAGE_PATHS.admin} element={<SystemAdmin user={user} />} />
+          <Route path={`${PAGE_PATHS.admin}/:tab?`} element={<SystemAdmin user={user} />} />
           <Route path={PAGE_PATHS.mypage} element={<MyPage user={user} onUserChange={setUser} onWithdrawn={clearLoginState} />} />
           {/* 없는 주소는 대시보드로 */}
           <Route path="*" element={<Navigate to={PAGE_PATHS.dashboard} replace />} />

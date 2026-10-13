@@ -3,6 +3,8 @@ import type { Page } from './types/user';
 // 페이지 ↔ URL 주소 매핑 — 새 페이지를 추가하면 여기와 types/user.ts 의 Page 타입만 수정
 // ⚠️ /api, /country, /route, /hscode, /ws-chat 로 시작하는 주소는 vite 프록시가 백엔드로 넘기므로 사용 금지
 // ⚠️ 매칭 상세는 첫 화면 바로 아래 /매칭번호 (예: /1001) — App.tsx 의 /:matchId (숫자 주소)
+// ⚠️ 탭이 있는 페이지는 주소 끝에 탭 이름 (새로고침해도 같은 탭) — App.tsx 의 /:tab?
+//    /trade/search · /trade/exchange (TradeAnalysis) , /admin/users · /admin/audit-logs (SystemAdmin)
 // [TS] Record<Page, string> : 키는 Page 이름들, 값은 주소 글자인 객체 → 하나라도 빠뜨리면 빨간 줄 (가이드 2-8)
 export const PAGE_PATHS: Record<Page, string> = {
   dashboard: '/',                          // 내 매칭 (첫 화면 , 상세는 /매칭번호)
