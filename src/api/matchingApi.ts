@@ -39,7 +39,7 @@ export interface MatchingApiDto {
   // 매칭 상태
   adminStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
 
-  shipperStatus: 'WAITING' | 'ACCEPTED' | 'REJECTED';
+  shipperStatus: 'WAITING' | 'ACCEPTED' | 'REJECTED' | 'AUTO_REJECTED';
 
   logisticsStatus: 'WAITING' | 'ACCEPTED' | 'REJECTED';
 
