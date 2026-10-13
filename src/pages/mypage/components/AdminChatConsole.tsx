@@ -69,7 +69,6 @@ export default function AdminChatConsole() {
             subtitle={`${selectedRoom.managerName} · ${selectedRoom.companyType}${selectedRoom.withdrawn ? ' · 탈퇴 회원' : ''}${connected ? '' : ' · 서버와 연결 중...'}`}
             messages={messages}
             me="ADMIN"
-            partnerLabel={`${selectedRoom.managerName} (${selectedRoom.companyName})`}
             connecting={!connected}
             closedNotice={selectedRoom.status ? undefined : '종료된 상담입니다. 회원이 새 상담을 시작하면 다시 대화할 수 있어요.'}
             onSend={sendMessage}

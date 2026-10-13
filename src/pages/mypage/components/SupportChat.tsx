@@ -74,7 +74,6 @@ export default function SupportChat() {
         subtitle={connected ? '평일 09:00 ~ 18:00' : '서버와 연결 중...'}
         messages={messages}
         me="MEMBER"
-        partnerLabel="MACROSS 고객센터"
         connecting={!connected}
         closedNotice={room.status ? undefined : (
           <>

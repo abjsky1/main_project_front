@@ -7,8 +7,7 @@ interface ChatWindowProps {
   subtitle?: ReactNode;             // 제목 아래 작은 글자
   messages: MessageDto[];
   me: SenderType;                   // 이 화면을 보는 사람 ('MEMBER' 또는 'ADMIN') → 내 메시지는 오른쪽
-  partnerLabel: string;             // 상대 메시지 위의 이름 (예: 'MACROSS 고객센터')
-  connecting?: boolean;             // true 면 서버와 연결 중 → 입력칸 잠금
+  connecting?: boolean;            // true 면 서버와 연결 중 → 입력칸 잠금
   closedNotice?: ReactNode;         // 있으면 입력칸 대신 이 안내를 보여 줌 (상담이 종료된 방)
   onSend: (text: string) => void;
   onEnd?: () => void;               // 있으면 오른쪽 위에 [상담 종료] 버튼
@@ -17,8 +16,11 @@ interface ChatWindowProps {
 
 // 채팅창 1개 (메시지 목록 + 입력칸) — 회원 상담 화면 · 관리자 상담 화면 공통
 // - 말풍선 : 내가 보낸 것(senderType === me)은 오른쪽 , 상대가 보낸 것은 왼쪽
+// - 말풍선 위 이름 : 내 것 · 상대 것 모두 서버가 보낸 senderName 을 그대로 (회원 · 관리자 화면이 같은 규칙)
+//     회원 화면   : 내 이름 / 상대는 "고객센터" (상담원 이름은 서버가 "고객센터" 로 바꿔서 보냄 — 회원에게 숨김)
+//     관리자 화면 : 답한 상담원 이름 / 상대는 회원 이름
 // - SYSTEM 메시지("상담이 시작되었습니다" 등)는 가운데 안내 줄로
-export default function ChatWindow({ title, subtitle, messages, me, partnerLabel, connecting, closedNotice, onSend, onEnd, onClose }: ChatWindowProps) {
+export default function ChatWindow({ title, subtitle, messages, me, connecting, closedNotice, onSend, onEnd, onClose }: ChatWindowProps) {
   const [text, setText] = useState('');
   // useRef : 화면 요소를 직접 잡아 두는 상자 (가이드 3-2) — 새 메시지가 오면 맨 아래로 스크롤하기 위해
   const listRef = useRef<HTMLDivElement>(null);
@@ -64,7 +66,7 @@ export default function ChatWindow({ title, subtitle, messages, me, partnerLabel
                 <p className="chat-system">{message.content} · {formatChatTime(message.createdAt)}</p>
               ) : (
                 <div className={mine ? 'chat-msg is-mine' : 'chat-msg'}>
-                  {!mine && <p className="chat-msg__name">{partnerLabel}</p>}
+                  <p className="chat-msg__name">{message.senderName}</p>
                   <div className="chat-msg__row">
                     <p className="chat-msg__bubble">{message.content}</p>
                     <span className="chat-msg__time">{formatChatTime(message.createdAt)}</span>
