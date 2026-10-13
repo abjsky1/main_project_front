@@ -81,27 +81,19 @@ const ox = (value: boolean) => {
 function getServerStage(match: MatchingApiDto): Stage {
 
   if (match.finalStatus === 'COMPLETED') {
-
     return 'completed';
-
   }
 
   if (match.shipperStatus === 'REJECTED') {
-
     return 'shipperRejected';
-
   }
 
   if (match.logisticsStatus === 'REJECTED') {
-
     return 'logisticsRejected';
-
   }
 
   if (match.shipperStatus === 'WAITING') {
-
     return 'recommended';
-
   }
 
   return 'requested';
@@ -124,7 +116,6 @@ export default function MyMatchingDetail({
   const memberId = user?.memberId;
 
   const isShipper = user?.companyType === '수출입기업';
-
 
   // 서버에서 조회한 전체 내 매칭 목록
   const [matches, setMatches] = useState<MatchingApiDto[]>([]);
@@ -168,12 +159,10 @@ export default function MyMatchingDetail({
       setMatches([]);
       setMyCondition(null);
 
-
       // 로그인하지 않았으면 조회 중단
       if (!memberId || !user || user.role === 'admin') {
 
         setLoading(false);
-
         return;
 
       }
@@ -182,11 +171,9 @@ export default function MyMatchingDetail({
       if (!/^\d+$/.test(matchId ?? '')) {
 
         setLoading(false);
-
         return;
 
       }
-
 
       try {
 
@@ -197,38 +184,28 @@ export default function MyMatchingDetail({
         );
 
         if (controller.signal.aborted) {
-
           return;
-
         }
 
         // 2. 현재 주소의 매칭 번호 확인
         const currentMatch = matchingList.find((item) => {
-
           return item.matchingId === Number(matchId);
-
         });
-
 
         // 본인에게 공개된 매칭이 아니면 상세 조회하지 않음
         if (!currentMatch) {
 
           setMatches(matchingList);
-
           return;
 
         }
-
 
         // 3. 국가/노선 중 노선 정보 조회
         const routes = await fetchRoutes(controller.signal);
 
         if (controller.signal.aborted) {
-
           return;
-
         }
-
 
         // 4. 화주인 경우 : 내 화물 조건 조회
         if (isShipper) {
@@ -239,29 +216,21 @@ export default function MyMatchingDetail({
           );
 
           const condition = conditionList.find((item) => {
-
             return item.cscore1Id === currentMatch.cscore1Id;
-
           });
-
 
           if (condition) {
 
             const [second, third] = await Promise.all([
-
               getCscore2(condition.cscore1Id, controller.signal),
-
               getCscore3(condition.cscore1Id, controller.signal)
-
             ]);
-
 
             if (second && third) {
 
               setMyCondition({
 
                 departure: getRouteName(routes, condition.departure),
-
                 destination: getRouteName(routes, condition.arrival),
 
                 transport: condition.transportType ? '해상' : '항공',
@@ -289,29 +258,21 @@ export default function MyMatchingDetail({
           );
 
           const condition = conditionList.find((item) => {
-
             return item.lscore1Id === currentMatch.lscore1Id;
-
           });
-
 
           if (condition) {
 
             const [second, third] = await Promise.all([
-
               getLscore2(condition.lscore1Id, controller.signal),
-
               getLscore3(condition.lscore1Id, controller.signal)
-
             ]);
-
 
             if (second && third) {
 
               setMyCondition({
 
                 departure: getRouteName(routes, condition.departure),
-
                 destination: getRouteName(routes, condition.arrival),
 
                 transport: condition.transportType ? '해상' : '항공',
@@ -323,11 +284,9 @@ export default function MyMatchingDetail({
                 date: second.availableDate,
 
                 regularRoute: condition.regularRoute,
-
                 directRoute: condition.directRoute,
 
                 experience: condition.experienceCount,
-
                 leadTime: second.averageTransitDays,
 
                 cargo: third
@@ -340,12 +299,9 @@ export default function MyMatchingDetail({
 
         }
 
-
         // 6. 매칭 목록 저장
         if (!controller.signal.aborted) {
-
           setMatches(matchingList);
-
         }
 
       } catch (error) {
@@ -363,23 +319,17 @@ export default function MyMatchingDetail({
       } finally {
 
         if (!controller.signal.aborted) {
-
           setLoading(false);
-
         }
 
       }
 
     };
 
-
     loadData();
 
-
     return () => {
-
       controller.abort();
-
     };
 
   }, [memberId, matchId, isShipper, reloadCount]);
@@ -387,9 +337,7 @@ export default function MyMatchingDetail({
 
   // [7] 현재 매칭 찾기
   const match = matches.find((item) => {
-
     return item.matchingId === Number(matchId);
-
   });
 
 
@@ -399,7 +347,6 @@ export default function MyMatchingDetail({
     if (!match) {
 
       navigate('/');
-
       return;
 
     }
@@ -428,17 +375,13 @@ export default function MyMatchingDetail({
 
     // 회원 번호 또는 매칭이 없으면 중단
     if (!memberId || !match || saving) {
-
       return;
-
     }
-
 
     // 상대 기업 이름
     const partnerName = isShipper
       ? match.logisticsCompanyName
       : match.shipperCompanyName;
-
 
     // 버튼별 확인 문구
     let confirmMessage = '';
@@ -465,23 +408,17 @@ export default function MyMatchingDetail({
 
     }
 
-
     // 확인을 누르지 않으면 요청하지 않음
     if (!window.confirm(confirmMessage)) {
-
       return;
-
     }
-
 
     setSaving(true);
     setNotice('');
 
-
     try {
 
       let result = false;
-
 
       // 1. 화주 매칭 요청
       if (action === 'shipperAccept') {
@@ -493,7 +430,6 @@ export default function MyMatchingDetail({
 
       }
 
-
       // 2. 화주 매칭 거절
       if (action === 'shipperReject') {
 
@@ -503,7 +439,6 @@ export default function MyMatchingDetail({
         );
 
       }
-
 
       // 3. 물류기업 매칭 수락
       if (action === 'logisticsAccept') {
@@ -515,7 +450,6 @@ export default function MyMatchingDetail({
 
       }
 
-
       // 4. 물류기업 매칭 거절
       if (action === 'logisticsReject') {
 
@@ -525,7 +459,6 @@ export default function MyMatchingDetail({
         );
 
       }
-
 
       // 5. 서버에서 false를 반환한 경우
       if (result === false) {
@@ -537,7 +470,6 @@ export default function MyMatchingDetail({
         return;
 
       }
-
 
       // 6. 성공 안내 문구
       if (action === 'shipperAccept') {
@@ -559,7 +491,6 @@ export default function MyMatchingDetail({
         setNotice('매칭 요청을 거절했습니다.');
 
       }
-
 
       // 7. 변경된 상태를 서버에서 다시 조회
       refreshMatch();
@@ -687,7 +618,6 @@ export default function MyMatchingDetail({
 
 
   // [16] 화면에 표시할 실제 매칭 정보
-
   const stage = getServerStage(match);
 
   // 상대 기업 이름
@@ -720,13 +650,9 @@ export default function MyMatchingDetail({
   const scores = [
 
     { label: '노선', score: match.routeScore, max: 30 },
-
     { label: '가용량', score: match.capacityScore, max: 25 },
-
     { label: 'HS CODE', score: match.itemScore, max: 20 },
-
     { label: '일정', score: match.scheduleScore, max: 15 },
-
     { label: '운송 경험', score: match.experienceScore, max: 10 }
 
   ];
@@ -738,21 +664,17 @@ export default function MyMatchingDetail({
   const cargoFlags = cargo ? [
 
     { label: '일반 컨테이너', on: cargo.generalContainer },
-
     { label: '냉장/냉동', on: cargo.refrigerated },
-
     { label: '위험물', on: cargo.dangerous },
-
     { label: '중량물', on: cargo.heavyCargo },
-
     { label: '특수화물', on: cargo.specialCargo }
 
   ] : [];
 
 
   // [19] 운송 조건 비교
-  // 현재 백엔드는 상대방의 상세 운송 조건을 제공하지 않음
   // 본인 조건만 실제 DB 값으로 표시
+  // 매칭된 물류기업의 주요 서비스는 별도 카드에서 표시
   const route = myCondition
     ? `${myCondition.departure} → ${myCondition.destination}`
     : '정보 없음';
@@ -812,22 +734,17 @@ export default function MyMatchingDetail({
     for (const other of matches) {
 
       if (other.matchingId === match.matchingId) {
-
         continue;
-
       }
 
       if (other.cscore1Id !== match.cscore1Id) {
-
         continue;
-
       }
 
       // 다른 운송사와 이미 매칭 완료
       if (other.finalStatus === 'COMPLETED') {
 
         lockReason = '이 화물 조건은 다른 운송사와 이미 매칭이 성사되었습니다.';
-
         break;
 
       }
@@ -837,7 +754,6 @@ export default function MyMatchingDetail({
           && other.shipperStatus === 'ACCEPTED') {
 
         lockReason = '진행 중인 매칭 요청이 끝나면 다른 운송사에 요청할 수 있습니다.';
-
         break;
 
       }
@@ -1019,64 +935,89 @@ export default function MyMatchingDetail({
         </section>
 
 
-        {/* [사업자 확인 정보] */}
+        {/* [추가] 사업자 확인 정보 -> 운송 서비스 정보 */}
         <section className="mm-card">
 
           <h2 className="mm-card__title">
 
-            사업자 확인 정보
+            운송 서비스 정보
 
           </h2>
 
           <dl className="mm-rows">
 
+            {/* 운송 방식 */}
             <div className="mm-rows__row">
 
-              <dt>사업자 상태</dt>
+              <dt>운송 방식</dt>
 
               <dd>
-
-                <span className="mm-biz">
-
-                  확인 전
-
-                </span>
-
+                {match.logisticsTransportType == null
+                  ? '정보 없음'
+                  : match.logisticsTransportType
+                    ? '해상 운송'
+                    : '항공 운송'}
               </dd>
 
             </div>
 
+            {/* 정기노선 여부 */}
             <div className="mm-rows__row">
 
-              <dt>계속사업 / 휴업 / 폐업</dt>
+              <dt>정기노선</dt>
 
-              <dd>조회되지 않음</dd>
+              <dd>
+                {match.logisticsRegularRoute == null
+                  ? '정보 없음'
+                  : match.logisticsRegularRoute
+                    ? '운영'
+                    : '미운영'}
+              </dd>
 
             </div>
 
+            {/* 직항 운송 여부 */}
             <div className="mm-rows__row">
 
-              <dt>과세 유형</dt>
+              <dt>직항 운송</dt>
 
-              <dd>조회되지 않음</dd>
+              <dd>
+                {match.logisticsDirectRoute == null
+                  ? '정보 없음'
+                  : match.logisticsDirectRoute
+                    ? '지원'
+                    : '미지원'}
+              </dd>
 
             </div>
 
+            {/* 평균 운송 기간 */}
             <div className="mm-rows__row">
 
-              <dt>확인일</dt>
+              <dt>평균 운송 기간</dt>
 
-              <dd>-</dd>
+              <dd>
+                {match.logisticsAverageTransitDays == null
+                  ? '정보 없음'
+                  : `${match.logisticsAverageTransitDays}일`}
+              </dd>
+
+            </div>
+
+            {/* HS코드 취급 경험 */}
+            <div className="mm-rows__row">
+
+              <dt>HS코드 취급 경험</dt>
+
+              <dd>
+                {match.logisticsExperienceCount == null
+                  ? '정보 없음'
+                  : `${match.logisticsExperienceCount.toLocaleString()}회`}
+              </dd>
 
             </div>
 
           </dl>
-
-          <p className="mm-card__note">
-
-            사업자 상태조회 API가 연동되지 않아 실제 조회 결과는 표시하지 않습니다.
-
-          </p>
 
         </section>
 
@@ -1101,15 +1042,10 @@ export default function MyMatchingDetail({
             {scores.map((item) => (
 
               <ScoreBar
-
                 key={item.label}
-
                 label={item.label}
-
                 score={item.score}
-
                 max={item.max}
-
               />
 
             ))}
@@ -1124,19 +1060,15 @@ export default function MyMatchingDetail({
 
           </p>
 
-
           <div className="mm-flags">
 
             {cargoFlags.map((flag) => (
 
               <span
-
                 key={flag.label}
-
                 className={
                   flag.on ? 'mm-flag is-on' : 'mm-flag'
                 }
-
               >
 
                 {flag.label} {ox(flag.on)}
@@ -1212,9 +1144,7 @@ export default function MyMatchingDetail({
                 <tr>
 
                   <th>항목</th>
-
                   <th>화주 요청</th>
-
                   <th>운송사 제공</th>
 
                 </tr>
@@ -1250,7 +1180,8 @@ export default function MyMatchingDetail({
 
           <p className="mm-card__note">
 
-            상대방의 상세 운송 조건은 현재 매칭 API에서 제공하지 않습니다.
+            이 비교표는 본인 조건을 중심으로 표시합니다.
+            매칭된 운송사의 주요 서비스 정보는 위 카드에서 확인할 수 있습니다.
 
           </p>
 
@@ -1279,28 +1210,19 @@ export default function MyMatchingDetail({
             <>
 
               <button
-
                 className="mm-reject-btn"
-
                 disabled={saving}
-
                 onClick={() => handleAction('shipperReject')}
-
               >
 
                 이 운송사 거절
 
               </button>
 
-
               <button
-
                 className="mm-primary-btn"
-
                 disabled={saving}
-
                 onClick={() => handleAction('shipperAccept')}
-
               >
 
                 {saving ? '처리 중...' : '매칭 요청 보내기'}
@@ -1320,28 +1242,19 @@ export default function MyMatchingDetail({
           <>
 
             <button
-
               className="mm-reject-btn"
-
               disabled={saving}
-
               onClick={() => handleAction('logisticsReject')}
-
             >
 
               거절
 
             </button>
 
-
             <button
-
               className="mm-primary-btn"
-
               disabled={saving}
-
               onClick={() => handleAction('logisticsAccept')}
-
             >
 
               {saving ? '처리 중...' : '수락'}

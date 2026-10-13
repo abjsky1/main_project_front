@@ -4,53 +4,268 @@
    ===================================================================== */
 
 /* ---------- 대표 이미지 배너 (헤더 바로 아래 , 화면 가로 전체) ----------
-   이미지 원본은 2560×1020(2배 크기)이고, 가운데에 최대 1280×510 으로 표시
-   → 고해상도(레티나·4K) 화면에서는 원본 픽셀을 그대로 써서 선명하게 보임.
-   이미지 양옆 빈 공간은 이미지 가장자리 색과 같은 그라데이션으로 채워서 끊김 없이 이어지게 함.
-   (색은 이미지 왼쪽/오른쪽 가장자리 픽셀을 위→아래로 뽑은 값)                         */
+   가운데 무대(stage)는 1280×510 비율로 고정
+   → 화면 폭이 바뀌거나 브라우저를 확대/축소(Ctrl + 휠 , Ctrl + / -)해도
+     사진 · 사선 · 문구가 한 장의 그림처럼 같은 비율로 커지고 작아짐 (사진이 잘리는 범위가 바뀌지 않음)
+   → 무대 안의 크기는 cqw(무대 폭의 1%) 단위로 적어서 무대가 작아지면 글자도 같이 작아짐
+     예) 1280px 무대에서 52px 글자 = 52 ÷ 1280 × 100 = 4.06cqw
+   무대 바깥 양옆은 무대 가장자리와 같은 색 그라데이션으로 화면 끝까지 채움
+   (색은 사진 가장자리 픽셀에 색 덮개를 섞은 최종 색을 위→아래로 뽑은 값)                         */
 .dashboard-hero {
-  background: #fff;
-}
-
-/* 이미지 + 양옆 배경 */
-.dashboard-hero__stage {
   background:
-    /* 왼쪽 절반 : 이미지 왼쪽 가장자리 색 (연보라 계열) */
-    linear-gradient(to bottom, #f8f9fd 0%, #f4f5fe 13%, #efeffd 25%, #eae9fb 50%, #e3e4f6 75%, #eaeffb 100%)
+    /* 왼쪽 절반 : 창고 사진 왼쪽 끝 색 (보라 계열) */
+    linear-gradient(to bottom, #36255f 0%, #34205a 25%, #3d2a63 50%, #3f2d66 70%, #37225a 88%, #3c2a63 100%)
       left top / 50% 100% no-repeat,
-    /* 오른쪽 절반 : 이미지 오른쪽 가장자리 색 (연하늘 계열) */
-    linear-gradient(to bottom, #f8f9fd 0%, #eff7fe 13%, #e9f5fc 25%, #dff2fc 50%, #dce8f5 75%, #eaeffb 100%)
+    /* 오른쪽 절반 : 선박 사진 오른쪽 끝 색 (남청색 계열) */
+    linear-gradient(to bottom, #104e68 0%, #0d4867 25%, #144462 45%, #114060 65%, #0c4265 88%, #084064 100%)
       right top / 50% 100% no-repeat;
 }
 
-.dashboard-hero__img {
-  display: block;
+/* 가운데 무대 : 최대 1280px , 높이는 폭에 맞춰 1280:510 비율 */
+.dashboard-hero__stage {
+  position: relative;
   width: 100%;
-  max-width: 1280px;     /* 원본(2560)의 절반 크기로 표시 → 최대 1280×510 */
-  height: auto;          /* 원본 비율 유지 */
+  max-width: 1280px;
+  aspect-ratio: 1280 / 510;
   margin: 0 auto;
+  overflow: hidden;
+  isolation: isolate;              /* 무대 안의 겹침 순서가 바깥 요소와 섞이지 않게 */
+  color: #fff;
+  container-type: inline-size;     /* 무대 안에서 cqw(무대 폭 기준 단위)를 쓸 수 있게 */
 }
 
-/* 화면이 이미지보다 넓을 때만 : 이미지 좌우 끝 20px 을 살짝 투명하게 → 배경 그라데이션과 자연스럽게 섞임
-   (양 끝 "화주 / 운송사" 글자는 가장자리에서 약 28~31px 안쪽이라 흐려지지 않음) */
+/* 두 사진 사이 보라→청록 경계선 : 사진 틈보다 조금 넓게 그려서 사진 아래에 깔아 둠 */
+.dashboard-hero__seam {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(56% 0, 58% 0, 44.4% 100%, 42.4% 100%);
+  background: linear-gradient(160deg, #c084fc, #22d3ee);
+}
+
+/* 사진 한 장을 담는 칸 : 무대 전체 크기로 겹쳐 놓고 clip-path 로 사선 모양만 남김 */
+.dashboard-hero__half {
+  position: absolute;
+  inset: 0;
+}
+
+.dashboard-hero__img {
+  position: absolute;
+  top: 0;
+  width: 62%;            /* 사선 칸을 다 덮을 만큼만 (무대 전체보다 작게 → 사진이 덜 잘림) */
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 사진 위 색 덮개 (왼쪽 보라 , 오른쪽 남색) → 사진 색을 브랜드 색 쪽으로 맞추고 흰 글자가 잘 보이게 */
+.dashboard-hero__half::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.dashboard-hero__half--left {
+  clip-path: polygon(0 0, 56.6% 0, 43% 100%, 0 100%);
+}
+
+.dashboard-hero__half--left .dashboard-hero__img {
+  left: 0;
+}
+
+.dashboard-hero__half--left::after {
+  background: linear-gradient(90deg, rgba(46, 16, 101, 0.7), rgba(76, 29, 149, 0.3));
+}
+
+.dashboard-hero__half--right {
+  clip-path: polygon(57.4% 0, 100% 0, 100% 100%, 43.8% 100%);
+}
+
+.dashboard-hero__half--right .dashboard-hero__img {
+  right: 0;
+  object-position: center bottom;   /* 사진 아래쪽을 보여 줌 → 선박이 조금 위로 올라가 가운데 문구와 덜 겹침 */
+}
+
+.dashboard-hero__half--right::after {
+  background: linear-gradient(270deg, rgba(8, 47, 73, 0.65), rgba(8, 80, 110, 0.3));
+}
+
+/* 화면이 무대보다 넓을 때만 : 사진 칸의 바깥쪽 끝 64px 을 서서히 투명하게 → 양옆 그라데이션과 끊김 없이 이어짐
+   (사진 칸에만 적용 → 아래 화주 / 운송사 이름표는 흐려지지 않음) */
 @media (min-width: 1281px) {
-  .dashboard-hero__img {
-    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
-    mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+  .dashboard-hero__half--left {
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 64px);
+    mask-image: linear-gradient(90deg, transparent 0, #000 64px);
+  }
+
+  .dashboard-hero__half--right {
+    -webkit-mask-image: linear-gradient(270deg, transparent 0, #000 64px);
+    mask-image: linear-gradient(270deg, transparent 0, #000 64px);
   }
 }
 
-/* 배너 아래 : 이미지 아래쪽 색(#eaeffb) → 흰 페이지로 부드럽게 */
-.dashboard-hero::after {
-  content: '';
-  display: block;
-  height: 40px;
-  background: linear-gradient(to bottom, #eaeffb, #fff);
+/* 문구 바로 뒤만 살짝 어둡게 (사진 전체 밝기는 그대로 두고 글자만 또렷하게) */
+.dashboard-hero__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 28% 40% at 50% 50%, rgba(12, 8, 32, 0.42) 0%, rgba(12, 8, 32, 0.2) 60%, rgba(12, 8, 32, 0) 100%);
 }
 
-/* 배너 아래 본문 : 위쪽 여백은 배너 페이드가 대신하니 조금 줄임 */
-.dashboard-body {
-  padding-top: 16px;
+/* ---------- 가운데 문구 (크기는 1280px 무대 기준 px 값을 cqw 로 바꾼 것) ---------- */
+.dashboard-hero__copy {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -52%);
+  width: max-content;
+  max-width: 90%;
+  text-align: center;
+  word-break: keep-all;           /* 한글을 글자 중간이 아니라 띄어쓰기에서 줄바꿈 */
+  font-family: 'Pretendard', 'Plus Jakarta Sans', sans-serif;   /* 한글은 Pretendard (index.css 에서 불러옴) */
+}
+
+/* 맨 위 작은 알약 모양 이름표 (앞에 그라데이션 점) */
+.dashboard-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625cqw;                     /* 8px */
+  padding: 0.47cqw 0.94cqw;          /* 6px 12px */
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.1);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: max(9px, 0.94cqw);      /* 12px (아주 작은 화면에서도 9px 아래로는 안 줄어듦) */
+  line-height: 1.33;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.dashboard-hero__eyebrow::before {
+  content: '';
+  width: 0.55cqw;                    /* 7px */
+  height: 0.55cqw;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c084fc, #22d3ee);
+}
+
+.dashboard-hero__title {
+  margin: 1.56cqw 0 1.1cqw;          /* 20px 0 14px */
+  font-size: 4.06cqw;                /* 52px */
+  font-weight: 800;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 2px rgba(10, 0, 40, 0.35), 0 2px 24px rgba(10, 0, 40, 0.6);
+}
+
+/* "가장 빠르게" : 보라→청록 그라데이션 글자
+   글자색이 투명이라 text-shadow 를 주면 그림자가 글자 안으로 비쳐서 탁해짐 → 바깥 그림자(drop-shadow)로 대신 */
+.dashboard-hero__highlight {
+  background: linear-gradient(90deg, #e9d5ff, #a5f3fc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 2px 14px rgba(10, 0, 40, 0.55));
+}
+
+.dashboard-hero__desc {
+  margin: 0;
+  font-size: max(12px, 1.4cqw);      /* 18px */
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 2px rgba(10, 0, 40, 0.35), 0 2px 24px rgba(10, 0, 40, 0.6);
+}
+
+/* ---------- 아래 양쪽 이름표 (화주 / 운송사) ---------- */
+.dashboard-hero__side {
+  position: absolute;
+  bottom: 2.2cqw;                    /* 28px */
+  display: flex;
+  align-items: center;
+  gap: 0.625cqw;                     /* 8px */
+  font-family: 'Pretendard', 'Plus Jakarta Sans', sans-serif;
+  font-size: max(12px, 1.33cqw);     /* 17px */
+  font-weight: 700;
+}
+
+.dashboard-hero__side em {
+  font-style: normal;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: max(9px, 0.94cqw);      /* 12px */
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  opacity: 0.75;
+}
+
+/* 이름표 앞 빛나는 점 */
+.dashboard-hero__side::before {
+  content: '';
+  width: max(6px, 0.7cqw);           /* 9px */
+  height: max(6px, 0.7cqw);
+  border-radius: 50%;
+}
+
+.dashboard-hero__side--left {
+  left: 2.5cqw;                      /* 32px */
+}
+
+.dashboard-hero__side--left::before {
+  background: #c084fc;
+  box-shadow: 0 0 12px #c084fc;
+}
+
+.dashboard-hero__side--right {
+  right: 2.5cqw;
+}
+
+.dashboard-hero__side--right::before {
+  background: #22d3ee;
+  box-shadow: 0 0 12px #22d3ee;
+}
+
+/* 휴대폰처럼 좁은 화면 : 1280:510 비율 그대로면 높이가 150px 남짓이라 문구를 읽을 수 없음
+   → 무대 높이를 400px 로 고정하고 글자는 px 크기로 */
+@media (max-width: 640px) {
+  .dashboard-hero__stage {
+    aspect-ratio: auto;
+    height: 400px;
+  }
+
+  .dashboard-hero__eyebrow {
+    gap: 6px;
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+
+  .dashboard-hero__eyebrow::before {
+    width: 6px;
+    height: 6px;
+  }
+
+  .dashboard-hero__title {
+    margin: 14px 0 10px;
+    font-size: 28px;
+  }
+
+  .dashboard-hero__desc {
+    font-size: 14px;
+  }
+
+  .dashboard-hero__side {
+    bottom: 20px;
+    gap: 6px;
+    font-size: 14px;
+  }
+
+  .dashboard-hero__side em {
+    font-size: 10px;
+  }
+
+  .dashboard-hero__side--left {
+    left: 16px;
+  }
+
+  .dashboard-hero__side--right {
+    right: 16px;
+  }
 }
 
 /* ---------- 페이지 제목 ---------- */

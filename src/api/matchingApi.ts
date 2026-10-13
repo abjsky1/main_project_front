@@ -14,180 +14,198 @@ import axios from 'axios';
    ========================================================= */
 
 
-  // [1] 백엔드 MatchingDto의 데이터 형식
-  export interface MatchingApiDto {
+// [1] 백엔드 MatchingDto의 데이터 형식
+export interface MatchingApiDto {
 
-    // 매칭 번호
-    matchingId: number;
+  // 매칭 번호
+  matchingId: number;
 
-    // 화주 매칭 조건 번호
-    cscore1Id: number;
+  // 화주 매칭 조건 번호
+  cscore1Id: number;
 
-    // 물류기업 매칭 조건 번호
-    lscore1Id: number;
-
-
-    // 매칭 점수
-    routeScore: number;
-    capacityScore: number;
-    itemScore: number;
-    scheduleScore: number;
-    experienceScore: number;
-    totalScore: number;
+  // 물류기업 매칭 조건 번호
+  lscore1Id: number;
 
 
-    // 매칭 상태
-    adminStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
-
-    shipperStatus: 'WAITING' | 'ACCEPTED' | 'REJECTED';
-
-    logisticsStatus: 'WAITING' | 'ACCEPTED' | 'REJECTED';
-
-    finalStatus: 'PENDING' | 'COMPLETED' | 'FAILED';
-
-
-    // 추천 이유 및 경고 메시지
-    recommendReason: string;
-    warningMessage: string;
-
-    // 매칭 생성일
-    createdAt: string;
+  // 매칭 점수
+  routeScore: number;
+  capacityScore: number;
+  itemScore: number;
+  scheduleScore: number;
+  experienceScore: number;
+  totalScore: number;
 
 
-    // 화주 기업 정보
-    shipperCompanyName?: string;
-    shipperContactName?: string;
-    shipperBizNumber?: string;
-    shipperPhone?: string;
-    shipperAddress?: string;
+  // 매칭 상태
+  adminStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+
+  shipperStatus: 'WAITING' | 'ACCEPTED' | 'REJECTED';
+
+  logisticsStatus: 'WAITING' | 'ACCEPTED' | 'REJECTED';
+
+  finalStatus: 'PENDING' | 'COMPLETED' | 'FAILED';
 
 
-    // 물류기업 정보
-    logisticsCompanyName?: string;
-    logisticsContactName?: string;
-    logisticsBizNumber?: string;
-    logisticsPhone?: string;
-    logisticsAddress?: string;
+  // 추천 이유 및 경고 메시지
+  recommendReason: string;
+  warningMessage: string;
 
-  }
+  // 매칭 생성일
+  createdAt: string;
 
 
-  // [2] 전체 매칭 결과 조회 (관리자)
-  // GET /api/matching
-  export async function getMatchingList(signal?: AbortSignal) {
-
-    const response = await axios.get<MatchingApiDto[]>(
-      '/api/matching',
-      {
-        signal,
-        withCredentials: true
-      }
-    );
-
-    return response.data;
-
-  }
+  // 화주 기업 정보
+  shipperCompanyName?: string;
+  shipperContactName?: string;
+  shipperBizNumber?: string;
+  shipperPhone?: string;
+  shipperAddress?: string;
 
 
-  // [3] 로그인 회원의 매칭 결과 조회
-  // GET /api/matching/member/{memberId}
-  export async function getMemberMatchingList(
-    memberId: string,
-    signal?: AbortSignal
-  ) {
-
-    const response = await axios.get<MatchingApiDto[]>(
-      `/api/matching/member/${memberId}`,
-      {
-        signal,
-        withCredentials: true
-      }
-    );
-
-    return response.data;
-
-  }
+  // 물류기업 정보
+  logisticsCompanyName?: string;
+  logisticsContactName?: string;
+  logisticsBizNumber?: string;
+  logisticsPhone?: string;
+  logisticsAddress?: string;
 
 
-  // [4] 화주 매칭 요청
-  // POST /api/matching/shipper/accept/{matchingId}
-  export async function acceptShipperMatching(
-    matchingId: number,
-    memberId: string
-  ) {
+  // [추가] 운송 서비스 정보
 
-    const response = await axios.post<boolean>(
-      `/api/matching/shipper/accept/${matchingId}`,
-      null,
-      {
-        params: { memberId },
-        withCredentials: true
-      }
-    );
+  // 운송 방식 : true = 해상, false = 항공
+  logisticsTransportType?: boolean | null;
 
-    return response.data;
+  // 정기노선 여부
+  logisticsRegularRoute?: boolean | null;
 
-  }
+  // 직항 여부
+  logisticsDirectRoute?: boolean | null;
 
+  // HS코드 취급 경험(회)
+  logisticsExperienceCount?: number | null;
 
-  // [5] 화주 매칭 거절
-  // POST /api/matching/shipper/reject/{matchingId}
-  export async function rejectShipperMatching(
-    matchingId: number,
-    memberId: string
-  ) {
+  // 평균 운송 기간(일)
+  logisticsAverageTransitDays?: number | null;
 
-    const response = await axios.post<boolean>(
-      `/api/matching/shipper/reject/${matchingId}`,
-      null,
-      {
-        params: { memberId },
-        withCredentials: true
-      }
-    );
-
-    return response.data;
-
-  }
+}
 
 
-  // [6] 물류기업 매칭 수락
-  // POST /api/matching/logistics/accept/{matchingId}
-  export async function acceptLogisticsMatching(
-    matchingId: number,
-    memberId: string
-  ) {
+// [2] 전체 매칭 결과 조회 (관리자)
+// GET /api/matching
+export async function getMatchingList(signal?: AbortSignal) {
 
-    const response = await axios.post<boolean>(
-      `/api/matching/logistics/accept/${matchingId}`,
-      null,
-      {
-        params: { memberId },
-        withCredentials: true
-      }
-    );
+  const response = await axios.get<MatchingApiDto[]>(
+    '/api/matching',
+    {
+      signal,
+      withCredentials: true
+    }
+  );
 
-    return response.data;
+  return response.data;
 
-  }
+}
 
 
-  // [7] 물류기업 매칭 거절
-  // POST /api/matching/logistics/reject/{matchingId}
-  export async function rejectLogisticsMatching(
-    matchingId: number,
-    memberId: string
-  ) {
+// [3] 로그인 회원의 매칭 결과 조회
+// GET /api/matching/member/{memberId}
+export async function getMemberMatchingList(
+  memberId: string,
+  signal?: AbortSignal
+) {
 
-    const response = await axios.post<boolean>(
-      `/api/matching/logistics/reject/${matchingId}`,
-      null,
-      {
-        params: { memberId },
-        withCredentials: true
-      }
-    );
+  const response = await axios.get<MatchingApiDto[]>(
+    `/api/matching/member/${memberId}`,
+    {
+      signal,
+      withCredentials: true
+    }
+  );
 
-    return response.data;
+  return response.data;
 
-  }
+}
+
+
+// [4] 화주 매칭 요청
+// POST /api/matching/shipper/accept/{matchingId}
+export async function acceptShipperMatching(
+  matchingId: number,
+  memberId: string
+) {
+
+  const response = await axios.post<boolean>(
+    `/api/matching/shipper/accept/${matchingId}`,
+    null,
+    {
+      params: { memberId },
+      withCredentials: true
+    }
+  );
+
+  return response.data;
+
+}
+
+
+// [5] 화주 매칭 거절
+// POST /api/matching/shipper/reject/{matchingId}
+export async function rejectShipperMatching(
+  matchingId: number,
+  memberId: string
+) {
+
+  const response = await axios.post<boolean>(
+    `/api/matching/shipper/reject/${matchingId}`,
+    null,
+    {
+      params: { memberId },
+      withCredentials: true
+    }
+  );
+
+  return response.data;
+
+}
+
+
+// [6] 물류기업 매칭 수락
+// POST /api/matching/logistics/accept/{matchingId}
+export async function acceptLogisticsMatching(
+  matchingId: number,
+  memberId: string
+) {
+
+  const response = await axios.post<boolean>(
+    `/api/matching/logistics/accept/${matchingId}`,
+    null,
+    {
+      params: { memberId },
+      withCredentials: true
+    }
+  );
+
+  return response.data;
+
+}
+
+
+// [7] 물류기업 매칭 거절
+// POST /api/matching/logistics/reject/{matchingId}
+export async function rejectLogisticsMatching(
+  matchingId: number,
+  memberId: string
+) {
+
+  const response = await axios.post<boolean>(
+    `/api/matching/logistics/reject/${matchingId}`,
+    null,
+    {
+      params: { memberId },
+      withCredentials: true
+    }
+  );
+
+  return response.data;
+
+}
