@@ -80,6 +80,13 @@
   background: rgba(100, 50, 220, 0.08);
 }
 
+/* "2 / 8 페이지" */
+.sm-page-info {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
 .sm-list-bar__note {
   margin-left: auto;
   font-size: 11px;

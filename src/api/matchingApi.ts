@@ -107,6 +107,40 @@ export async function getMatchingList(signal?: AbortSignal) {
 }
 
 
+// [2-1] 관리자 매칭 관리 화면 — 상태별 건수 5개 + 고른 상태의 매칭 한 페이지(50건)를 한 번에
+// GET /api/matching/admin?status=completed&page=0
+
+// 상태 필터 (화면 위쪽 카드 5칸) — 글자 그대로 서버의 status 로 보냄
+//   all 전체 · linked 자동 매칭 연결 · requested 물류 수락 대기 · completed 매칭 성사 · failed 매칭 실패
+export type MatchingStatusFilter = 'all' | 'linked' | 'requested' | 'completed' | 'failed';
+
+// 백엔드 MatchingPageDto (숫자 5개 + 목록 한 페이지 + 페이지 숫자)
+export interface MatchingPageDto {
+  allCount: number;          // 전체 매칭 수
+  linkedCount: number;       // 자동 매칭 연결
+  requestedCount: number;    // 물류 수락 대기
+  completedCount: number;    // 매칭 성사
+  failedCount: number;       // 매칭 실패
+  matchings: MatchingApiDto[];   // 고른 상태의 이번 페이지 (최신순 , 최대 50건)
+  page: number;              // 지금 페이지 — 0 부터 (화면에 보여 줄 때 +1)
+  size: number;              // 한 페이지 건수 (50)
+  totalPages: number;        // 고른 상태의 전체 페이지 수
+  totalCount: number;        // 고른 상태의 전체 매칭 수
+}
+
+// status : 화면의 상태 필터 , page : 서버 기준 0 부터
+// - 관리자만 사용 가능 : 서버가 로그인 쿠키(AccessToken)로 확인 → withCredentials: true 로 쿠키를 같이 보냄
+// [TS] MatchingPageDto | null : 관리자가 아니면 서버가 null(빈 응답 → axios 는 '')을 돌려줌 → || null 로 null 로 바꿈
+export async function getAdminMatchings(status: MatchingStatusFilter, page: number, signal?: AbortSignal) {
+  const response = await axios.get<MatchingPageDto | null>('/api/matching/admin', {
+    params: { status, page },
+    signal,
+    withCredentials: true,
+  });
+  return response.data || null;
+}
+
+
 // [3] 로그인 회원의 매칭 결과 조회
 // GET /api/matching/member/{memberId}
 export async function getMemberMatchingList(
