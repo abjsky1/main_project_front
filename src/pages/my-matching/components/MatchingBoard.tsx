@@ -26,6 +26,7 @@ import {
 import type { Stage } from '../myMatchingData';
 
 import ScoreBar from './ScoreBar';
+import MatchingAiEvaluation from './MatchingAiEvaluation';
 import StageBadge from './StageBadge';
 
 import '../MyMatching.css';
@@ -827,7 +828,10 @@ export default function MatchingBoard({ user }: { user: User }) {
 
                       <td>
 
-                        <ScoreBar score={match.totalScore} />
+                        <div className="mm-ai-score-cell">
+                          <ScoreBar score={match.totalScore} />
+                          <MatchingAiEvaluation match={match} memberId={memberId ?? ''} view="list" />
+                        </div>
 
                       </td>
 
@@ -927,7 +931,10 @@ export default function MatchingBoard({ user }: { user: User }) {
 
                       <td>
 
-                        <ScoreBar score={match.totalScore} />
+                        <div className="mm-ai-score-cell">
+                          <ScoreBar score={match.totalScore} />
+                          <MatchingAiEvaluation match={match} memberId={memberId ?? ''} view="list" />
+                        </div>
 
                       </td>
 
