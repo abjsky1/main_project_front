@@ -1,106 +1,213 @@
-// ⚠️ 더미 데이터 — 맞춤 인사이트 API 를 연결하면 이 파일의 함수를 서버 응답으로 교체하세요.
-//    (지금은 국가 이름으로 "항상 같은 가짜 숫자"를 만들어서, 국가마다 다른 그래프가 보이게 함)
+export type MemberType = 'SHIPPER' | 'LOGISTICS';
+export type Direction = 'EXPORT' | 'IMPORT';
 
-// 수출/수입 상위 HS 코드 한 줄
-export interface TopHsItem {
+export interface Country {
+  id: number;
   code: string;
   name: string;
-  value: number;
 }
 
-// seededRng : "씨앗 숫자(seed)가 같으면 항상 같은 순서의 가짜 난수"를 만드는 함수
-//             (Math.random 은 새로고침마다 값이 바뀌지만, 이건 같은 국가면 항상 같은 그래프가 나옴)
-//             안의 계산식은 난수 공식이라 몰라도 됩니다. rng() 를 부를 때마다 0~1 사이 숫자가 나온다는 것만 기억!
-function seededRng(seed: number) {
-  let s = seed;
+export interface Item {
+  code: string;
+  name: string;
+}
 
-  return () => {
-    s = (s * 1664525 + 1013904223) & 0xffffffff;
-    return (s >>> 0) / 0xffffffff;
+export interface Condition {
+  id: number;
+  countryId: number;
+  hsCode: string | null;
+  direction: Direction | null;
+  label: string;
+  details: Record<string, string | number | boolean>;
+}
+
+export interface Filters {
+  countryIds: number[];
+  hsCode: string;
+  direction: Direction;
+  start: string;
+  end: string;
+  objective: string;
+  conditionId: number | null;
+}
+
+export interface Options {
+  memberType: MemberType;
+  conditions: Condition[];
+  countries: Country[];
+  objectives: string[];
+  start: string;
+  end: string;
+  minMonth: string;
+  maxMonth: string;
+}
+
+export interface Point {
+  period: string;
+  exportAmount: number | null;
+  importAmount: number | null;
+  balance: number | null;
+}
+
+export interface Series {
+  country: string;
+  points: Point[];
+  observedMonths: number;
+  expectedMonths: number;
+}
+
+export interface Metric {
+  id: string;
+  country: string;
+  name: string;
+  value: number | null;
+  unit: string;
+  period: string;
+  source: string;
+  completeness: 'complete' | 'partial' | 'unavailable';
+}
+
+export interface Trend {
+  id: string;
+  country: string;
+  title: string;
+  period: string;
+  source: string;
+  metricIds: string[];
+  description: string;
+}
+
+export interface Analysis {
+  id: string;
+  title: string;
+  finding: string;
+  interpretationType: 'observation' | 'hypothesis';
+  whyItMattersToYou: string;
+  metricIds: string[];
+  conditionIds: string[];
+}
+
+export interface Recommendation {
+  id: string;
+  priority: 'high' | 'medium' | 'low';
+  action: string;
+  reasonForYou: string;
+  evidenceIds: string[];
+  conditionIds: string[];
+  checksBeforeAction: string[];
+}
+
+export interface Narrative {
+  status: 'ok' | 'partial' | 'insufficient_data';
+  personalAnalysis: Analysis[];
+  recommendations: Recommendation[];
+
+  relatedTrends: {
+    trendId: string;
+    relevanceToYou: string;
+    implication: string;
+    caveat: string;
+  }[];
+
+  finalSummary: {
+    currentSituation: string;
+    meaningForYou: string;
+    nextActionIds: string[];
+    caution: string;
   };
+
+  limitations: string[];
 }
 
-// seed 만들기 : 7 + (모든 국가 이름의 글자 코드 합)
-// charCodeAt(i) : i 번째 글자의 문자 코드 숫자 (예: '가' → 44032)
-function makeSeed(countries: string[]): number {
-  let seed = 7;
-  for (const country of countries) {
-    for (let i = 0; i < country.length; i++) {
-      seed = seed + country.charCodeAt(i);
-    }
+export interface InsightResult {
+  memberType: MemberType;
+  filters: Filters;
+  itemName: string;
+  generatedAt: string;
+  aiStatus: 'ready' | 'unavailable' | 'not_requested';
+  series: Series[];
+  metrics: Metric[];
+  trends: Trend[];
+  narrative: Narrative;
+  limitations: string[];
+}
+
+export interface Generation {
+  historyId: number | null;
+  saved: boolean;
+  saveMessage: string;
+  result: InsightResult;
+}
+
+export interface ConditionSnapshot {
+  memberType: MemberType;
+  filters: Filters;
+  businessConditions: Condition[];
+}
+
+export interface HistoryItem {
+  id: number;
+  createdAt: string;
+  status: string;
+  itemName: string;
+  hsCode: string;
+  direction: Direction;
+  start: string;
+  end: string;
+}
+
+export interface HistoryPage {
+  items: HistoryItem[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface HistoryDetail {
+  id: number;
+  createdAt: string;
+  status: string;
+  condition: ConditionSnapshot;
+  result: InsightResult;
+  metadata: Record<string, unknown>;
+}
+
+export const objectiveLabels: Record<string, string> = {
+  MARKET_OPPORTUNITY: '시장 기회 탐색',
+  MARKET_RISK: '거래 시장 위험 점검',
+  TRANSPORT_CHECK: '운송 조건 점검',
+  SALES_MARKET: '영업 대상 시장 검토',
+  ROUTE_FIT: '취급 품목·노선 적합성 검토',
+  OPERATIONS_CHECK: '운영 조건 점검',
+};
+
+export const historyStatusLabels: Record<string, string> = {
+  COMPLETE: '분석 완료',
+  STATISTICS_ONLY: '통계만 생성',
+  NO_DATA: '자료 부족',
+};
+
+export function formatDate(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
   }
-  return seed;
-}
 
-// 최근 5년 수출입 더미 데이터 (그래프 2개에 사용)
-export function yearlyTradeData(countries: string[]) {
-  const rng = seededRng(makeSeed(countries));
-
-  // 1. 기준 수출/수입액 (rng() 로 국가마다 다르게)
-  const base = {
-    exp: 400 + rng() * 600,
-    imp: 300 + rng() * 500,
-  };
-
-  // 2. 2021 ~ 2025 년 5개 데이터 만들기 (해마다 조금씩 증가)
-  return [2021, 2022, 2023, 2024, 2025].map((year) => {
-    const t = (year - 2021) / 4;          // 0, 0.25, 0.5, 0.75, 1 (첫 해 → 마지막 해 진행 정도)
-    const drift = rng() * 0.12 - 0.04;    // 해마다 조금씩 흔들리는 값
-
-    const exp = Math.round(
-      base.exp * (1 + t * 0.3 + drift)
-    );
-
-    const imp = Math.round(
-      base.imp * (1 + t * 0.25 + rng() * 0.08)
-    );
-
-    return {
-      year: `${year}`,
-      export: exp,
-      import: imp,
-      balance: exp - imp,   // 무역수지 = 수출 - 수입
-    };
+  return date.toLocaleString('ko-KR', {
+    timeZone: 'Asia/Seoul',
   });
 }
 
-// Top 2 에 뽑힐 수 있는 HS 품목 후보 (코드는 hscode.csv 의 10자리 , 점 없이 숫자만)
-const HS_ITEMS = [
-  { code: '8541101000', name: '반도체 다이오드' },
-  { code: '8517121090', name: '스마트폰' },
-  { code: '8542311000', name: '집적회로(IC)' },
-  { code: '8703231010', name: '승용차' },
-  { code: '8708999000', name: '자동차 부품' },
-  { code: '2710193000', name: '석유제품' },
-  { code: '2709001010', name: '원유' },
-  { code: '3304991000', name: '기초화장품' },
-  { code: '7208519000', name: '열연강판' },
-  { code: '3901101000', name: '폴리에틸렌' },
-  { code: '8471300000', name: '노트북' },
-  { code: '7306402000', name: '강관' },
-];
+export function formatNumber(
+  value: number | null | undefined,
+): string {
+  if (value == null || !Number.isFinite(value)) {
+    return '자료 부족';
+  }
 
-// 후보 중 서로 다른 2개를 골라 금액이 큰 순서로 돌려줌
-function pickTop2(rng: () => number): TopHsItem[] {
-  const first = Math.floor(rng() * HS_ITEMS.length);
-  let second = Math.floor(rng() * HS_ITEMS.length);
-  if (second === first) second = (first + 1) % HS_ITEMS.length;   // 같은 품목이 뽑히면 바로 다음 품목으로
-
-  const topValue = Math.round(8000 + rng() * 15000);              // 1위 금액
-  const secondValue = Math.round(topValue * (0.4 + rng() * 0.5)); // 2위는 1위보다 작게
-
-  return [
-    { ...HS_ITEMS[first], value: topValue },
-    { ...HS_ITEMS[second], value: secondValue },
-  ];
-}
-
-// 국가별 수출 Top 2 / 수입 Top 2 (더미)
-export function topHsData(country: string) {
-  // 그래프와 다른 난수 순서를 쓰려고 seed 에 1000 을 더함
-  const rng = seededRng(makeSeed([country]) + 1000);
-  return {
-    exportTop: pickTop2(rng),
-    importTop: pickTop2(rng),
-  };
+  return new Intl.NumberFormat('ko-KR', {
+    maximumFractionDigits: 1,
+  }).format(value);
 }
