@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import FilterButton from '../../../components/common/FilterButton';
+import Pagination from '../../../components/common/Pagination';
 import { SEARCH_COUNTRIES, type SortField } from '../tradeData';
 import type { TradeSearchState } from '../useTradeSearch';
 import HsCodeSelect from './HsCodeSelect';
@@ -21,12 +23,23 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
   const {
     country, setCountry, startDate, setStartDate, endDate, setEndDate, hsCode, setHsCode,
     hsCodes, hsCodeError, searched, loading, searchError, handleSearch,
-    colFilterOpen, setColFilterOpen, filterCountry, setFilterCountry, sortField, sortDir, toggleSort,
-    colFiltersActive, resetColFilters, displayedResults,
+    colFilterOpen, setColFilterOpen, filterCountry, changeFilterCountry, sortField, sortDir, toggleSort,
+    colFiltersActive, resetColFilters, pageResults, totalCount, totalPages, page, goToPage,
   } = search;
 
   // 정렬 화살표 : 지금 정렬 중인 열이면 방향(↑ 오름 / ↓ 내림), 아니면 ↕
   const sortArrow = (field: SortField) => (sortField === field ? (sortDir === 'asc' ? '↑' : '↓') : '↕');
+
+  // 결과 상단 바(검색 결과 N건)를 가리키는 ref (useRef — 가이드 3-2)
+  // [TS] useRef<HTMLDivElement>(null) : div 태그를 담을 상자 , 처음엔 비어 있음(null)
+  const resultTop = useRef<HTMLDivElement>(null);
+
+  // 페이지 번호를 누르면 : 그 페이지로 + 결과 표 맨 위로 (화면 맨 위는 검색 조건이라 결과 시작 부분으로)
+  // ?. : 아직 화면에 없어서 null 이면 아무것도 안 함
+  const changePage = (nextPage: number) => {
+    goToPage(nextPage);
+    resultTop.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   return (
     <div>
@@ -78,11 +91,13 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
 
       {searched && (
         <div>
-          {/* 결과 상단 바 */}
-          <div className="result-bar">
+          {/* 결과 상단 바 (페이지를 넘기면 여기까지 스크롤) */}
+          <div className="result-bar" ref={resultTop}>
             <div className="result-bar__left">
               <p className="eyebrow trade-section-label">검색 결과</p>
-              <span className="result-count">{displayedResults.length}건</span>
+              {/* 이번 페이지 줄 수(최대 50)가 아니라 필터까지 적용한 전체 건수 */}
+              <span className="result-count">{totalCount.toLocaleString()}건</span>
+              {totalPages > 1 && <span className="result-page-info">{page} / {totalPages} 페이지</span>}
             </div>
             <div className="result-bar__right">
               {colFiltersActive && (
@@ -103,7 +118,7 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
                 <label className="form-label">국가</label>
                 <select
                   value={filterCountry}
-                  onChange={(e) => setFilterCountry(e.target.value)}
+                  onChange={(e) => changeFilterCountry(e.target.value)}
                   className={filterCountry ? 'filter-input trade-filter-country has-value' : 'filter-input trade-filter-country'}
                 >
                   <option value="">전체 국가</option>
@@ -141,7 +156,8 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
                 </tr>
               </thead>
               <tbody>
-                {!loading && displayedResults.map((row) => (
+                {/* 이번 페이지 50줄만 그림 */}
+                {!loading && pageResults.map((row) => (
                   <tr key={row.id}>
                     <td className="cell-code">{row.hsCode}</td>
                     <td className="cell-product">{row.product}</td>
@@ -155,7 +171,7 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
                     <td className="cell-code">{row.period}</td>
                   </tr>
                 ))}
-                {(loading || displayedResults.length === 0) && (
+                {(loading || pageResults.length === 0) && (
                   <tr>
                     <td colSpan={7} className="cell-empty">
                       {loading ? '검색 중입니다... (무역 통계 파일을 읽는 중)' : '검색 결과가 없습니다.'}
@@ -165,6 +181,9 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
               </tbody>
             </table>
           </div>
+
+          {/* 페이지 번호 (감사 로그와 같은 공통 컴포넌트 — 페이지가 2개 이상이고 검색 중이 아닐 때만) */}
+          {!loading && <Pagination page={page} totalPages={totalPages} onChange={changePage} />}
         </div>
       )}
     </div>

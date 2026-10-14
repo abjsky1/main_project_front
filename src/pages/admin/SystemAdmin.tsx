@@ -36,8 +36,9 @@ export default function SystemAdmin({ user }: SystemAdminProps) {
 
   // 탭을 바꿔도 값이 유지되도록 상태는 여기(부모)에서 보관 (가이드 3-1)
   // userState / logState 에는 각 훅이 return 한 값과 함수들이 들어 있음 → 탭에 통째로 전달
-  const userState = useUserManagement();
-  const logState = useAuditLogs();
+  // 두 탭 모두 페이지 번호를 주소의 ?page= 에 저장해서 , 지금 열린 탭(true)만 주소의 페이지를 따르게 알려 줌
+  const userState = useUserManagement(section === 'users');
+  const logState = useAuditLogs(section === 'audit-logs');
 
   // 탭 열기 — 그 탭 주소로 이동 (뒤로 가기를 누르면 이전 탭으로)
   // 감사 로그 탭은 누를 때마다 다시 조회 (방금 한 활동이 바로 보이게)

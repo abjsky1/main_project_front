@@ -1,4 +1,5 @@
 import FilterButton from '../../../components/common/FilterButton';
+import Pagination from '../../../components/common/Pagination';
 import type { UserRoleLabel, UserStatus } from '../adminData';
 import type { LoginSort, UserManagementState } from '../useUserManagement';
 
@@ -14,16 +15,23 @@ interface UserManagementProps {
 }
 
 // "사용자 권한 관리" 탭
+// 한 페이지에 50명씩 , 표 아래 페이지 번호 버튼 (Pagination — 감사 로그와 같은 공통 컴포넌트)
 export default function UserManagement({ state, currentMemberId }: UserManagementProps) {
   // state = useUserManagement() 가 돌려준 객체 → 필요한 값/함수를 구조분해로 꺼냄
   const {
-    users, summary, loading, loadError, busyId, toggleRole, changeStatus,
+    users, summary, totalCount, totalPages, page, goToPage, loading, loadError, busyId, toggleRole, changeStatus,
     filterOpen, setFilterOpen, filterRole, setFilterRole, filterStatus, setFilterStatus,
-    loginSort, setLoginSort, filtersActive, search, resetFilters,
+    loginSort, changeLoginSort, filtersActive, search, resetFilters,
   } = state;
 
   // 표가 비었을 때 안내 문구
   const emptyMessage = loading ? '사용자 목록을 불러오는 중입니다...' : loadError || '해당 조건의 사용자가 없습니다.';
+
+  // 페이지 번호를 누르면 : 그 페이지로 + 화면 맨 위로 (감사 로그와 같음)
+  const changePage = (nextPage: number) => {
+    goToPage(nextPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <div>
@@ -47,7 +55,9 @@ export default function UserManagement({ state, currentMemberId }: UserManagemen
       <div className="admin-list-bar">
         <div className="admin-list-bar__left">
           <p className="eyebrow">사용자 목록</p>
-          <span className="admin-count">{users.length}명</span>
+          {/* 이번 페이지 인원(최대 50)이 아니라 필터에 맞는 전체 인원 */}
+          <span className="admin-count">{totalCount.toLocaleString()}명</span>
+          {totalPages > 1 && <span className="admin-page-info">{page} / {totalPages} 페이지</span>}
         </div>
         <div className="admin-list-bar__right">
           {filtersActive && <button onClick={resetFilters} className="filter-reset-btn">필터 초기화</button>}
@@ -55,7 +65,7 @@ export default function UserManagement({ state, currentMemberId }: UserManagemen
         </div>
       </div>
 
-      {/* 필터 패널 — 역할/상태는 [검색]을 눌러야 DB 에서 조회 , 정렬은 바로 화면에서만 */}
+      {/* 필터 패널 — 역할/상태는 [검색]을 눌러야 DB 에서 조회 , 정렬은 누르면 바로 DB 에서 정렬해서 1 페이지부터 */}
       {filterOpen && (
         <div className="filter-panel admin-filter-panel">
           <div>
@@ -83,7 +93,7 @@ export default function UserManagement({ state, currentMemberId }: UserManagemen
               {SORT_OPTIONS.map((s) => (
                 <button
                   key={s.val!}
-                  onClick={() => setLoginSort(loginSort === s.val ? null : s.val)}
+                  onClick={() => changeLoginSort(loginSort === s.val ? null : s.val)}
                   className={loginSort === s.val ? 'option-btn is-active' : 'option-btn'}
                 >
                   {s.label}
@@ -156,6 +166,9 @@ export default function UserManagement({ state, currentMemberId }: UserManagemen
           </tbody>
         </table>
       </div>
+
+      {/* 페이지 번호 (페이지가 2개 이상일 때만 보임) */}
+      <Pagination page={page} totalPages={totalPages} onChange={changePage} />
     </div>
   );
 }

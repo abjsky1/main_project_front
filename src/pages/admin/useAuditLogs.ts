@@ -54,7 +54,8 @@ const toAuditLog = (dto: AuditDto): AuditLog => ({
 // - 한 번에 50건씩 (페이징) — 지금 페이지 번호는 주소에 저장 : /admin/audit-logs?page=3
 //     → 새로고침하거나 주소를 공유해도 같은 페이지 , 뒤로 가기를 누르면 이전 페이지
 // 커스텀 훅 = useState 묶음 함수 (가이드 3-1). 부모 SystemAdmin 에서 호출 → 탭을 바꿔도 값 유지
-export default function useAuditLogs() {
+// active : 지금 이 탭이 열려 있는지 — 사용자 권한 관리 탭도 같은 ?page= 를 쓰기 때문에 , 열려 있을 때만 주소의 페이지를 따름
+export default function useAuditLogs(active: boolean) {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [totalCount, setTotalCount] = useState(0);   // 조건에 맞는 전체 로그 수 ("총 1,352건")
   const [totalPages, setTotalPages] = useState(0);   // 전체 페이지 수 (페이지 버튼 개수)
@@ -65,8 +66,9 @@ export default function useAuditLogs() {
   // useSearchParams : 주소의 물음표(?) 뒤 값을 읽고 바꾸는 훅 (탭 주소의 useParams 와 비슷한 역할)
   //   예) /admin/audit-logs?page=3 → searchParams.get('page') = '3' (글자) → Number 로 숫자 3
   //   Number('abc') 는 NaN(숫자 아님) → || 1 로 1 페이지
+  //   이 탭이 닫혀 있으면 1 (사용자 목록 탭의 ?page=3 을 감사 로그 페이지로 착각하지 않게)
   const [searchParams, setSearchParams] = useSearchParams();
-  const page = Math.max(1, Number(searchParams.get('page')) || 1);
+  const page = active ? Math.max(1, Number(searchParams.get('page')) || 1) : 1;
 
   // 필터 패널에서 입력/선택 중인 값
   const [filterOpen, setFilterOpen] = useState(false);
@@ -130,9 +132,10 @@ export default function useAuditLogs() {
   }, [page, setSearchParams]);
 
   // 마지막 페이지보다 큰 번호면 마지막 페이지로 (예: ?page=99 를 직접 입력 , 필터 때문에 페이지 수가 줄어듦)
+  // 이 탭이 열려 있을 때만 (닫혀 있을 때 주소를 바꾸면 사용자 목록 탭의 페이지가 바뀌어 버림)
   useEffect(() => {
-    if (totalPages > 0 && page > totalPages) goToPage(totalPages, true);
-  }, [page, totalPages, goToPage]);
+    if (active && totalPages > 0 && page > totalPages) goToPage(totalPages, true);
+  }, [active, page, totalPages, goToPage]);
 
   // 감사 로그 탭을 다시 열 때 : 지금 조건 · 지금 페이지로 다시 조회 (방금 한 활동이 바로 보이게)
   const reload = () => { load(applied, page); };

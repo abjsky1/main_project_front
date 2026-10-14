@@ -403,6 +403,7 @@ select.trade-input {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  scroll-margin-top: 80px;   /* 페이지를 넘겨 여기로 스크롤할 때 위에 고정된 헤더(56px)에 가려지지 않게 */
 }
 
 .result-bar__left {
@@ -425,6 +426,13 @@ select.trade-input {
   font-weight: 700;
   background: rgba(100, 50, 220, 0.08);
   color: var(--brand-purple);
+}
+
+/* "2 / 5 페이지" (감사 로그 .admin-page-info 와 같은 모양) */
+.result-page-info {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
 }
 
 .excel-btn {

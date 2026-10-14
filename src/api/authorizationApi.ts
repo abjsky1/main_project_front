@@ -15,21 +15,27 @@ export interface AuthorizationDto {
   lastLoginAt: string | null;  // "2025-12-31 09:14" , 로그인 기록이 없으면 null
 }
 
-// 사용자 수 + 목록 — AuthorizationCountDto
+// 사용자 수 + 이번 페이지 목록 + 페이지 숫자 — AuthorizationCountDto
 export interface AuthorizationCountDto {
   allUser: number;      // 요약 카드 숫자는 필터와 상관없이 전체 기준
   activate: number;
   deactivate: number;
-  members: AuthorizationDto[];
+  members: AuthorizationDto[];   // 이번 페이지 사용자 (최대 50명)
+  page: number;         // 지금 페이지 (0 부터)
+  size: number;         // 한 페이지 인원 (50)
+  totalPages: number;   // 전체 페이지 수
+  totalCount: number;   // 필터에 맞는 전체 인원 ("사용자 목록 N명")
 }
 
-// 필터 조건 (값이 없으면 조건 없이 전체)
+// 필터 · 정렬 · 페이지 조건 (값이 없으면 조건 없이 전체)
 export interface UserSearchParams {
   roleName?: string;
   status?: boolean;
+  loginSort?: 'asc' | 'desc';   // 최근 로그인 정렬 (없으면 최근 가입순)
+  page: number;                 // 0 부터 (화면 1페이지 = 0)
 }
 
-// GET /api/authorization?roleName=&status=  (필터 조건으로 DB 에서 조회)
+// GET /api/authorization?roleName=&status=&loginSort=&page=  (조건에 맞는 사용자 중 그 페이지만 DB 에서 조회)
 // [TS] AuthorizationCountDto | null : 관리자가 아니면 서버가 null 을 돌려줌 (빈 응답)
 export async function searchUsers(params: UserSearchParams, signal?: AbortSignal) {
   const response = await axios.get<AuthorizationCountDto | null>('/api/authorization', { params, signal, withCredentials: true });
