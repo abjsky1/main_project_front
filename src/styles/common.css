@@ -131,46 +131,120 @@
   border: 1px solid rgba(217, 48, 37, 0.15);
 }
 
-/* 필터 버튼을 누르면 열리는 회색 패널 (열 개수는 각 페이지 CSS에서 지정) */
-.filter-panel {
-  display: grid;
-  gap: 16px;
-  margin-bottom: 16px;
-  padding: 16px;
-  border-radius: 12px;
+/* ---------- 표 머리글 아래 필터 줄 (매칭 관리 · 사용자 권한 관리 · 감사 로그 · 무역 조건 검색 공통) ----------
+   [필터] 버튼을 누르면 <thead> 안에 두 번째 줄(<tr className="col-filter-row">)이 열림
+   → 각 칸의 조건이 바로 위 컬럼에 대한 것 (조건이 없는 컬럼은 빈칸)
+   - col-search       : 검색칸 + 작은 [검색] 버튼 (버튼을 누르거나 Enter 를 쳐야 검색 — 글자를 칠 때마다 서버에 묻지 않음)
+   - col-filter-select: 선택칸 (고르면 바로 적용) — 전체(기본값)는 회색 글씨 , 무언가 고르면 보라색(has-value)
+   - col-sort-btn     : 정렬 버튼 (누를 때마다 ↓ 내림차순 ↔ ↑ 오름차순) — 지금 정렬 중인 칸이면 보라색(is-active)
+   - col-filter-group : 한 칸에 선택칸 · 버튼을 여러 개 나란히 (같은 너비로 나눔)
+   높이는 모두 30px 로 맞춤
+   선택자를 thead tr.col-filter-row th 로 길게 쓴 이유 : 각 페이지 CSS 의 .admin-table th 같은 머리글 스타일보다 우선하게 (더 구체적인 선택자가 이김) */
+thead tr.col-filter-row th {
+  padding: 8px 10px;
+  font-weight: 500;
+  text-transform: none;    /* 머리글(th)의 대문자 · 자간 설정을 필터 줄에는 쓰지 않음 */
+  letter-spacing: 0;
+  background: #fff;
+  border-bottom: 1px solid var(--clean-border);
+}
+
+.col-filter-input,
+.col-filter-select {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  outline: none;
+  color: var(--text-primary);
   background: var(--input-bg);
   border: 1px solid var(--clean-border);
 }
 
-/* 필터 패널 안의 입력칸 / 셀렉트 */
-.filter-input {
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-  outline: none;
-  border: 1px solid var(--clean-border);
-  background: #fff;
-  color: var(--text-primary);
+.col-filter-input:focus,
+.col-filter-select:focus {
+  border-color: rgba(100, 50, 220, 0.35);
 }
 
-/* 필터 패널 안의 선택 버튼 (정렬, 결과 등) */
-.option-btn {
-  border-radius: 12px;
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  font-weight: 600;
-  background: #fff;
-  color: var(--text-secondary);
-  border: 1px solid var(--clean-border);
-  transition: all 150ms var(--ease);
+.col-filter-select {
+  padding: 0 4px;
+  cursor: pointer;
+  color: var(--text-muted);
 }
 
-.option-btn.is-active {
-  background: rgba(100, 50, 220, 0.08);
+.col-filter-select.has-value {
+  font-weight: 700;
   color: var(--brand-purple);
-  border: 1px solid rgba(100, 50, 220, 0.2);
+  border-color: rgba(100, 50, 220, 0.25);
+}
+
+/* 검색칸 + 작은 [검색] 버튼 */
+.col-search {
+  display: flex;
+  gap: 4px;
+}
+
+.col-search .col-filter-input {
+  flex: 1 1 0%;
+}
+
+.col-search__btn {
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #fff;
+  background: var(--brand-gradient);
+}
+
+.col-search__btn:hover {
+  opacity: 0.9;
+}
+
+/* 정렬 버튼 */
+.col-sort-btn {
+  width: 100%;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  background: #fff;
+  border: 1px solid var(--clean-border);
+}
+
+.col-sort-btn.is-active {
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.08);
+  border-color: rgba(100, 50, 220, 0.2);
+}
+
+/* 한 칸에 여러 개 나란히 (예: 매칭 제공 조건의 선택칸 3개 , 감사 로그 일시의 기간 선택 + 정렬) */
+.col-filter-group {
+  display: flex;
+  gap: 4px;
+}
+
+.col-filter-group > * {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+/* 표 맨 왼쪽 "번호" 칸 — 화면에 보이는 순서 (1 , 2 , 3 ... 정렬 · 필터가 바뀌어도 첫 줄은 항상 1)
+   매칭 관리 · 사용자 권한 관리 · 감사 로그 · 무역 조건 검색 */
+.cell-no {
+  font-family: var(--font-code);
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-muted);
 }
 
 /* ---------- 접근 제한 안내 (components/common/AccessGuard) ---------- */
@@ -301,7 +375,7 @@
 }
 
 /* ---------- 페이지 번호 버튼 (components/common/Pagination) ----------
-   ‹ 이전  1 2 [3] 4 ... 10  다음 ›  — 지금 페이지는 보라색으로 (option-btn 의 선택 색과 같음) */
+   ‹ 이전  1 2 [3] 4 ... 10  다음 ›  — 지금 페이지는 보라색으로 (필터 줄 정렬 버튼의 선택 색과 같음) */
 .pagination {
   display: flex;
   flex-wrap: wrap;

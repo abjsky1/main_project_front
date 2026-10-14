@@ -86,47 +86,8 @@
   color: var(--text-muted);
 }
 
-/* ---------- 필터 패널 ---------- */
-.admin-filter-panel {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.admin-filter-options {
-  display: flex;
-  gap: 8px;
-}
-
-.admin-filter-options .option-btn {
-  flex: 1 1 0%;
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-
-/* 감사 로그 기간 필터 : 버튼이 6개라 한 줄 전체를 씀 */
-.admin-filter-period {
-  grid-column: 1 / -1;
-}
-
-/* 필터 패널 맨 아래 줄 : [검색] 버튼 (오른쪽 정렬) */
-.admin-filter-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.admin-search-btn {
-  padding: 8px 24px;
-  border-radius: 9999px;
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  font-weight: 700;
-  color: #fff;
-  background: var(--brand-gradient);
-}
-
-.admin-search-btn:hover {
-  opacity: 0.9;
-}
+/* ---------- 필터 패널 ----------
+   사용자 권한 관리 · 감사 로그 모두 한 줄 모양 공통 클래스(styles/common.css 의 .filter-row)를 씀 */
 
 /* ---------- 표 공통 ---------- */
 .admin-table-wrap {
@@ -141,6 +102,41 @@
   font-size: var(--fs-sm);
   line-height: var(--lh-sm);
 }
+
+/* ---------- 칸 너비 고정 (사용자 목록 · 감사 로그) ----------
+   table-layout: fixed → 칸 너비를 안에 든 글자 · 입력칸이 아니라 아래 너비로 정함
+   → [필터] 를 눌러 머리글 아래 필터 줄(검색칸 · 선택칸)이 열리고 닫혀도 칸 너비가 그대로 (표가 움직이지 않음)
+   - 너비는 필터를 닫았을 때의 원래 모양에 맞춤 , 너비를 안 적은 칸 하나가 남는 폭을 가짐
+   - min-width : 창이 좁으면 남는 칸이 사라지지 않게 표 최소 너비 (그보다 좁으면 표 안에서 가로 스크롤)
+   - overflow-wrap: anywhere : 칸보다 긴 글자(긴 이메일 등)는 옆 칸을 침범하지 않고 칸 안에서 줄바꿈 */
+.admin-table--users,
+.admin-table--logs {
+  table-layout: fixed;
+}
+
+.admin-table--users td,
+.admin-table--logs td {
+  overflow-wrap: anywhere;
+}
+
+/* 사용자 목록 : 번호 / 이름 / 이메일(남는 폭) / 역할 / 최근 로그인 / 상태 / 권한 관리 */
+.admin-table--users { min-width: 1000px; }
+.admin-table--users th:nth-child(1) { width: 72px; }
+.admin-table--users th:nth-child(2) { width: 200px; }   /* 이름 + 필터 줄의 짧은 이름 검색칸 */
+.admin-table--users th:nth-child(4) { width: 160px; }
+.admin-table--users th:nth-child(5) { width: 190px; }
+.admin-table--users th:nth-child(6) { width: 120px; }
+.admin-table--users th:nth-child(7) { width: 150px; }
+
+/* 감사 로그 : 번호 / 일시 / 회원 유형 / 사용자 / 작업 유형 / 대상(남는 폭) / IP 주소 / 결과 */
+.admin-table--logs { min-width: 1100px; }
+.admin-table--logs th:nth-child(1) { width: 64px; }
+.admin-table--logs th:nth-child(2) { width: 180px; }    /* 2026-10-14 11:29:48 + 기간 선택칸 */
+.admin-table--logs th:nth-child(3) { width: 110px; }
+.admin-table--logs th:nth-child(4) { width: 210px; }    /* 이메일 + 사용자 검색칸 */
+.admin-table--logs th:nth-child(5) { width: 150px; }    /* 작업 유형 배지 + 선택칸 */
+.admin-table--logs th:nth-child(7) { width: 150px; }    /* IP + IP 검색칸 */
+.admin-table--logs th:nth-child(8) { width: 84px; }
 
 .admin-table thead tr {
   background: rgba(100, 50, 220, 0.02);

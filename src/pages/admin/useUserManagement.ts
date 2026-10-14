@@ -6,21 +6,25 @@ import {
 } from '../../api/authorizationApi';
 import { ADMIN_REQUIRED_MESSAGE, type SystemUser, type UserRoleLabel, type UserStatus } from './adminData';
 
-export type LoginSort = 'asc' | 'desc' | null;
+// 정렬 기준 : join = 가입순 , login = 최근 로그인 / 방향 : asc = 오름차순 , desc = 내림차순
+export type UserSortField = 'join' | 'login';
+export type SortDirection = 'asc' | 'desc';
 
-// 필터 조건 (역할 / 상태)
+// 적용된 필터 조건 (이름 · 이메일 검색어 / 역할 / 상태) — 표의 각 컬럼 위 필터 줄의 값
 // [TS] 'all' | UserRoleLabel → '전체' 또는 '관리자' / '일반사용자'
 interface UserFilter {
+  name: string;
+  email: string;
   role: 'all' | UserRoleLabel;
   status: 'all' | UserStatus;
 }
 
-const NO_FILTER: UserFilter = { role: 'all', status: 'all' };
+const NO_FILTER: UserFilter = { name: '', email: '', role: 'all', status: 'all' };
 
 // 화면 필터 + 정렬 + 페이지 → API 조건 (전체면 보내지 않음)
 // 값이 undefined 인 조건은 axios 가 주소에 붙이지 않으므로 "조건 없음" 이 됨
 // page : 화면은 1 부터 , 서버는 0 부터 세서 1 을 뺌 (화면 3페이지 → 서버 page=2)
-function toParams(f: UserFilter, sort: LoginSort, page: number): UserSearchParams {
+function toParams(f: UserFilter, sort: UserSortField, dir: SortDirection, page: number): UserSearchParams {
   let roleName: string | undefined;            // 처음엔 undefined (= 전체)
   if (f.role === '관리자') roleName = 'ROLE_ADMIN';
   if (f.role === '일반사용자') roleName = 'ROLE_USER';
@@ -29,8 +33,8 @@ function toParams(f: UserFilter, sort: LoginSort, page: number): UserSearchParam
   if (f.status === '활성') status = true;
   if (f.status === '비활성') status = false;
 
-  // ?? : 왼쪽이 null 이면 오른쪽 값 (정렬 없음 null → undefined = 보내지 않음)
-  return { roleName, status, loginSort: sort ?? undefined, page: page - 1 };
+  // 검색어가 빈 글자('')면 || 오른쪽의 undefined (= 조건 없음)
+  return { name: f.name || undefined, email: f.email || undefined, roleName, status, sort, dir, page: page - 1 };
 }
 
 // 백엔드 응답(AuthorizationDto) → 표 한 줄(SystemUser)
@@ -45,10 +49,13 @@ const toSystemUser = (dto: AuthorizationDto): SystemUser => ({
 });
 
 // "사용자 권한 관리" 탭의 상태와 동작
-// - 필터(역할/상태)는 [검색] 버튼을 눌렀을 때 DB 에서 다시 조회
+// - 필터는 표 머리글 아래 필터 줄에 각 컬럼마다 (매칭 관리와 같은 모양)
+//     이름 · 이메일 검색칸 : 작은 [검색] 버튼 / Enter 로 적용 , 역할 · 상태 선택칸 · 정렬 버튼 : 고르면 바로 적용
 // - 한 번에 50명씩 (페이징 — 감사 로그와 같은 방식) , 지금 페이지 번호는 주소에 저장 : /admin/users?page=3
 // - 최근 로그인 정렬도 DB 에서 정렬해서 받아옴 (누르면 바로 1 페이지부터 다시 조회)
 //     → 화면에서 정렬하면 "이번 페이지 50명 안에서만" 정렬되어 전체 순서가 틀려서
+//     기본은 가입순 내림차순 (= 최근 가입한 회원부터)
+// - 표 맨 왼쪽 번호는 화면에 보이는 순서 (정렬 · 필터가 바뀌어도 첫 줄은 항상 1 , 2 페이지는 51 부터)
 // (부모 SystemAdmin 에서 호출해서, 탭을 바꿔도 값이 유지되도록 함)
 // active : 지금 이 탭이 열려 있는지 — 감사 로그 탭도 같은 ?page= 를 쓰기 때문에 , 열려 있을 때만 주소의 페이지를 따름
 //          (감사 로그 탭에서 ?page=12 를 보는 중이면 사용자 목록은 1 페이지로 둠)
@@ -58,6 +65,7 @@ export default function useUserManagement(active: boolean) {
   const [summary, setSummary] = useState({ all: 0, active: 0, inactive: 0 });   // 요약 카드 (전체 기준)
   const [totalCount, setTotalCount] = useState(0);                              // 필터에 맞는 전체 인원 ("N명")
   const [totalPages, setTotalPages] = useState(0);                              // 전체 페이지 수 (페이지 버튼 개수)
+  const [pageSize, setPageSize] = useState(50);                                 // 한 페이지 인원 (서버가 알려 준 값 — 줄 번호 계산용)
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);                    // 변경 요청 중인 회원 (중복 클릭 방지)
@@ -67,27 +75,28 @@ export default function useUserManagement(active: boolean) {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = active ? Math.max(1, Number(searchParams.get('page')) || 1) : 1;
 
-  // 필터 패널에서 고르는 중인 값
+  // 필터 줄 : 열림 여부 , 검색칸에 입력 중인 글자 , 적용된 조건(서버에 보내는 값)
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filterRole, setFilterRole] = useState<'all' | UserRoleLabel>('all');
-  const [filterStatus, setFilterStatus] = useState<'all' | UserStatus>('all');
-  // 마지막으로 [검색]해서 적용된 값
+  const [nameInput, setNameInput] = useState('');
+  const [emailInput, setEmailInput] = useState('');
   const [applied, setApplied] = useState<UserFilter>(NO_FILTER);
-  const [loginSort, setLoginSort] = useState<LoginSort>(null);
+  // 정렬 (누르면 바로 적용) — 기본 : 가입순 내림차순
+  const [sortField, setSortField] = useState<UserSortField>('join');
+  const [sortDir, setSortDir] = useState<SortDirection>('desc');
   // 가장 최근 요청의 취소 도구를 기억 (useRef = 화면을 다시 그리지 않는 변수 — 가이드 3-2)
   const lastRequest = useRef<AbortController | null>(null);
 
   // DB 에서 그 페이지만 조회 (GET /api/authorization) — 이전 요청이 아직 진행 중이면 취소하고 마지막 요청 결과만 사용
   // (페이지 번호 · 정렬을 빠르게 여러 번 누르면 늦게 도착한 이전 결과가 화면을 덮어쓰는 것을 막음 — 감사 로그와 같음)
   // useCallback : 함수를 기억해 두는 훅 — 아래 useEffect 의존성 배열에 넣기 위해 사용 (가이드 3-3)
-  const load = useCallback(async (filter: UserFilter, sort: LoginSort, pageToLoad: number) => {
+  const load = useCallback(async (filter: UserFilter, field: UserSortField, dir: SortDirection, pageToLoad: number) => {
     lastRequest.current?.abort();               // 1. 진행 중인 이전 요청 취소
     const controller = new AbortController();   // 2. 이번 요청용 취소 도구를 새로 만들어 기억
     lastRequest.current = controller;
     setLoading(true);
     setLoadError('');
     try {
-      const data = await searchUsers(toParams(filter, sort, pageToLoad), controller.signal);
+      const data = await searchUsers(toParams(filter, field, dir, pageToLoad), controller.signal);
       // 관리자가 아니면 서버가 null 을 돌려줌 → 응답이 비어 있음 (axios 는 빈 응답을 '' 로 줌 → !data 로 확인)
       if (!data) {
         setUsers([]);
@@ -101,6 +110,7 @@ export default function useUserManagement(active: boolean) {
       setSummary({ all: data.allUser, active: data.activate, inactive: data.deactivate });
       setTotalCount(data.totalCount);
       setTotalPages(data.totalPages);
+      setPageSize(data.size);
     } catch (error) {
       if (controller.signal.aborted) return;   // 취소된 요청이면 무시
       console.log('사용자 목록 조회 실패 : ', error);
@@ -116,9 +126,9 @@ export default function useUserManagement(active: boolean) {
   // 적용된 필터 · 정렬 · 페이지가 바뀔 때마다 그 페이지를 다시 조회 (화면에 처음 들어올 때도 실행)
   // 화면을 떠나거나 다음 조회가 시작되면 진행 중인 요청 취소 (가이드 3-4)
   useEffect(() => {
-    load(applied, loginSort, page);
+    load(applied, sortField, sortDir, page);
     return () => lastRequest.current?.abort();
-  }, [load, applied, loginSort, page]);
+  }, [load, applied, sortField, sortDir, page]);
 
   // 페이지 이동 = 주소의 ?page= 만 바꿈 → page 가 바뀌어서 위 useEffect 가 그 페이지를 조회 (감사 로그와 같음)
   // 1 페이지는 ?page=1 을 붙이지 않고 깔끔하게 /admin/users 로 , replace : true 면 뒤로 가기 기록에 남기지 않음
@@ -133,26 +143,47 @@ export default function useUserManagement(active: boolean) {
     if (active && totalPages > 0 && page > totalPages) goToPage(totalPages, true);
   }, [active, page, totalPages, goToPage]);
 
-  // [검색] : 고른 필터를 적용 + 1 페이지로
-  // (setApplied 로 새 조건 객체를 넣으면 위 useEffect 가 다시 조회 — 같은 조건으로 다시 눌러도 새 객체라 다시 조회됨)
+  // [검색] 버튼 / Enter : 이름 · 이메일 검색칸에 입력한 글자를 한꺼번에 적용 + 1 페이지로
+  // { ...applied , name , email } : 지금 조건(역할 · 상태)은 그대로 두고 검색어만 바꾼 새 객체 → 위 useEffect 가 다시 조회
   const search = () => {
-    setApplied({ role: filterRole, status: filterStatus });
+    setApplied({ ...applied, name: nameInput.trim(), email: emailInput.trim() });
     goToPage(1);
   };
 
-  // [필터 초기화] : 조건 · 정렬 비우고 1 페이지 전체 다시 조회
+  // 역할 · 상태 선택칸 : 고르면 바로 적용 + 1 페이지로
+  const changeRoleFilter = (role: 'all' | UserRoleLabel) => {
+    setApplied({ ...applied, role });
+    goToPage(1);
+  };
+
+  const changeStatusFilter = (status: 'all' | UserStatus) => {
+    setApplied({ ...applied, status });
+    goToPage(1);
+  };
+
+  // [필터 초기화] : 조건 · 검색칸 비우고 기본 정렬(가입순 내림차순)로 1 페이지 전체 다시 조회
   const resetFilters = () => {
-    setFilterRole('all');
-    setFilterStatus('all');
-    setLoginSort(null);
+    setNameInput('');
+    setEmailInput('');
+    setSortField('join');
+    setSortDir('desc');
     setApplied({ ...NO_FILTER });   // { ...NO_FILTER } : 복사본(새 객체) → 같은 조건이어도 useEffect 가 다시 조회
     goToPage(1);
   };
 
-  // 최근 로그인 정렬 버튼 : 정렬을 바꾸고 1 페이지부터 (정렬이 바뀌면 위 useEffect 가 DB 에서 다시 조회)
-  // 이미 고른 정렬을 다시 누르면 정렬 해제(null) — 그 판단은 버튼 쪽(UserManagement)에서 함
-  const changeLoginSort = (next: LoginSort) => {
-    setLoginSort(next);
+  // 최근 로그인 정렬 버튼 : 누를 때마다 정렬 안 함(기본 = 최근 가입순) → 최신순 ↓ → 오래된순 ↑ → 다시 정렬 안 함
+  // 정렬이 바뀌면 위 useEffect 가 DB 에서 다시 조회 , 1 페이지부터
+  // (가입순 정렬 버튼은 화면에서 뺐고 , 서버에서는 기본 순서로만 씀)
+  const toggleLoginSort = () => {
+    if (sortField !== 'login') {
+      setSortField('login');
+      setSortDir('desc');
+    } else if (sortDir === 'desc') {
+      setSortDir('asc');
+    } else {
+      setSortField('join');
+      setSortDir('desc');
+    }
     goToPage(1);
   };
 
@@ -195,13 +226,15 @@ export default function useUserManagement(active: boolean) {
     }
   };
 
-  // 적용된 필터/정렬이 있으면 true → [필터 초기화] 버튼 보이기
-  const filtersActive = applied.role !== 'all' || applied.status !== 'all' || loginSort !== null;
+  // 적용된 필터가 있거나 정렬이 기본(가입순 내림차순)과 다르면 true → [필터 초기화] 버튼 보이기
+  const filtersActive = applied.name !== '' || applied.email !== '' || applied.role !== 'all' || applied.status !== 'all'
+    || sortField !== 'join' || sortDir !== 'desc';
 
   return {
-    users, summary, totalCount, totalPages, page, goToPage, loading, loadError, busyId, toggleRole, changeStatus,
-    filterOpen, setFilterOpen, filterRole, setFilterRole, filterStatus, setFilterStatus,
-    loginSort, changeLoginSort, filtersActive, search, resetFilters,
+    users, summary, totalCount, totalPages, page, pageSize, goToPage, loading, loadError, busyId, toggleRole, changeStatus,
+    filterOpen, setFilterOpen, nameInput, setNameInput, emailInput, setEmailInput, search,
+    roleFilter: applied.role, statusFilter: applied.status, changeRoleFilter, changeStatusFilter,
+    sortField, sortDir, toggleLoginSort, filtersActive, resetFilters,
   };
 }
 

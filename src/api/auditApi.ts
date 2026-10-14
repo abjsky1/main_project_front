@@ -27,11 +27,13 @@ export interface AuditPageDto {
 // 필터 조건 + 페이지 (값이 없으면 조건 없이 전체)
 // [TS] user?: string → 없어도 되는 칸. 값이 undefined 인 칸은 axios 가 주소에 붙이지 않음
 export interface AuditSearchParams {
-  user?: string;      // 이메일 또는 이름에 포함된 글자
-  action?: string;    // 작업 유형에 포함된 글자
-  result?: boolean;   // true = 성공 , false = 실패
-  period?: string;    // 기간 : today / 7days / 30days / 6months / 1year (안 보내면 전체 기간)
-  page?: number;      // 몇 번째 페이지 — 서버 기준 0 부터 (0 = 1페이지)
+  user?: string;        // 이메일 또는 이름에 포함된 글자
+  memberType?: string;  // 회원 유형 : 관리자 / 수출입기업 / 물류운송업체 / 비회원 (signup 테이블의 이름 그대로)
+  actionId?: number;    // 작업 유형 번호 (선택칸에서 고른 값 — 목록은 getAuditActions)
+  ip?: string;          // IP 주소에 포함된 글자
+  result?: boolean;     // true = 성공 , false = 실패
+  period?: string;      // 기간 : today / 7days / 30days / 6months / 1year (안 보내면 전체 기간)
+  page?: number;        // 몇 번째 페이지 — 서버 기준 0 부터 (0 = 1페이지)
 }
 
 // 감사 로그 조회 (필터 조건으로 DB 에서 조회 , 최신순 , 한 페이지씩)
@@ -40,5 +42,18 @@ export interface AuditSearchParams {
 // [TS] AuditPageDto | null : 관리자가 아니면 서버가 null 을 돌려줌 (빈 응답 → axios 는 '' 로 줌 → || null 로 null 로 바꿈)
 export async function getAuditLogs(params: AuditSearchParams, signal?: AbortSignal) {
   const response = await axios.get<AuditPageDto | null>('/api/audit', { params, signal, withCredentials: true });
+  return response.data || null;
+}
+
+// 작업 유형 1개 — ActionDto (감사 로그 필터 줄의 "작업 유형" 선택칸 목록)
+export interface ActionDto {
+  actionId: number;     // 1 , 2 , 3 ...
+  actionType: string;   // 엑셀 다운로드 , 로그인 , 로그인 실패 ...
+}
+
+// GET /api/audit/actions : 작업 유형 21가지 (action 테이블 , 번호순) — 관리자가 아니면 null
+// (DB 에 작업 유형이 늘어나면 선택칸에도 자동으로 나오게 , 화면에 목록을 직접 적어 두지 않고 서버에서 받음)
+export async function getAuditActions() {
+  const response = await axios.get<ActionDto[] | null>('/api/audit/actions', { withCredentials: true });
   return response.data || null;
 }

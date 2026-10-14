@@ -13,6 +13,7 @@ const SORT_COLUMNS: { field: SortField; label: string; header: string }[] = [
   { field: 'balance', label: '무역수지', header: '무역수지 ($)' },
 ];
 
+
 interface TradeSearchTabProps {
   search: TradeSearchState;  // useTradeSearch() 결과 (부모가 보관)
 }
@@ -24,7 +25,7 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
     country, setCountry, startDate, setStartDate, endDate, setEndDate, hsCode, setHsCode,
     hsCodes, hsCodeError, searched, loading, searchError, handleSearch,
     colFilterOpen, setColFilterOpen, filterCountry, changeFilterCountry, sortField, sortDir, toggleSort,
-    colFiltersActive, resetColFilters, pageResults, totalCount, totalPages, page, goToPage,
+    colFiltersActive, resetColFilters, pageResults, firstNo, totalCount, totalPages, page, goToPage,
   } = search;
 
   // 정렬 화살표 : 지금 정렬 중인 열이면 방향(↑ 오름 / ↓ 내림), 아니면 ↕
@@ -111,42 +112,15 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
             </div>
           </div>
 
-          {/* 필터 패널 — 검색 결과는 모두 같은 HS 코드라서 국가 필터와 금액 정렬만 둠 (한 줄) */}
-          {colFilterOpen && (
-            <div className="filter-panel trade-filter-panel">
-              <div>
-                <label className="form-label">국가</label>
-                <select
-                  value={filterCountry}
-                  onChange={(e) => changeFilterCountry(e.target.value)}
-                  className={filterCountry ? 'filter-input trade-filter-country has-value' : 'filter-input trade-filter-country'}
-                >
-                  <option value="">전체 국가</option>
-                  {SEARCH_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="form-label">금액 정렬</label>
-                <div className="trade-sort-options">
-                  {/* [TS] s.field! : "field 는 null 이 아니야" 라는 표시 (key 에는 null 을 쓸 수 없어서 — 가이드 2-6) */}
-                  {SORT_COLUMNS.map((s) => (
-                    <button key={s.field!} onClick={() => toggleSort(s.field)} className={sortField === s.field ? 'option-btn is-active' : 'option-btn'}>
-                      {s.label} {sortArrow(s.field)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* 결과 표 */}
           <div className="trade-table-divider" />
           <div className="trade-table-wrap">
             <table className="trade-table">
               <thead>
                 <tr>
-                  {['HS 코드', '품목명', '국가'].map((h) => <th key={h}>{h}</th>)}
-                  {/* ({ header, field }) : 배열의 객체에서 header, field 를 바로 꺼내 받기 (매개변수 구조분해) */}
+                  {['번호', 'HS 코드', '품목명', '국가'].map((h) => <th key={h}>{h}</th>)}
+                  {/* 금액 머리글은 눌러도 정렬 (필터 줄의 정렬 버튼과 같은 동작)
+                      ({ header, field }) : 배열의 객체에서 header, field 를 바로 꺼내 받기 (매개변수 구조분해) */}
                   {SORT_COLUMNS.map(({ header, field }) => (
                     <th key={header} onClick={() => toggleSort(field)} className={sortField === field ? 'is-sortable is-sorted' : 'is-sortable'}>
                       {header} <span className="sort-arrow">{sortArrow(field)}</span>
@@ -154,11 +128,44 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
                   ))}
                   <th className="is-wrap">기간</th>
                 </tr>
+
+                {/* 필터 줄 — 각 조건이 바로 위 컬럼에 대한 것 (매칭 관리와 같은 모양)
+                    검색 결과는 모두 같은 HS 코드라서 국가 선택과 금액 정렬만 둠 , 화면 안에서 거르는 거라 고르면 바로 적용 */}
+                {colFilterOpen && (
+                  <tr className="col-filter-row">
+                    {/* 번호 · HS 코드 · 품목명 : 거를 조건 없음 */}
+                    <th />
+                    <th />
+                    <th />
+                    <th>
+                      <select
+                        value={filterCountry}
+                        onChange={(e) => changeFilterCountry(e.target.value)}
+                        className={filterCountry ? 'col-filter-select has-value' : 'col-filter-select'}
+                      >
+                        <option value="">전체 국가</option>
+                        {SEARCH_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </th>
+                    {/* 금액 3칸 : 누를 때마다 ↓ 높은순 ↔ ↑ 낮은순 , 다른 칸으로 정렬 중이면 "정렬 ↕" */}
+                    {SORT_COLUMNS.map(({ header, field }) => (
+                      <th key={header}>
+                        <button onClick={() => toggleSort(field)} className={sortField === field ? 'col-sort-btn is-active' : 'col-sort-btn'}>
+                          {sortField !== field ? '정렬 ↕' : sortDir === 'desc' ? '높은순 ↓' : '낮은순 ↑'}
+                        </button>
+                      </th>
+                    ))}
+                    {/* 기간 : 거를 조건 없음 (기간은 위 검색 조건에서 정함) */}
+                    <th />
+                  </tr>
+                )}
               </thead>
               <tbody>
                 {/* 이번 페이지 50줄만 그림 */}
-                {!loading && pageResults.map((row) => (
+                {!loading && pageResults.map((row, index) => (
                   <tr key={row.id}>
+                    {/* 화면에 보이는 순서 번호 (첫 줄 = 1 , 2 페이지 첫 줄 = 51) */}
+                    <td className="cell-no">{firstNo + index}</td>
                     <td className="cell-code">{row.hsCode}</td>
                     <td className="cell-product">{row.product}</td>
                     <td className="cell-country">{row.country}</td>
@@ -173,7 +180,7 @@ export default function TradeSearchTab({ search }: TradeSearchTabProps) {
                 ))}
                 {(loading || pageResults.length === 0) && (
                   <tr>
-                    <td colSpan={7} className="cell-empty">
+                    <td colSpan={8} className="cell-empty">
                       {loading ? '검색 중입니다... (무역 통계 파일을 읽는 중)' : '검색 결과가 없습니다.'}
                     </td>
                   </tr>

@@ -452,41 +452,8 @@ select.trade-input {
   opacity: 0.8;
 }
 
-/* ---------- 필터 패널 ---------- */
-/* 필터 패널 : 국가 | 금액 정렬 한 줄 (넓은 화면에서는 정렬 버튼 칸을 3배 넓게) */
-.trade-filter-panel {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-@media (min-width: 768px) {
-  .trade-filter-panel {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
-  }
-}
-
-/* 국가 선택: 선택 전에는 회색 글씨 */
-.trade-filter-country {
-  appearance: none;
-  cursor: pointer;
-  color: var(--text-muted);
-}
-
-.trade-filter-country.has-value {
-  color: var(--text-primary);
-}
-
-/* 정렬 버튼 줄 : 옆 칸의 국가 선택칸(높이 38px)과 같은 높이 안에서 세로 가운데 정렬 */
-.trade-sort-options {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  min-height: 38px;
-}
-
-.trade-sort-options .option-btn {
-  padding: 6px 16px;
-}
+/* ---------- 필터 ----------
+   결과 표의 필터 줄(머리글 아래)은 다른 표와 같은 공통 스타일 (styles/common.css 의 .col-filter-row) */
 
 /* ---------- 결과 표 ---------- */
 .trade-table-divider {
@@ -503,8 +470,23 @@ select.trade-input {
 
 .trade-table {
   width: 100%;
+  min-width: 1100px;      /* 창이 좁으면 품목명 칸이 사라지지 않게 (그보다 좁으면 표 안에서 가로 스크롤) */
+  table-layout: fixed;    /* 칸 너비 고정 → 필터 줄을 열고 닫아도 표가 움직이지 않음 (사용자 목록 · 감사 로그와 같음) */
   font-size: var(--fs-sm);
   line-height: var(--lh-sm);
+}
+
+/* 칸 너비 (필터를 닫았을 때의 원래 모양에 맞춤) : 번호 / HS 코드 / 품목명(남는 폭) / 국가 / 수출액 / 수입액 / 무역수지 / 기간 */
+.trade-table th:nth-child(1) { width: 80px; }
+.trade-table th:nth-child(2) { width: 140px; }
+.trade-table th:nth-child(4) { width: 200px; }   /* 국가 + 필터 줄의 국가 선택칸 */
+.trade-table th:nth-child(5) { width: 160px; }
+.trade-table th:nth-child(6) { width: 150px; }
+.trade-table th:nth-child(7) { width: 170px; }
+.trade-table th:nth-child(8) { width: 110px; }
+
+.trade-table td {
+  overflow-wrap: anywhere;   /* 긴 국가 이름은 옆 칸을 침범하지 않고 칸 안에서 줄바꿈 */
 }
 
 .trade-table thead tr {

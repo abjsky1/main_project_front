@@ -128,12 +128,31 @@ export interface MatchingPageDto {
   totalCount: number;        // 고른 상태의 전체 매칭 수
 }
 
-// status : 화면의 상태 필터 , page : 서버 기준 0 부터
+// 관리자 매칭 목록 조회 조건 (서버의 MatchingSearchDto 와 같은 이름)
+// - 값이 undefined 인 조건은 axios 가 주소에 붙이지 않음 → 서버에서 null = 그 조건으로 거르지 않음
+// - keyword       : 화주사 · 운송사 회사 이름 검색어
+// - reason        : 추천 이유 · 주의 사항 검색어
+// - transportType : true = 해상 , false = 항공 / regularRoute · directRoute : true = O , false = X
+// - sort          : id(매칭 ID 순) / score(매칭 점수순) , dir : asc(오름차순) / desc(내림차순)
+// - page          : 서버 기준 0 부터
+export interface AdminMatchingParams {
+  status: MatchingStatusFilter;
+  keyword?: string;
+  reason?: string;
+  transportType?: boolean;
+  regularRoute?: boolean;
+  directRoute?: boolean;
+  sort: 'id' | 'score';
+  dir: 'asc' | 'desc';
+  page: number;
+}
+
+// GET /api/matching/admin?status=&keyword=&reason=&transportType=&regularRoute=&directRoute=&sort=&dir=&page=
 // - 관리자만 사용 가능 : 서버가 로그인 쿠키(AccessToken)로 확인 → withCredentials: true 로 쿠키를 같이 보냄
 // [TS] MatchingPageDto | null : 관리자가 아니면 서버가 null(빈 응답 → axios 는 '')을 돌려줌 → || null 로 null 로 바꿈
-export async function getAdminMatchings(status: MatchingStatusFilter, page: number, signal?: AbortSignal) {
+export async function getAdminMatchings(params: AdminMatchingParams, signal?: AbortSignal) {
   const response = await axios.get<MatchingPageDto | null>('/api/matching/admin', {
-    params: { status, page },
+    params,
     signal,
     withCredentials: true,
   });

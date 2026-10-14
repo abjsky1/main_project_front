@@ -1,13 +1,8 @@
+import type { KeyboardEvent } from 'react';
 import FilterButton from '../../../components/common/FilterButton';
 import Pagination from '../../../components/common/Pagination';
 import type { UserRoleLabel, UserStatus } from '../adminData';
-import type { LoginSort, UserManagementState } from '../useUserManagement';
-
-// 최근 로그인 정렬 버튼 2개
-const SORT_OPTIONS: { val: LoginSort; label: string }[] = [
-  { val: 'asc', label: '오름차순 ↑' },
-  { val: 'desc', label: '내림차순 ↓' },
-];
+import type { UserManagementState } from '../useUserManagement';
 
 interface UserManagementProps {
   state: UserManagementState;
@@ -16,13 +11,25 @@ interface UserManagementProps {
 
 // "사용자 권한 관리" 탭
 // 한 페이지에 50명씩 , 표 아래 페이지 번호 버튼 (Pagination — 감사 로그와 같은 공통 컴포넌트)
+// 필터 : [필터] 버튼을 누르면 표 머리글 바로 아래에 필터 줄 — 각 조건이 해당 컬럼 위에 (매칭 관리와 같은 모양)
 export default function UserManagement({ state, currentMemberId }: UserManagementProps) {
   // state = useUserManagement() 가 돌려준 객체 → 필요한 값/함수를 구조분해로 꺼냄
   const {
-    users, summary, totalCount, totalPages, page, goToPage, loading, loadError, busyId, toggleRole, changeStatus,
-    filterOpen, setFilterOpen, filterRole, setFilterRole, filterStatus, setFilterStatus,
-    loginSort, changeLoginSort, filtersActive, search, resetFilters,
+    users, summary, totalCount, totalPages, page, pageSize, goToPage, loading, loadError, busyId, toggleRole, changeStatus,
+    filterOpen, setFilterOpen, nameInput, setNameInput, emailInput, setEmailInput, search,
+    roleFilter, statusFilter, changeRoleFilter, changeStatusFilter,
+    sortField, sortDir, toggleLoginSort, filtersActive, resetFilters,
   } = state;
+
+  // 검색칸에서 Enter = [검색]
+  const searchOnEnter = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') search();
+  };
+
+  // 최근 로그인 정렬 버튼 글자 : 정렬 안 함 → "정렬 ↕" , 최신순 → "최신순 ↓" , 오래된순 → "오래된순 ↑"
+  const loginSorted = sortField === 'login';
+  let loginSortLabel = '정렬 ↕';
+  if (loginSorted) loginSortLabel = sortDir === 'desc' ? '최신순 ↓' : '오래된순 ↑';
 
   // 표가 비었을 때 안내 문구
   const emptyMessage = loading ? '사용자 목록을 불러오는 중입니다...' : loadError || '해당 조건의 사용자가 없습니다.';
@@ -65,63 +72,79 @@ export default function UserManagement({ state, currentMemberId }: UserManagemen
         </div>
       </div>
 
-      {/* 필터 패널 — 역할/상태는 [검색]을 눌러야 DB 에서 조회 , 정렬은 누르면 바로 DB 에서 정렬해서 1 페이지부터 */}
-      {filterOpen && (
-        <div className="filter-panel admin-filter-panel">
-          <div>
-            <label className="form-label">역할</label>
-            {/* [TS] as 'all' | UserRoleLabel : 고른 값이 이 글자들 중 하나라는 표시 (값은 그대로 — 가이드 2-6) */}
-            <select value={filterRole} onChange={(e) => setFilterRole(e.target.value as 'all' | UserRoleLabel)} className="filter-input">
-              <option value="all">전체</option>
-              <option value="관리자">관리자</option>
-              <option value="일반사용자">일반사용자</option>
-            </select>
-          </div>
-          <div>
-            <label className="form-label">상태</label>
-            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as 'all' | UserStatus)} className="filter-input">
-              <option value="all">전체</option>
-              <option value="활성">활성</option>
-              <option value="비활성">비활성</option>
-            </select>
-          </div>
-          <div>
-            <label className="form-label">최근 로그인 정렬</label>
-            <div className="admin-filter-options">
-              {/* 이미 고른 정렬을 다시 누르면 정렬 해제(null) */}
-              {/* [TS] s.val! : "val 은 null 이 아니야" 라는 표시 (key 에 null 을 쓸 수 없어서) */}
-              {SORT_OPTIONS.map((s) => (
-                <button
-                  key={s.val!}
-                  onClick={() => changeLoginSort(loginSort === s.val ? null : s.val)}
-                  className={loginSort === s.val ? 'option-btn is-active' : 'option-btn'}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="admin-filter-actions">
-            <button onClick={search} className="admin-search-btn">검색</button>
-          </div>
-        </div>
-      )}
-
       {/* 사용자 표 */}
       <div className="admin-table-wrap">
-        <table className="admin-table">
+        <table className="admin-table admin-table--users">
           <thead>
             <tr>
-              {['이름', '이메일', '역할', '최근 로그인', '상태', '권한 관리'].map((h) => <th key={h}>{h}</th>)}
+              {['번호', '이름', '이메일', '역할'].map((h) => <th key={h}>{h}</th>)}
+              {/* 최근 로그인으로 정렬 중이면 머리글 옆에 방향 표시 */}
+              <th>최근 로그인{loginSorted && (sortDir === 'desc' ? ' ↓' : ' ↑')}</th>
+              <th>상태</th>
+              <th>권한 관리</th>
             </tr>
+
+            {/* 필터 줄 — 각 조건이 바로 위 컬럼에 대한 것
+                이름 · 이메일은 [검색] 버튼 / Enter 로 적용 (둘 중 어느 버튼을 눌러도 둘 다 적용) , 선택칸 · 정렬 버튼은 바로 적용 */}
+            {filterOpen && (
+              <tr className="col-filter-row">
+                {/* 번호 : 화면 순서라서 거를 조건이 없음 */}
+                <th />
+                <th>
+                  <div className="col-search">
+                    <input value={nameInput} onChange={(e) => setNameInput(e.target.value)} onKeyDown={searchOnEnter} placeholder="이름" className="col-filter-input" />
+                    <button onClick={search} className="col-search__btn">검색</button>
+                  </div>
+                </th>
+                <th>
+                  <div className="col-search">
+                    <input value={emailInput} onChange={(e) => setEmailInput(e.target.value)} onKeyDown={searchOnEnter} placeholder="이메일" className="col-filter-input" />
+                    <button onClick={search} className="col-search__btn">검색</button>
+                  </div>
+                </th>
+                <th>
+                  {/* [TS] as 'all' | UserRoleLabel : 고른 값이 이 글자들 중 하나라는 표시 (값은 그대로 — 가이드 2-6) */}
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => changeRoleFilter(e.target.value as 'all' | UserRoleLabel)}
+                    className={roleFilter === 'all' ? 'col-filter-select' : 'col-filter-select has-value'}
+                  >
+                    <option value="all">전체</option>
+                    <option value="관리자">관리자</option>
+                    <option value="일반사용자">일반사용자</option>
+                  </select>
+                </th>
+                <th>
+                  {/* 누를 때마다 정렬 안 함 → 최신순 → 오래된순 → 정렬 안 함 */}
+                  <button onClick={toggleLoginSort} className={loginSorted ? 'col-sort-btn is-active' : 'col-sort-btn'}>
+                    {loginSortLabel}
+                  </button>
+                </th>
+                <th>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => changeStatusFilter(e.target.value as 'all' | UserStatus)}
+                    className={statusFilter === 'all' ? 'col-filter-select' : 'col-filter-select has-value'}
+                  >
+                    <option value="all">전체</option>
+                    <option value="활성">활성</option>
+                    <option value="비활성">비활성</option>
+                  </select>
+                </th>
+                {/* 권한 관리 : 거를 조건 없음 */}
+                <th />
+              </tr>
+            )}
           </thead>
           <tbody>
-            {users.map((u) => {
+            {users.map((u, index) => {
               const isAdmin = u.role === '관리자';
               // 스위치 잠금 : 로그인한 관리자 본인의 줄이거나, 다른 회원의 변경 요청이 진행 중일 때
               const locked = u.id === currentMemberId || busyId !== null;   // 본인 행 , 다른 변경 요청 중
               return (
                 <tr key={u.id} className="user-row">
+                  {/* 화면에 보이는 순서 번호 (첫 줄 = 1 , 2 페이지 첫 줄 = 51) */}
+                  <td className="cell-no">{(page - 1) * pageSize + index + 1}</td>
                   <td>
                     <div className="user-name">
                       <div className={isAdmin ? 'user-name__avatar is-admin' : 'user-name__avatar'}>{u.name.charAt(0)}</div>
@@ -161,7 +184,7 @@ export default function UserManagement({ state, currentMemberId }: UserManagemen
               );
             })}
             {users.length === 0 && (
-              <tr><td colSpan={6} className="cell-empty">{emptyMessage}</td></tr>
+              <tr><td colSpan={7} className="cell-empty">{emptyMessage}</td></tr>
             )}
           </tbody>
         </table>

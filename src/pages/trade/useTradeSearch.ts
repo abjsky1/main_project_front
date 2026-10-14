@@ -42,6 +42,7 @@ export default function useTradeSearch() {
   // 결과 표 필터 / 정렬
   const [colFilterOpen, setColFilterOpen] = useState(false);
   const [filterCountry, setFilterCountry] = useState('');
+  // 금액 정렬 — 기본 : 정렬 안 함(null) = 서버가 돌려준 검색 결과 원래 순서
   const [sortField, setSortField] = useState<SortField>(null);   // [TS] <SortField> : 정렬 기준 열 이름 또는 null
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
@@ -152,11 +153,14 @@ export default function useTradeSearch() {
   const pageResults = displayedResults.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // 탭 화면(TradeSearchTab)에서 쓸 값과 함수들을 객체로 돌려줌
+  // 4) 맨 왼쪽 번호 : 화면에 보이는 순서 (필터 · 정렬이 바뀌어도 첫 줄은 항상 1 , 2 페이지 첫 줄은 51)
+  const firstNo = (page - 1) * PAGE_SIZE + 1;
+
   return {
     country, setCountry, startDate, setStartDate, endDate, setEndDate, hsCode, setHsCode,
     hsCodes, hsCodeError, searched, loading, searchError, handleSearch,
     colFilterOpen, setColFilterOpen, filterCountry, changeFilterCountry, sortField, sortDir, toggleSort,
-    colFiltersActive, resetColFilters, pageResults, totalCount, totalPages, page, goToPage: setPage,
+    colFiltersActive, resetColFilters, pageResults, firstNo, totalCount, totalPages, page, goToPage: setPage,
   };
 }
 

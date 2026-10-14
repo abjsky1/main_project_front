@@ -87,8 +87,15 @@
   color: var(--text-muted);
 }
 
-.sm-list-bar__note {
+/* 막대 오른쪽 : 점수 설명 + [필터 초기화] + [필터] (오른쪽 끝으로 밀기) */
+.sm-list-bar__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-left: auto;
+}
+
+.sm-list-bar__note {
   font-size: 11px;
   color: var(--text-muted);
 }
@@ -111,22 +118,26 @@
   line-height: var(--lh-sm);
 }
 
-/* 칸 너비 : 글자 길이가 거의 정해진 칸은 px 로 고정 (안에 든 가장 긴 글자 + 좌우 여백 28px 이 들어가는 만큼)
-   3번째 칸(추천 이유 · 주의 사항)은 너비를 정하지 않음 → 표에서 남는 공간을 전부 가짐 (화면이 넓을수록 넓어짐) */
-.sm-table th:nth-child(1) { width: 100px; }   /* #700 / 10-14 04:00 */
-.sm-table th:nth-child(2) { width: 230px; }   /* 가장 긴 회사 이름 "농업회사법인 주식회사 현농프레쉬" 까지 */
-.sm-table th:nth-child(4) { width: 170px; }   /* 경험 306회 · 평균 운송 28일 */
-.sm-table th:nth-child(5) { width: 170px; }   /* 30 · 25 · 20 · 13 · 10 */
-.sm-table th:nth-child(6) { width: 125px; }   /* 물류 수락 대기 배지 */
+/* 칸 너비 : 글자 길이가 거의 정해진 칸은 px 로 고정 (안에 든 가장 긴 글자 + 좌우 여백이 들어가는 만큼)
+   4번째 칸(추천 이유 · 주의 사항)은 너비를 정하지 않음 → 표에서 남는 공간을 전부 가짐 (화면이 넓을수록 넓어짐) */
+.sm-table th:nth-child(1) { width: 56px; }    /* 번호 (화면 순서) */
+.sm-table th:nth-child(2) { width: 112px; }   /* #700 / 10-14 04:00 + 필터 줄의 "오래된순 ↑" 버튼 */
+.sm-table th:nth-child(3) { width: 230px; }   /* 가장 긴 회사 이름 "농업회사법인 주식회사 현농프레쉬" 까지 */
+.sm-table th:nth-child(5) { width: 236px; }   /* 필터 줄의 선택칸 3개 (운송 · 정기 · 직항) */
+.sm-table th:nth-child(6) { width: 165px; }   /* 30 · 25 · 20 · 13 · 10 */
+.sm-table th:nth-child(7) { width: 132px; }   /* 물류 수락 대기 배지 · 필터 줄의 상태 선택칸 */
 
-/* 좁은 화면 : px 칸 합계(795px)만으로 표가 꽉 차서 3번째 칸이 사라지지 않게 % 로 나눔 (합계 75% , 나머지 25% 가 3번째 칸) */
+/* 좁은 화면 : px 칸 합계(931px)만으로 표가 꽉 차서 4번째 칸이 사라지지 않게 % 로 나눔 (합계 75% , 나머지 25% 가 4번째 칸) */
 @media (max-width: 1023px) {
-  .sm-table th:nth-child(1) { width: 10%; }
-  .sm-table th:nth-child(2) { width: 21%; }
-  .sm-table th:nth-child(4) { width: 16%; }
-  .sm-table th:nth-child(5) { width: 15%; }
-  .sm-table th:nth-child(6) { width: 13%; }
+  .sm-table th:nth-child(1) { width: 5%; }
+  .sm-table th:nth-child(2) { width: 10%; }
+  .sm-table th:nth-child(3) { width: 18%; }
+  .sm-table th:nth-child(5) { width: 19%; }
+  .sm-table th:nth-child(6) { width: 12%; }
+  .sm-table th:nth-child(7) { width: 11%; }
 }
+
+/* 필터 줄(머리글 아래)과 맨 왼쪽 번호 칸은 다른 표와 같은 공통 스타일 (styles/common.css 의 .col-filter-row , .cell-no) */
 
 /* 칸 안의 글자 줄 : 줄바꿈 없이 칸 너비를 넘으면 "…" */
 .sm-table td p {

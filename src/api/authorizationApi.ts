@@ -7,7 +7,7 @@ import axios from 'axios';
 
 // 회원 1명 — AuthorizationDto
 export interface AuthorizationDto {
-  memberId: string;
+  memberId: string;            // 회원 아이디 (UUID — 권한 · 상태 변경 때 사용)
   managerName: string;
   userEmail: string;
   roleName: string;            // ROLE_ADMIN / ROLE_USER
@@ -29,13 +29,16 @@ export interface AuthorizationCountDto {
 
 // 필터 · 정렬 · 페이지 조건 (값이 없으면 조건 없이 전체)
 export interface UserSearchParams {
+  name?: string;                // 이름 검색어
+  email?: string;               // 이메일 검색어
   roleName?: string;
   status?: boolean;
-  loginSort?: 'asc' | 'desc';   // 최근 로그인 정렬 (없으면 최근 가입순)
+  sort: 'join' | 'login';       // 정렬 기준 : 가입순 / 최근 로그인
+  dir: 'asc' | 'desc';          // 정렬 방향 : 오름차순 / 내림차순 (가입순 내림차순 = 최근 가입한 회원부터 , 기본)
   page: number;                 // 0 부터 (화면 1페이지 = 0)
 }
 
-// GET /api/authorization?roleName=&status=&loginSort=&page=  (조건에 맞는 사용자 중 그 페이지만 DB 에서 조회)
+// GET /api/authorization?name=&email=&roleName=&status=&sort=&dir=&page=  (조건에 맞는 사용자 중 그 페이지만 DB 에서 조회)
 // [TS] AuthorizationCountDto | null : 관리자가 아니면 서버가 null 을 돌려줌 (빈 응답)
 export async function searchUsers(params: UserSearchParams, signal?: AbortSignal) {
   const response = await axios.get<AuthorizationCountDto | null>('/api/authorization', { params, signal, withCredentials: true });

@@ -3,7 +3,7 @@
 // - 조건 검색 : 팀원의 검색 API(/api/condition/search) — useTradeSearch.ts
 
 // [TS] 'a' | 'b' : 이 글자들 중 하나만 들어갈 수 있는 타입 (가이드 2-3)
-export type SortField = 'exportAmt' | 'importAmt' | 'balance' | null;   // 정렬 기준 열 (null = 정렬 안 함)
+export type SortField = 'exportAmt' | 'importAmt' | 'balance' | null;   // 정렬 기준 열 (null = 정렬 안 함 = 검색 결과 원래 순서)
 export type SortDir = 'asc' | 'desc';                                   // asc = 오름차순, desc = 내림차순
 
 /* ───────────── 누적 무역 카드 ───────────── */
