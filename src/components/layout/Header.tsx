@@ -225,10 +225,13 @@ export default function Header({
       '/api/matching/stream',
     );
 
-    // 3. 서버에서 매칭 알림을 받으면 최신 정보 조회
+    // 3. 서버에서 매칭 알림을 받으면
+    // 헤더와 내 매칭 화면에 변경 사실 전달
     eventSource.addEventListener('matching-updated', () => {
 
-      matchingRead();
+      window.dispatchEvent(
+        new Event('macross:matching-updated')
+      );
 
     });
 

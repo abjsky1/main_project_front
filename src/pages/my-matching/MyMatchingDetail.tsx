@@ -44,6 +44,7 @@ import type { Stage } from './myMatchingData';
 import ProgressSteps from './components/ProgressSteps';
 import ScoreBar from './components/ScoreBar';
 import StageBadge from './components/StageBadge';
+import MatchingAiEvaluation from './components/MatchingAiEvaluation';
 
 import './MyMatching.css';
 
@@ -1130,6 +1131,9 @@ export default function MyMatchingDetail({
 
         </section>
 
+
+        {/* [LLM API 평가] 기존 Java 점수와 Gemini 점수 및 근거 비교 */}
+        <MatchingAiEvaluation match={match} memberId={memberId} view="detail" />
 
         {/* [운송 조건 비교] */}
         <section className="mm-card mm-card--wide">

@@ -721,3 +721,107 @@
 .mm-reject-btn:hover {
   background: rgba(217, 48, 37, 0.05);
 }
+
+/* ---------- LLM API 평가 (기존 매칭 UI 위에 작은 기능만 추가) ---------- */
+.mm-ai-score-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mm-ai-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 100px;
+}
+
+.mm-ai-btn {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(100, 50, 220, 0.26);
+  background: rgba(100, 50, 220, 0.055);
+  color: var(--brand-purple);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mm-ai-btn:hover:not(:disabled) {
+  background: rgba(100, 50, 220, 0.13);
+}
+
+.mm-ai-btn:disabled { opacity: 0.6; cursor: wait; }
+
+.mm-ai-result {
+  color: var(--brand-purple);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.mm-ai-error {
+  color: var(--danger);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.mm-ai-card { min-width: 0; }
+
+.mm-ai-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mm-ai-heading .mm-card__title { margin-bottom: 4px; }
+.mm-ai-help, .mm-ai-placeholder {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+}
+
+.mm-ai-totals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mm-ai-totals > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: #fbfaff;
+  border: 1px solid var(--clean-border);
+  border-radius: 12px;
+}
+
+.mm-ai-totals span { font-size: var(--fs-xs); color: var(--text-muted); }
+.mm-ai-totals strong { font-size: 25px; color: var(--brand-purple); }
+.mm-ai-totals small { margin-left: 3px; font-size: 12px; color: var(--text-muted); }
+
+.mm-ai-table td { vertical-align: top; }
+.mm-ai-table td:nth-child(2), .mm-ai-table td:nth-child(3) { font-weight: 700; }
+.mm-ai-table .mm-ai-table__reason { min-width: 250px; white-space: normal; }
+.mm-ai-different { color: var(--danger) !important; }
+.mm-ai-reason { font-size: var(--fs-xs); line-height: 1.6; }
+.mm-ai-reason__calc { display: block; margin-bottom: 4px; color: var(--text-muted); overflow-wrap: anywhere; }
+.mm-ai-reason p { color: var(--text-secondary); }
+.mm-ai-summary { margin-top: 16px; padding: 14px 16px; border-radius: 12px; background: #fbfaff; }
+.mm-ai-summary h3 { margin-bottom: 6px; font-size: var(--fs-xs); font-weight: 800; color: var(--text-primary); }
+.mm-ai-summary p { font-size: var(--fs-sm); line-height: 1.65; white-space: pre-wrap; color: var(--text-secondary); }
+.mm-ai-summary--warning { background: #fffaf0; }
+
+@media (max-width: 700px) {
+  .mm-ai-score-cell { flex-wrap: wrap; gap: 6px; }
+  .mm-ai-totals { grid-template-columns: 1fr; }
+}

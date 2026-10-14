@@ -26,6 +26,7 @@ import {
 import type { Stage } from '../myMatchingData';
 
 import ScoreBar from './ScoreBar';
+import MatchingAiEvaluation from './MatchingAiEvaluation';
 import StageBadge from './StageBadge';
 
 import '../MyMatching.css';
@@ -256,7 +257,8 @@ export default function MatchingBoard({ user }: { user: User }) {
 
               .filter((match) => {
 
-                return match.cscore1Id === condition.id;
+                return match.cscore1Id === condition.id&& match.shipperStatus !== 'AUTO_REJECTED';
+                  
 
               })
 
@@ -416,6 +418,36 @@ export default function MatchingBoard({ user }: { user: User }) {
 
 
   // [7] 선택된 매칭 조건 확인
+
+  // [추가] SSE 매칭 알림을 받으면 내 매칭 목록 자동 갱신
+  useEffect(() => {
+
+    // 1. 매칭 변경 이벤트 발생 시 실행
+    const refreshMatchingBoard = () => {
+
+      // 기존 DB 조회 useEffect를 다시 실행
+      setReloadCount((count) => count + 1);
+
+    };
+
+    // 2. 매칭 변경 이벤트 감지
+    window.addEventListener(
+      'macross:matching-updated',
+      refreshMatchingBoard
+    );
+
+    // 3. 컴포넌트 종료 시 이벤트 제거
+    return () => {
+
+      window.removeEventListener(
+        'macross:matching-updated',
+        refreshMatchingBoard
+      );
+
+    };
+
+  }, []);
+
   const selectedId = Number(searchParams.get('condition'));
 
   const selected = conditions.find((condition) => {
@@ -796,7 +828,10 @@ export default function MatchingBoard({ user }: { user: User }) {
 
                       <td>
 
-                        <ScoreBar score={match.totalScore} />
+                        <div className="mm-ai-score-cell">
+                          <ScoreBar score={match.totalScore} />
+                          <MatchingAiEvaluation match={match} memberId={memberId ?? ''} view="list" />
+                        </div>
 
                       </td>
 
@@ -896,7 +931,10 @@ export default function MatchingBoard({ user }: { user: User }) {
 
                       <td>
 
-                        <ScoreBar score={match.totalScore} />
+                        <div className="mm-ai-score-cell">
+                          <ScoreBar score={match.totalScore} />
+                          <MatchingAiEvaluation match={match} memberId={memberId ?? ''} view="list" />
+                        </div>
 
                       </td>
 

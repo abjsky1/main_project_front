@@ -27,6 +27,6 @@ export interface TradeSearchParams {
 
 // GET /api/condition/search?startdate=2025-01&enddate=2025-12&country=미국&hscode=3304991000
 export async function searchTrade(params: TradeSearchParams, signal?: AbortSignal) {
-  const response = await axios.get<TradeSearchDto[]>('http://localhost:8080/api/condition/search', { params, signal });
+  const response = await axios.get<TradeSearchDto[]>('http://localhost:8080/api/condition/search', { params, signal , withCredentials: true,});
   return response.data;
 }
