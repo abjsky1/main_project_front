@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Client } from '@stomp/stompjs';
+import { Client, ReconnectionTimeMode } from '@stomp/stompjs';
 import {
   CHAT_SEND_DESTINATION, chatRoomTopic, closeRoom, getChatSocketUrl, getMessages, getMyRoom, markRead, openMyRoom,
   type MessageDto, type MessageSendDto, type RoomDto,
@@ -54,8 +54,15 @@ export default function useSupportChat() {
     const client = new Client({
       // 2-1. 연결 주소 : ws://지금주소/ws-chat → Vite 프록시 → 백엔드 (로그인 쿠키가 같이 가서 서버가 회원을 확인)
       brokerURL: getChatSocketUrl(),
-      // 2-2. 끊기면 5초 뒤 자동으로 다시 연결 (다시 연결할 때도 쿠키로 다시 확인)
-      reconnectDelay: 5000,
+      // 2-2. 끊기면 자동으로 다시 연결 (다시 연결할 때도 쿠키로 다시 확인)
+      //      기다리는 시간을 1초 → 2초 → 4초 … 최대 30초로 점점 늘림 (Backoff — 서버가 꺼져 있을 때 계속 두드리지 않게)
+      //      연결에 성공하면 다시 1초부터
+      reconnectDelay: 1000,
+      reconnectTimeMode: ReconnectionTimeMode.EXPONENTIAL,
+      maxReconnectDelay: 30000,
+      //      하트비트 : 10초마다 "살아 있음" 신호를 주고받음 (서버 WebSocketConfig 와 같은 값) → 조용히 끊긴 연결을 빨리 알아챔
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
       // 2-3. 연결 성공 (다시 연결됐을 때도 실행)
       onConnect: () => {
         setConnected(true);

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Client } from '@stomp/stompjs';
+import { Client, ReconnectionTimeMode } from '@stomp/stompjs';
 import {
   CHAT_ADMIN_TOPIC, CHAT_SEND_DESTINATION, closeRoom, getChatSocketUrl, getMessages, getRooms, markRead,
   type MessageDto, type MessageSendDto, type RoomDto,
@@ -54,7 +54,12 @@ export default function useAdminChat() {
   useEffect(() => {
     const client = new Client({
       brokerURL: getChatSocketUrl(),   // useSupportChat 의 2-1 과 같음
-      reconnectDelay: 5000,
+      // 다시 연결 간격 1초 → 2초 → 4초 … 최대 30초 , 하트비트 10초 (useSupportChat 의 2-2 와 같음)
+      reconnectDelay: 1000,
+      reconnectTimeMode: ReconnectionTimeMode.EXPONENTIAL,
+      maxReconnectDelay: 30000,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
       // 2-1. 연결 성공 (다시 연결됐을 때도 실행)
       onConnect: () => {
         setConnected(true);
