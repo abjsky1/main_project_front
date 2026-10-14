@@ -81,8 +81,7 @@ interface MatchingSettingsProps {
 }
 
 
-// [2] 매칭 서비스 참여 동의는 페이지에 들어올 때마다 새로 받음
-// 브라우저에 동의 체크 상태를 저장하지 않음
+// [2] 매칭 서비스 참여 동의는 회원별 localStorage에 저장하여 유지
 
 
 // [3] 섹션 제목
@@ -170,9 +169,21 @@ export default function MatchingSettings({
 
   const companyType = user?.companyType;
 
-  // 다른 계정으로 전환하면 참여 동의를 다시 받음
+  // [추가] 회원별 매칭 동의 상태 불러오기
   useEffect(() => {
-    setConsented(false);
+
+      if (!memberId) {
+          setConsented(false);
+          return;
+      }
+
+      // 저장된 동의 상태 조회
+      const saved = localStorage.getItem(
+          `macross:matching-consent:${memberId}`
+      );
+
+      setConsented(saved === 'true');
+
   }, [memberId]);
 
 
@@ -487,12 +498,22 @@ export default function MatchingSettings({
   // [11] 매칭 서비스 참여 동의 변경
   const toggleConsent = () => {
 
-    setStatusMessage('');
+      setStatusMessage('');
 
-    const next = !consented;
+      const next = !consented;
 
-    setConsented(next);
+      // 체크 상태 변경
+      setConsented(next);
 
+      // 회원별 동의 상태 저장
+      if (memberId) {
+
+          localStorage.setItem(
+              `macross:matching-consent:${memberId}`,
+              String(next)
+          );
+
+      }
 
   };
 
