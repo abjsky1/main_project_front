@@ -213,7 +213,7 @@ export default function MatchingSettings({
       // 1. 수출입기업인 경우
       if (companyType === '수출입기업') {
 
-        // 백엔드 GET /api/cscore 호출
+        // 백엔드 GET /api/conditions/shipper 호출
         const rows = await loadShipperRows(
           memberId,
           countries,
@@ -239,7 +239,7 @@ export default function MatchingSettings({
 
         // 2. 물류업체인 경우
 
-        // 백엔드 GET /api/lscore 호출
+        // 백엔드 GET /api/conditions/logistics 호출
         const rows = await loadLogisticsRows(
           memberId,
           countries,
@@ -635,7 +635,7 @@ export default function MatchingSettings({
       );
 
 
-      // 2. POST /api/cscore 요청
+      // 2. POST /api/conditions/shipper 요청
       saveCondition(
         () => createCscore(body),
         () => setShipperForm(emptyShipper())
@@ -672,7 +672,7 @@ export default function MatchingSettings({
       );
 
 
-      // 2. POST /api/lscore 요청
+      // 2. POST /api/conditions/logistics 요청
       saveCondition(
         () => createLscore(body),
         () => setLogisticsForm(emptyLogistics())

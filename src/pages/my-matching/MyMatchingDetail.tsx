@@ -180,7 +180,6 @@ export default function MyMatchingDetail({
 
         // 1. 실제 내 매칭 결과 조회
         const matchingList = await getMemberMatchingList(
-          memberId,
           controller.signal
         );
 

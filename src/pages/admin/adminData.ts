@@ -1,5 +1,5 @@
 // 시스템 관리 화면에서 쓰는 타입 / 표시용 매핑
-// (데이터는 백엔드에서 조회 : 사용자 목록 GET /api/authorization , 감사 로그 GET /api/audit)
+// (데이터는 백엔드에서 조회 : 사용자 목록 GET /api/admin/members , 감사 로그 GET /api/admin/audits)
 
 // 서버가 "관리자가 아님" 이라고 응답했을 때 보여줄 문구 (두 탭 공통)
 // 로그인한 지 20분이 지나 AccessToken 쿠키가 만료된 경우가 가장 흔함

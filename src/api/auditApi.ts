@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// 백엔드 GET /api/audit 응답 (감사 로그 1건) — main_project_back 의 AuditDto
+// 백엔드 GET /api/admin/audits 응답 (감사 로그 1건) — main_project_back 의 AuditDto
 export interface AuditDto {
   auditId: number;
   createdAt: string;      // "2025-12-31 09:31:45"
@@ -14,7 +14,7 @@ export interface AuditDto {
   actionResult: boolean;
 }
 
-// 백엔드 GET /api/audit 응답 — 감사 로그 한 페이지 (main_project_back 의 AuditPageDto)
+// 백엔드 GET /api/admin/audits 응답 — 감사 로그 한 페이지 (main_project_back 의 AuditPageDto)
 // 로그 전체가 아니라 "이번 페이지 50건" + 페이지 버튼을 그리는 데 필요한 숫자들
 export interface AuditPageDto {
   logs: AuditDto[];      // 이번 페이지의 로그 (최신순 , 최대 50건)
@@ -37,11 +37,11 @@ export interface AuditSearchParams {
 }
 
 // 감사 로그 조회 (필터 조건으로 DB 에서 조회 , 최신순 , 한 페이지씩)
-// 예) params = { user: 'kim', period: '7days', page: 2 }  →  GET /api/audit?user=kim&period=7days&page=2
+// 예) params = { user: 'kim', period: '7days', page: 2 }  →  GET /api/admin/audits?user=kim&period=7days&page=2
 // - 관리자만 사용 가능 : 서버가 로그인 쿠키(AccessToken)로 확인 → withCredentials: true 로 쿠키를 같이 보냄
 // [TS] AuditPageDto | null : 관리자가 아니면 서버가 null 을 돌려줌 (빈 응답 → axios 는 '' 로 줌 → || null 로 null 로 바꿈)
 export async function getAuditLogs(params: AuditSearchParams, signal?: AbortSignal) {
-  const response = await axios.get<AuditPageDto | null>('/api/audit', { params, signal, withCredentials: true });
+  const response = await axios.get<AuditPageDto | null>('/api/admin/audits', { params, signal, withCredentials: true });
   return response.data || null;
 }
 
@@ -51,9 +51,9 @@ export interface ActionDto {
   actionType: string;   // 엑셀 다운로드 , 로그인 , 로그인 실패 ...
 }
 
-// GET /api/audit/actions : 작업 유형 21가지 (action 테이블 , 번호순) — 관리자가 아니면 null
+// GET /api/admin/actions : 작업 유형 21가지 (action 테이블 , 번호순) — 관리자가 아니면 null
 // (DB 에 작업 유형이 늘어나면 선택칸에도 자동으로 나오게 , 화면에 목록을 직접 적어 두지 않고 서버에서 받음)
 export async function getAuditActions() {
-  const response = await axios.get<ActionDto[] | null>('/api/audit/actions', { withCredentials: true });
+  const response = await axios.get<ActionDto[] | null>('/api/admin/actions', { withCredentials: true });
   return response.data || null;
 }

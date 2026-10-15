@@ -137,7 +137,7 @@ function makeBaseDto(
   };
 }
 
-// 수출입기업 조건 저장 요청 body (POST /api/cscore)
+// 수출입기업 조건 저장 요청 body (POST /api/conditions/shipper)
 // 1번(기본) + 2번(물량/일정) + 3번(화물 특성) DTO 를 한 객체로 묶어서 돌려줌
 export function buildShipperRequest(form: ShipperForm, memberId: string, consented: boolean, countries: CountryData[], routes: RouteData[]) {
   const cscore1Dto = makeBaseDto(form, memberId, consented, countries, routes);
@@ -150,7 +150,7 @@ export function buildShipperRequest(form: ShipperForm, memberId: string, consent
   return { cscore1Dto, cscore2Dto, cscore3Dto };
 }
 
-// 물류업체 조건 저장 요청 body (POST /api/lscore)
+// 물류업체 조건 저장 요청 body (POST /api/conditions/logistics)
 export function buildLogisticsRequest(form: LogisticsForm, memberId: string, consented: boolean, countries: CountryData[], routes: RouteData[]) {
   const lscore1Dto = {
     // ...makeBaseDto(...) : 공통 1번 조건의 칸들을 모두 펼쳐 넣고, 물류업체 전용 칸을 더함

@@ -7,7 +7,7 @@ import type {
   Options,
 } from './insightsData';
 
-const BASE_URL = 'http://localhost:8080/api/insights';
+const BASE_URL = '/api/insights';
 
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'DELETE';

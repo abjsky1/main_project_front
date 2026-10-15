@@ -1,13 +1,13 @@
 /* =====================================================================
    마이페이지 (주소: /mypage , 로그인한 회원 — 헤더 오른쪽 동그라미 버튼으로 들어옴)
-   - 왼쪽(1) 내 정보 : 로그인할 때 받은 회원 정보 표시 + 이름 · 주소 수정 (PUT /api/mypage/{memberId})
-                       + 비밀번호 변경 (PUT /api/mypage/password)
+   - 왼쪽(1) 내 정보 : 로그인할 때 받은 회원 정보 표시 + 이름 · 주소 수정 (PUT /api/members/me)
+                       + 비밀번호 변경 (PUT /api/members/me/password)
    - 오른쪽(2) 고객센터 채팅 상담
        기업 회원 : [고객센터 채팅상담] 버튼 → 내 채팅방 (components/SupportChat + useSupportChat)
        관리자    : 채팅방 목록 + 고른 방의 대화 (components/AdminChatConsole + useAdminChat)
        → 대화는 DB 에 저장 (api/chatApi) , 새 메시지는 웹소켓(STOMP)으로 실시간 전달
    - 관심 국가 설정은 맞춤 인사이트 페이지 위쪽으로 옮김
-   - 회원 탈퇴 (기업 회원만) : 비밀번호 확인 → POST /api/mypage/withdraw → 성공하면 로그아웃 상태로 첫 화면
+   - 회원 탈퇴 (기업 회원만) : 비밀번호 확인 → POST /api/members/me/withdraw → 성공하면 로그아웃 상태로 첫 화면
    ===================================================================== */
 import { useState, type FormEvent } from 'react';
 import type { User } from '../../types/user';
@@ -121,7 +121,7 @@ export default function MyPage({ user, onUserChange, onWithdrawn }: MyPageProps)
     setInfoSaving(true);
     setInfoError('');
     try {
-      const ok = await updateMyInfo(memberId, name, address);
+      const ok = await updateMyInfo(name, address);
       if (!ok) {
         setInfoError(LOGIN_EXPIRED_MESSAGE);
         return;

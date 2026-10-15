@@ -14,7 +14,7 @@ import {
 
 import { axisTick } from '../../../styles/chartTheme';
 
-// 월별 수출입 · 무역수지 그래프 (Spring /api/cumulative/monthly)
+// 월별 수출입 · 무역수지 그래프 (Spring /api/trade/monthly)
 // 무역 데이터 분석 > 환율 동향 탭의 왼쪽 반 (예전에는 첫 화면 아래에 있었음)
 interface TradeTrendChartProps {
   year: number;
@@ -94,7 +94,7 @@ export default function TradeTrendChart({
         // { data } : 응답 객체에서 data 칸만 꺼내기 (구조분해 — response.data 와 같음)
         const { data } =
           await axios.get<MonthlyTradeResponse[]>(
-            'http://localhost:8080/api/cumulative/monthly',
+            '/api/trade/monthly',
             {
               params: { year },
             }

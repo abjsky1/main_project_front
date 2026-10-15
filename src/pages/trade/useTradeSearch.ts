@@ -14,7 +14,7 @@ const PAGE_SIZE = 50;
 //   TradeAnalysis.tsx 에서  const search = useTradeSearch();  로 호출하면
 //   맨 아래 return 의 값/함수들을 search.country, search.handleSearch ... 처럼 쓸 수 있음
 //
-// 검색은 팀원이 만든 백엔드 API (GET /api/condition/search) 로 실제 무역 데이터를 조회
+// 검색은 팀원이 만든 백엔드 API (GET /api/trade/search) 로 실제 무역 데이터를 조회
 //
 // [페이징 — 화면에서 나누기]
 // 감사 로그 · 사용자 목록은 DB 에서 50건씩 가져오지만 , 무역 데이터는 DB 가 아니라 CSV 파일(C:/mpdata)에서 찾음

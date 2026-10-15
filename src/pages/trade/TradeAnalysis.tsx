@@ -4,7 +4,7 @@
      → 지금 탭은 주소로 정함 : /trade/search , /trade/exchange (/trade 만 있으면 첫 탭)
        새로고침하거나 주소를 공유해도 같은 탭이 열림 (App.tsx 의 /trade/:tab?)
    - 조건 검색 탭일 때 탭 바로 아래에 누적 무역 현황 요약 띠 (TradeKpi — 예전 첫 화면 카드를 한 줄로)
-   - 환율은 백엔드 /api/exchange/month (실제 환율 CSV) , 조건 검색은 /api/condition/search
+   - 환율은 백엔드 /api/exchange/monthly (실제 환율 CSV) , 조건 검색은 /api/trade/search
    ===================================================================== */
 import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';

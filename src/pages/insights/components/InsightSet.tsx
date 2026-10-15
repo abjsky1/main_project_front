@@ -9,6 +9,8 @@ import {
   YAxis,
 } from 'recharts';
 
+import { axisTick, tooltipBoxStyle } from '../../../styles/chartTheme';
+
 import {
   detailLabels,
   detailText,
@@ -414,21 +416,26 @@ export default function InsightSet({
                         left: 10,
                       }}
                     >
+                      {/* 그래프 색 · 글자는 무역 데이터 분석 차트와 같게 (styles/chartTheme.ts , common.css 의 범례 색) */}
                       <CartesianGrid
-                        stroke="#e2e7ef"
+                        stroke="#f2f2f8"
                         strokeDasharray="3 3"
                         vertical={false}
                       />
 
                       <XAxis
                         dataKey="period"
-                        tick={{ fontSize: 11 }}
+                        tick={axisTick()}
+                        axisLine={false}
+                        tickLine={false}
                         minTickGap={28}
                       />
 
                       <YAxis
                         width={80}
-                        tick={{ fontSize: 11 }}
+                        tick={axisTick()}
+                        axisLine={false}
+                        tickLine={false}
                         tickFormatter={value =>
                           new Intl.NumberFormat('ko-KR', {
                             notation: 'compact',
@@ -437,6 +444,7 @@ export default function InsightSet({
                       />
 
                       <Tooltip
+                        contentStyle={tooltipBoxStyle()}
                         formatter={(value: unknown) =>
                           `${formatNumber(
                             value == null
@@ -452,7 +460,7 @@ export default function InsightSet({
                         type="linear"
                         dataKey="exportAmount"
                         name="수출액"
-                        stroke="#6255bd"
+                        stroke="#9333ea"
                         strokeWidth={2}
                         dot={{ r: 2 }}
                         connectNulls={false}
@@ -462,7 +470,7 @@ export default function InsightSet({
                         type="linear"
                         dataKey="importAmount"
                         name="수입액"
-                        stroke="#0891b2"
+                        stroke="#06b6d4"
                         strokeWidth={2}
                         dot={{ r: 2 }}
                         connectNulls={false}

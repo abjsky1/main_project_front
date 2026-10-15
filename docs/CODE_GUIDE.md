@@ -21,12 +21,12 @@ main.tsx            ← 시작점. <BrowserRouter>로 App을 감쌈 (B_react 의
 |---|---|---|
 | `/` | `pages/dashboard/Dashboard.tsx` | **내 매칭** (첫 화면): 대표 이미지 + 인사말 + 아래는 로그인 상태별 — 비회원 로그인 안내 / 관리자 안내 / 기업 회원은 `my-matching/components/MatchingBoard` (왼쪽 내 조건 목록 1 : 오른쪽 추천 운송사·받은 요청 표 3 , ⚠️ 더미 데이터) |
 | `/:matchId` (예: `/1001`) | `pages/my-matching/MyMatchingDetail.tsx` | 매칭 상세 (기업정보 · 사업자 확인 · 점수 · 조건 비교) + 요청/수락/거절 버튼 — `useParams` 로 번호를 꺼냄 (숫자가 아니면 첫 화면으로) |
-| `/trade` | `pages/trade/TradeAnalysis.tsx` | 조건 검색 탭(팀원 검색 API `/api/condition/search` , 탭 옆 누적 무역 카드 `/api/cumulative/trade`) + 환율 탭(`/api/exchange/month` 실제 환율 CSV , 수출입 추이 `/api/cumulative/monthly`) |
-| `/insights` | `pages/insights/Insights.tsx` | 기업 회원: 위쪽 관심 국가 설정(최대 3개 , `/api/interest` DB 저장 , 밀어내기) + 관심 국가별 맞춤 인사이트 (그래프 값은 더미 데이터) |
+| `/trade` | `pages/trade/TradeAnalysis.tsx` | 조건 검색 탭(팀원 검색 API `/api/trade/search` , 탭 옆 누적 무역 카드 `/api/trade/cumulative`) + 환율 탭(`/api/exchange/monthly` 실제 환율 CSV , 수출입 추이 `/api/trade/monthly`) |
+| `/insights` | `pages/insights/Insights.tsx` | 기업 회원: 맞춤 인사이트 (`/api/insights`) |
 | `/matching-settings` | `pages/matching-settings/MatchingSettings.tsx` | 기업 회원이 매칭 조건 등록/삭제 (참여 동의는 브라우저에 회원별 저장 , 동의 전에는 입력 잠금) |
 | `/matching` | `pages/smart-matching/SmartMatching.tsx` | 관리자: 매칭 진행 상황 5칸(전체 · 자동 매칭 연결 · 화주사만 승인 · 성사 · 실패) + 목록 (내 매칭과 같은 더미 데이터 , 승인 버튼 없음) |
 | `/admin` | `pages/admin/SystemAdmin.tsx` | 관리자: 사용자 권한 관리 + 감사 로그 |
-| `/mypage` | `pages/mypage/MyPage.tsx` | 왼쪽 내 정보(이름·주소 수정 `PUT /api/mypage/{memberId}`) 1 : 오른쪽 고객센터 채팅 2 (회원은 상담 채팅방 , 관리자는 채팅방 목록 + 대화 — ⚠️ 브라우저 저장 데모) + 회원 탈퇴 버튼 — 헤더 오른쪽 동그라미로 이동 |
+| `/mypage` | `pages/mypage/MyPage.tsx` | 왼쪽 내 정보(이름·주소 수정 `PUT /api/members/me`) 1 : 오른쪽 고객센터 채팅 2 (회원은 상담 채팅방 , 관리자는 채팅방 목록 + 대화 — ⚠️ 브라우저 저장 데모) + 회원 탈퇴 버튼 — 헤더 오른쪽 동그라미로 이동 |
 
 > 코드 안에서는 첫 화면을 예전 이름 그대로 `dashboard` / `Dashboard` 라고 부릅니다(메뉴에 보이는 이름은 "내 매칭").
 > 권한이 없는 페이지에 주소로 직접 들어오면 각 페이지가 `AccessGuard`("접근 권한이 없습니다" + 홈으로 돌아가기)를 보여줍니다.
@@ -36,7 +36,7 @@ main.tsx            ← 시작점. <BrowserRouter>로 App을 감쌈 (B_react 의
 ```
 MatchingSettings.tsx
   → conditionApi.ts 의 loadShipperRows()        (여러 API 결과를 표 한 줄로 합침)
-    → api/scoreApi.ts 의 getCscore1List()        (axios.get('/api/cscore'))
+    → api/scoreApi.ts 의 getCscore1List()        (axios.get('/api/conditions/shipper'))
       → vite 프록시가 /api 요청을 http://localhost:8080 (Spring) 으로 전달
 ```
 
@@ -46,7 +46,7 @@ MatchingSettings.tsx
 
 ```
 MyPage.tsx → api/mypageApi.ts 의 updateMyInfo()
-  → axios.put('/api/mypage/회원번호', { managerName, companyAddress }, { withCredentials: true })
+  → axios.put('/api/members/me', { managerName, companyAddress }, { withCredentials: true })
     → MypageController : @CookieValue 로 AccessToken 쿠키를 받음
       → MypageService : 쿠키 속 회원 번호 == 주소의 회원 번호 일 때만 수정 (아니면 false)
 ```
@@ -106,7 +106,7 @@ export default function StatCard({ label, value }) { ... }
 
 ```ts
 const [users, setUsers] = useState<SystemUser[]>([]);   // "SystemUser 객체 배열을 담는 state"
-const response = await axios.get<AuditDto[]>('/api/audit');  // "응답 data 는 AuditDto 배열"
+const response = await axios.get<AuditDto[]>('/api/admin/audits');  // "응답 data 는 AuditDto 배열"
 ```
 
 `< >` 안의 내용은 "무엇을 담는지" 알려주는 표시일 뿐, 동작은 `useState([])`, `axios.get(url)` 과 같습니다.

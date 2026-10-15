@@ -215,7 +215,7 @@ export default function MatchingBoard({ user }: { user: User }) {
 
           fetchRoutes(controller.signal),
 
-          getMemberMatchingList(memberId, controller.signal)
+          getMemberMatchingList(controller.signal)
 
         ]);
 

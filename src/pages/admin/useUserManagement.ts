@@ -86,7 +86,7 @@ export default function useUserManagement(active: boolean) {
   // 가장 최근 요청의 취소 도구를 기억 (useRef = 화면을 다시 그리지 않는 변수 — 가이드 3-2)
   const lastRequest = useRef<AbortController | null>(null);
 
-  // DB 에서 그 페이지만 조회 (GET /api/authorization) — 이전 요청이 아직 진행 중이면 취소하고 마지막 요청 결과만 사용
+  // DB 에서 그 페이지만 조회 (GET /api/admin/members) — 이전 요청이 아직 진행 중이면 취소하고 마지막 요청 결과만 사용
   // (페이지 번호 · 정렬을 빠르게 여러 번 누르면 늦게 도착한 이전 결과가 화면을 덮어쓰는 것을 막음 — 감사 로그와 같음)
   // useCallback : 함수를 기억해 두는 훅 — 아래 useEffect 의존성 배열에 넣기 위해 사용 (가이드 3-3)
   const load = useCallback(async (filter: UserFilter, field: UserSortField, dir: SortDirection, pageToLoad: number) => {
