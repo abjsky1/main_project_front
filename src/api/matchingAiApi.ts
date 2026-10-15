@@ -47,7 +47,7 @@ export async function evaluateMatchingAi(memberId: string, matchingId: number): 
   if (existingRequest) return existingRequest;
 
   const request = axios.post<MatchingAiDto | null>(
-    `/api/matching/ai/compare/${matchingId}`,
+    `/api/matchings/${matchingId}/ai/compare`,
     null,
     { withCredentials: true }
   ).then((response) => {

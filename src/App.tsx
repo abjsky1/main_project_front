@@ -172,7 +172,7 @@ export default function App() {
     async function restoreLogin() {
       try {
         let response = await axios.get<LoginMember>(
-          '/api/login/me',
+          '/api/auth/me',
           { withCredentials: true },
         );
 
@@ -181,7 +181,7 @@ export default function App() {
         // 기존 API 동작: 빈 응답이면 RefreshToken으로 재발급
         if (!response.data) {
           response = await axios.post<LoginMember>(
-            '/api/login/reissue',
+            '/api/auth/reissue',
             {},
             { withCredentials: true },
           );
@@ -219,7 +219,7 @@ export default function App() {
   ): Promise<string | null> => {
     try {
       const loginResponse = await axios.post<boolean>(
-        '/api/login',
+        '/api/auth/login',
         {
           userEmail: email,
           userPassword: password,
@@ -232,7 +232,7 @@ export default function App() {
       }
 
       const memberResponse = await axios.get<LoginMember>(
-        '/api/login/me',
+        '/api/auth/me',
         { withCredentials: true },
       );
 
@@ -263,7 +263,7 @@ export default function App() {
           : '301';
 
       const response = await axios.post<boolean>(
-        '/api/signup',
+        '/api/auth/signup',
         {
           userEmail: newUser.email.trim(),
           userPassword: password,
@@ -318,7 +318,7 @@ export default function App() {
 
       try {
         const response = await axios.post<LoginMember>(
-          '/api/login/reissue',
+          '/api/auth/reissue',
           {},
           { withCredentials: true },
         );
@@ -354,7 +354,7 @@ export default function App() {
   const handleLogout = async () => {
     try {
       await axios.post(
-        '/api/login/logout',
+        '/api/auth/logout',
         {},
         { withCredentials: true },
       );

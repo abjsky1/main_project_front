@@ -38,10 +38,10 @@ export interface UserSearchParams {
   page: number;                 // 0 부터 (화면 1페이지 = 0)
 }
 
-// GET /api/authorization?name=&email=&roleName=&status=&sort=&dir=&page=  (조건에 맞는 사용자 중 그 페이지만 DB 에서 조회)
+// GET /api/admin/members?name=&email=&roleName=&status=&sort=&dir=&page=  (조건에 맞는 사용자 중 그 페이지만 DB 에서 조회)
 // [TS] AuthorizationCountDto | null : 관리자가 아니면 서버가 null 을 돌려줌 (빈 응답)
 export async function searchUsers(params: UserSearchParams, signal?: AbortSignal) {
-  const response = await axios.get<AuthorizationCountDto | null>('/api/authorization', { params, signal, withCredentials: true });
+  const response = await axios.get<AuthorizationCountDto | null>('/api/admin/members', { params, signal, withCredentials: true });
   return response.data;
 }
 
@@ -50,13 +50,13 @@ export async function searchUsers(params: UserSearchParams, signal?: AbortSignal
 // encodeURIComponent : memberId 에 특수문자가 있어도 주소가 깨지지 않게 변환
 // axios.put( 주소 , body , 설정 ) : 보낼 body 가 없어서 {} (B_react 의 axios.post( url , {} , { withCredentials : true }) 와 같은 모양)
 export async function toggleMemberRole(memberId: string) {
-  const response = await axios.put<boolean>(`/api/authorization/${encodeURIComponent(memberId)}/role`, {}, { withCredentials: true });
+  const response = await axios.put<boolean>(`/api/admin/members/${encodeURIComponent(memberId)}/role`, {}, { withCredentials: true });
   return response.data;
 }
 
 // PUT 상태 스위치 (활성 ↔ 비활성) , 성공하면 true
 // (관리자가 아니거나 , 내 계정을 비활성으로 바꾸려고 하면 false)
 export async function toggleMemberStatus(memberId: string) {
-  const response = await axios.put<boolean>(`/api/authorization/${encodeURIComponent(memberId)}/status`, {}, { withCredentials: true });
+  const response = await axios.put<boolean>(`/api/admin/members/${encodeURIComponent(memberId)}/status`, {}, { withCredentials: true });
   return response.data;
 }

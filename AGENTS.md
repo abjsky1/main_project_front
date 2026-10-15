@@ -26,14 +26,14 @@ This is the canonical project structure. Start with task-relevant files below. O
 ```
 src/
 ├── App.tsx                 # 로그인 상태 + 라우트(<Routes>) 정의
-├── routes.ts               # 페이지 ↔ URL 매핑 (PAGE_PATHS) — /api, /country, /route, /hscode, /ws-chat 로 시작하는 주소 금지(프록시) , 탭은 주소 끝에 (/trade/exchange , /admin/audit-logs)
+├── routes.ts               # 페이지 ↔ URL 매핑 (PAGE_PATHS) — /api, /country, /route, /hscode, /ws/chat 로 시작하는 주소 금지(프록시) , 탭은 주소 끝에 (/trade/exchange , /admin/audit-logs)
 │                           # (코드 읽는 법·TS 문법 설명: docs/CODE_GUIDE.md)
 ├── index.css               # 전역: Tailwind 초기화, 폰트, 색상/글자크기 변수(:root)
 ├── styles/
 │   ├── common.css          # 여러 페이지 공통 클래스 (page-container, eyebrow, filter-btn ...)
 │   └── chartTheme.ts       # Recharts 그래프 공통 스타일 값
 ├── types/user.ts           # User, Page, CompanyType
-├── api/                    # 백엔드 호출 (axios) — referenceData, scoreApi, matchingApi, interestApi, mypageApi, tradeSearchApi ...
+├── api/                    # 백엔드 호출 (axios) — referenceData, scoreApi, matchingApi, mypageApi, tradeSearchApi ...
 ├── components/
 │   ├── common/             # PageHeader, AccessGuard, FilterButton
 │   ├── layout/             # Header (+ Header.css)

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 /* =====================================================================
-   매칭 조건 API (Spring /api/cscore, /api/lscore)
+   매칭 조건 API (Spring /api/conditions/shipper, /api/conditions/logistics)
    - cscore: 수출입기업(화주) 조건   - lscore: 물류업체 조건
    - 1번 = 기본 조건, 2번 = 물량/일정, 3번 = 화물 특성
    - 모든 함수는 axios 로 요청한 뒤 응답의 data 만 돌려줍니다. (B_react 의 response.data 와 같음)
@@ -54,63 +54,63 @@ export interface CargoDto {
 
 /* ---------- 수출입기업 (cscore) ---------- */
 
-// GET /api/cscore?memberId=...  : memberId 를 주면 해당 회원 조건만, 안 주면 전체
+// GET /api/conditions/shipper?memberId=...  : memberId 를 주면 해당 회원 조건만, 안 주면 전체
 // [TS] memberId?: string → ? 는 "안 넘겨도 되는 매개변수"
 // [TS] axios.get<Cscore1Dto[]> → "응답 data 는 Cscore1Dto 배열" 이라는 표시 (가이드 2-5)
 export async function getCscore1List(memberId?: string, signal?: AbortSignal) {
   // params 는 주소 뒤의 ?memberId=... 부분. { memberId } 는 { memberId: memberId } 를 줄여 쓴 것
-  const response = await axios.get<Cscore1Dto[]>('/api/cscore', { params: memberId ? { memberId } : undefined, signal });
+  const response = await axios.get<Cscore1Dto[]>('/api/conditions/shipper', { params: memberId ? { memberId } : undefined, signal });
   return response.data;
 }
 
-// GET /api/cscore/{id}/cscore2 : 물량/일정 (없으면 null)
+// GET /api/conditions/shipper/{id}/volume : 물량/일정 (없으면 null)
 export async function getCscore2(cscore1Id: number, signal?: AbortSignal) {
-  const response = await axios.get<Cscore2Dto | null>(`/api/cscore/${cscore1Id}/cscore2`, { signal });
+  const response = await axios.get<Cscore2Dto | null>(`/api/conditions/shipper/${cscore1Id}/volume`, { signal });
   return response.data;
 }
 
-// GET /api/cscore/{id}/cscore3 : 화물 특성 (없으면 null)
+// GET /api/conditions/shipper/{id}/cargo : 화물 특성 (없으면 null)
 export async function getCscore3(cscore1Id: number, signal?: AbortSignal) {
-  const response = await axios.get<CargoDto | null>(`/api/cscore/${cscore1Id}/cscore3`, { signal });
+  const response = await axios.get<CargoDto | null>(`/api/conditions/shipper/${cscore1Id}/cargo`, { signal });
   return response.data;
 }
 
-// POST /api/cscore : 1·2·3번 조건을 한 번에 저장 (성공하면 true)
+// POST /api/conditions/shipper : 1·2·3번 조건을 한 번에 저장 (성공하면 true)
 export async function createCscore(body: { cscore1Dto: Score1Dto; cscore2Dto: Cscore2Dto; cscore3Dto: CargoDto }) {
-  const response = await axios.post<boolean>('/api/cscore', body);
+  const response = await axios.post<boolean>('/api/conditions/shipper', body);
   return response.data;
 }
 
-// DELETE /api/cscore/{id} : 조건 삭제 (매칭 결과에 쓰인 조건이면 false)
+// DELETE /api/conditions/shipper/{id} : 조건 삭제 (매칭 결과에 쓰인 조건이면 false)
 export async function deleteCscore(cscore1Id: number) {
-  const response = await axios.delete<boolean>(`/api/cscore/${cscore1Id}`);
+  const response = await axios.delete<boolean>(`/api/conditions/shipper/${cscore1Id}`);
   return response.data;
 }
 
 /* ---------- 물류업체 (lscore) ---------- */
 
 export async function getLscore1List(memberId?: string, signal?: AbortSignal) {
-  const response = await axios.get<Lscore1Dto[]>('/api/lscore', { params: memberId ? { memberId } : undefined, signal });
+  const response = await axios.get<Lscore1Dto[]>('/api/conditions/logistics', { params: memberId ? { memberId } : undefined, signal });
   return response.data;
 }
 
 export async function getLscore2(lscore1Id: number, signal?: AbortSignal) {
-  const response = await axios.get<Lscore2Dto | null>(`/api/lscore/${lscore1Id}/lscore2`, { signal });
+  const response = await axios.get<Lscore2Dto | null>(`/api/conditions/logistics/${lscore1Id}/volume`, { signal });
   return response.data;
 }
 
 export async function getLscore3(lscore1Id: number, signal?: AbortSignal) {
-  const response = await axios.get<CargoDto | null>(`/api/lscore/${lscore1Id}/lscore3`, { signal });
+  const response = await axios.get<CargoDto | null>(`/api/conditions/logistics/${lscore1Id}/cargo`, { signal });
   return response.data;
 }
 
 // [TS] Omit<Lscore1Dto, 'lscore1Id'> = Lscore1Dto 에서 lscore1Id 칸만 뺀 모양 (id 는 DB 가 만들어 주므로)
 export async function createLscore(body: { lscore1Dto: Omit<Lscore1Dto, 'lscore1Id'>; lscore2Dto: Lscore2Dto; lscore3Dto: CargoDto }) {
-  const response = await axios.post<boolean>('/api/lscore', body);
+  const response = await axios.post<boolean>('/api/conditions/logistics', body);
   return response.data;
 }
 
 export async function deleteLscore(lscore1Id: number) {
-  const response = await axios.delete<boolean>(`/api/lscore/${lscore1Id}`);
+  const response = await axios.delete<boolean>(`/api/conditions/logistics/${lscore1Id}`);
   return response.data;
 }

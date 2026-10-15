@@ -1,6 +1,6 @@
 import type { MatchingStatusFilter } from '../../../api/matchingApi';
 
-// 상단 숫자 카드 필터 : 전체 + 진행 단계 분류 4가지 (서버 /api/matching/admin 의 status 와 같은 글자)
+// 상단 숫자 카드 필터 : 전체 + 진행 단계 분류 4가지 (서버 /api/admin/matchings 의 status 와 같은 글자)
 // (예전에는 "내 매칭" 더미 데이터의 단계 분류를 썼는데 , 서버 연결 후 API 의 상태 글자로 바꿈)
 export type MatchFilter = MatchingStatusFilter;
 

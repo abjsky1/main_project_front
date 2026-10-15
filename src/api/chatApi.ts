@@ -45,14 +45,14 @@ export interface MessageSendDto {
 }
 
 // ---------- 웹소켓 (STOMP) 주소 ----------
-// 백엔드 WebSocketConfig 의 주소와 같아야 함 (연결 /ws-chat , 보내기 /pub , 받기 /sub)
+// 백엔드 WebSocketConfig 의 주소와 같아야 함 (연결 /ws/chat , 보내기 /pub , 받기 /sub)
 
 // 연결 주소 : 지금 열린 페이지 주소를 기준으로 만듦 → 개발(localhost:8443)이든 배포든 코드를 고칠 필요가 없음
-// - 개발 : ws://localhost:8443/ws-chat → Vite 프록시가 백엔드(8080)로 넘김 (vite.config.ts)
+// - 개발 : ws://localhost:8443/ws/chat → Vite 프록시가 백엔드(8080)로 넘김 (vite.config.ts)
 // - https 사이트면 wss:// (암호화된 웹소켓)
 export function getChatSocketUrl() {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-  return `${protocol}://${window.location.host}/ws-chat`;
+  return `${protocol}://${window.location.host}/ws/chat`;
 }
 
 // 보내는 주소 : /pub + ChatMessageController 의 @MessageMapping("/chat/message")
@@ -68,19 +68,19 @@ export const CHAT_ADMIN_TOPIC = '/sub/chat/admin';
 // [TS] RoomDto | null : 서버가 null 을 돌려주면 빈 응답이 오고 , axios 는 이걸 빈 글자('')로 줌
 //      → response.data || null 로 '' 를 null 로 바꿔서 돌려줌 (화면에서는 null 인지만 보면 됨)
 
-// ① GET /api/chat/my-room : 내 채팅방 (기업 회원)
+// ① GET /api/chat/rooms/me : 내 채팅방 (기업 회원)
 // - 방 정보 + 이번 상담 메시지(messages) + 안 읽음 수
 // - 상담을 한 번도 안 했거나 , 관리자 · 비로그인이면 null
 export async function getMyRoom(signal?: AbortSignal) {
-  const response = await axios.get<RoomDto | null>('/api/chat/my-room', { signal, withCredentials: true });
+  const response = await axios.get<RoomDto | null>('/api/chat/rooms/me', { signal, withCredentials: true });
   return response.data || null;
 }
 
-// ② POST /api/chat/my-room/open : 상담 시작 (기업 회원)
+// ② POST /api/chat/rooms/me/open : 상담 시작 (기업 회원)
 // - 방이 없으면 만들고 , 종료된 방이면 다시 켬 → 방 정보 + 이번 상담 메시지 ("상담이 시작되었습니다" · 고객센터 인사 포함)
 // - 이미 상담 중이면 그 방을 그대로 돌려줌 (버튼을 두 번 누르거나 탭을 두 개 연 경우) , 관리자 · 비로그인 · 비활성 회원이면 null
 export async function openMyRoom() {
-  const response = await axios.post<RoomDto | null>('/api/chat/my-room/open', {}, { withCredentials: true });
+  const response = await axios.post<RoomDto | null>('/api/chat/rooms/me/open', {}, { withCredentials: true });
   return response.data || null;
 }
 
@@ -96,7 +96,7 @@ export async function closeRoom(roomId: number) {
 // - 상담 중(켜진 시각이 오래된 순) → 종료(꺼진 시각이 최근 순) , 목록에는 messages 가 비어 있음
 // - 관리자가 아니면 null
 export async function getRooms(signal?: AbortSignal) {
-  const response = await axios.get<RoomDto[] | null>('/api/chat/rooms', { signal, withCredentials: true });
+  const response = await axios.get<RoomDto[] | null>('/api/admin/chat/rooms', { signal, withCredentials: true });
   return response.data || null;
 }
 

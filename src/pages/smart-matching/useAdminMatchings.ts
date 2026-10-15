@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { getAdminMatchings, type MatchingApiDto, type MatchingStatusFilter } from '../../api/matchingApi';
 
 // 관리자 매칭 관리 화면(SmartMatching)의 데이터 훅
-// - GET /api/matching/admin 한 번으로 "상태별 건수 5개 + 고른 상태의 매칭 50건" 을 받음
+// - GET /api/admin/matchings 한 번으로 "상태별 건수 5개 + 고른 상태의 매칭 50건" 을 받음
 // - 고른 상태와 페이지는 주소에 저장 : /matching?status=completed&page=2
 //     → 새로고침하거나 주소를 공유해도 같은 화면 , 뒤로 가기를 누르면 이전 상태 · 이전 페이지
 //     (감사 로그의 useAuditLogs 와 같은 방식 — 주소가 원본 , 화면은 주소를 따라감)

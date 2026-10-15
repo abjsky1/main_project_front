@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { YEARS, type KpiStat } from '../tradeData';
 
-// Spring TradestatusDto 응답 구조 (GET /api/cumulative/trade?year=2026)
+// Spring TradestatusDto 응답 구조 (GET /api/trade/cumulative?year=2026)
 interface TradestatusResponse {
   year: number;
   throughMonth: number;      // 몇 월까지 더한 값인지 (예: 8 → 1~8월 누적)
@@ -81,7 +81,7 @@ export default function TradeKpi({ year, onYearChange }: TradeKpiProps) {
 
     async function fetchTrade() {
       try {
-        const { data } = await axios.get<TradestatusResponse>('http://localhost:8080/api/cumulative/trade', { params: { year } });
+        const { data } = await axios.get<TradestatusResponse>('/api/trade/cumulative', { params: { year } });
         if (!ignore) setTrade(data);
       } catch (error) {
         if (!ignore) console.error('누적 무역 조회 실패:', error);

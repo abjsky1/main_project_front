@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 /* =========================================================
-   매칭 API (Spring Boot /api/matching)
+   매칭 API (Spring Boot /api/matchings , /api/admin/matchings , /api/members/me/matchings)
 
    1. 관리자 전체 매칭 조회
    2. 회원별 내 매칭 조회
@@ -90,25 +90,8 @@ export interface MatchingApiDto {
 }
 
 
-// [2] 전체 매칭 결과 조회 (관리자)
-// GET /api/matching
-export async function getMatchingList(signal?: AbortSignal) {
-
-  const response = await axios.get<MatchingApiDto[]>(
-    '/api/matching',
-    {
-      signal,
-      withCredentials: true
-    }
-  );
-
-  return response.data;
-
-}
-
-
-// [2-1] 관리자 매칭 관리 화면 — 상태별 건수 5개 + 고른 상태의 매칭 한 페이지(50건)를 한 번에
-// GET /api/matching/admin?status=completed&page=0
+// [2] 관리자 매칭 관리 화면 — 상태별 건수 5개 + 고른 상태의 매칭 한 페이지(50건)를 한 번에
+// GET /api/admin/matchings?status=completed&page=0
 
 // 상태 필터 (화면 위쪽 카드 5칸) — 글자 그대로 서버의 status 로 보냄
 //   all 전체 · linked 자동 매칭 연결 · requested 물류 수락 대기 · completed 매칭 성사 · failed 매칭 실패
@@ -147,11 +130,11 @@ export interface AdminMatchingParams {
   page: number;
 }
 
-// GET /api/matching/admin?status=&keyword=&reason=&transportType=&regularRoute=&directRoute=&sort=&dir=&page=
+// GET /api/admin/matchings?status=&keyword=&reason=&transportType=&regularRoute=&directRoute=&sort=&dir=&page=
 // - 관리자만 사용 가능 : 서버가 로그인 쿠키(AccessToken)로 확인 → withCredentials: true 로 쿠키를 같이 보냄
 // [TS] MatchingPageDto | null : 관리자가 아니면 서버가 null(빈 응답 → axios 는 '')을 돌려줌 → || null 로 null 로 바꿈
 export async function getAdminMatchings(params: AdminMatchingParams, signal?: AbortSignal) {
-  const response = await axios.get<MatchingPageDto | null>('/api/matching/admin', {
+  const response = await axios.get<MatchingPageDto | null>('/api/admin/matchings', {
     params,
     signal,
     withCredentials: true,
@@ -161,14 +144,13 @@ export async function getAdminMatchings(params: AdminMatchingParams, signal?: Ab
 
 
 // [3] 로그인 회원의 매칭 결과 조회
-// GET /api/matching/member/{memberId}
+// GET /api/members/me/matchings — 어떤 회원인지는 서버가 로그인 쿠키(AccessToken)로 정함
 export async function getMemberMatchingList(
-  memberId: string,
   signal?: AbortSignal
 ) {
 
   const response = await axios.get<MatchingApiDto[]>(
-    `/api/matching/member/${memberId}`,
+    '/api/members/me/matchings',
     {
       signal,
       withCredentials: true
@@ -181,14 +163,14 @@ export async function getMemberMatchingList(
 
 
 // [4] 화주 매칭 요청
-// POST /api/matching/shipper/accept/{matchingId}
+// POST /api/matchings/{matchingId}/shipper/accept
 export async function acceptShipperMatching(
   matchingId: number,
   memberId: string
 ) {
 
   const response = await axios.post<boolean>(
-    `/api/matching/shipper/accept/${matchingId}`,
+    `/api/matchings/${matchingId}/shipper/accept`,
     null,
     {
       params: { memberId },
@@ -202,14 +184,14 @@ export async function acceptShipperMatching(
 
 
 // [5] 화주 매칭 거절
-// POST /api/matching/shipper/reject/{matchingId}
+// POST /api/matchings/{matchingId}/shipper/reject
 export async function rejectShipperMatching(
   matchingId: number,
   memberId: string
 ) {
 
   const response = await axios.post<boolean>(
-    `/api/matching/shipper/reject/${matchingId}`,
+    `/api/matchings/${matchingId}/shipper/reject`,
     null,
     {
       params: { memberId },
@@ -223,14 +205,14 @@ export async function rejectShipperMatching(
 
 
 // [6] 물류기업 매칭 수락
-// POST /api/matching/logistics/accept/{matchingId}
+// POST /api/matchings/{matchingId}/logistics/accept
 export async function acceptLogisticsMatching(
   matchingId: number,
   memberId: string
 ) {
 
   const response = await axios.post<boolean>(
-    `/api/matching/logistics/accept/${matchingId}`,
+    `/api/matchings/${matchingId}/logistics/accept`,
     null,
     {
       params: { memberId },
@@ -244,14 +226,14 @@ export async function acceptLogisticsMatching(
 
 
 // [7] 물류기업 매칭 거절
-// POST /api/matching/logistics/reject/{matchingId}
+// POST /api/matchings/{matchingId}/logistics/reject
 export async function rejectLogisticsMatching(
   matchingId: number,
   memberId: string
 ) {
 
   const response = await axios.post<boolean>(
-    `/api/matching/logistics/reject/${matchingId}`,
+    `/api/matchings/${matchingId}/logistics/reject`,
     null,
     {
       params: { memberId },

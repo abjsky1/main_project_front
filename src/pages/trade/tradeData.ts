@@ -1,6 +1,6 @@
 // 무역 데이터 분석 페이지에서 쓰는 목록 / 타입
-// - 환율 : 백엔드 GET /api/exchange/month (환율 CSV 2000~2026 의 월 평균 — useExchangeRates.ts 에서 조회)
-// - 조건 검색 : 팀원의 검색 API(/api/condition/search) — useTradeSearch.ts
+// - 환율 : 백엔드 GET /api/exchange/monthly (환율 CSV 2000~2026 의 월 평균 — useExchangeRates.ts 에서 조회)
+// - 조건 검색 : 팀원의 검색 API(/api/trade/search) — useTradeSearch.ts
 
 // [TS] 'a' | 'b' : 이 글자들 중 하나만 들어갈 수 있는 타입 (가이드 2-3)
 export type SortField = 'exportAmt' | 'importAmt' | 'balance' | null;   // 정렬 기준 열 (null = 정렬 안 함 = 검색 결과 원래 순서)

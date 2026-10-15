@@ -8,7 +8,7 @@
        (사용자 권한 관리 · 감사 로그 · 무역 조건 검색도 같은 모양 — 공통 스타일 styles/common.css 의 .col-filter-row)
        서버가 거르고 정렬해서 50건씩 보내 줌 (카드 숫자도 필터에 맞는 건수로 바뀜)
    - 맨 왼쪽 번호 : 지금 화면에 보이는 순서 (정렬 · 필터가 바뀌어도 첫 줄은 항상 1 , 2 페이지는 51 부터)
-   - 데이터 : GET /api/matching/admin 한 번으로 "카드 숫자 5개 + 고른 상태의 50건" (useAdminMatchings)
+   - 데이터 : GET /api/admin/matchings 한 번으로 "카드 숫자 5개 + 고른 상태의 50건" (useAdminMatchings)
      고른 상태 · 페이지는 주소에 저장 → /matching?status=completed&page=2 (새로고침 · 뒤로 가기 유지)
    ===================================================================== */
 import type { KeyboardEvent, MouseEvent } from 'react';

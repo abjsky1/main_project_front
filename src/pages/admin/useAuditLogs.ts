@@ -100,7 +100,7 @@ export default function useAuditLogs(active: boolean) {
     return () => { ignore = true; };
   }, []);
 
-  // DB 에서 그 페이지만 조회 (GET /api/audit) — 이전 요청이 아직 진행 중이면 취소하고 마지막 요청 결과만 사용
+  // DB 에서 그 페이지만 조회 (GET /api/admin/audits) — 이전 요청이 아직 진행 중이면 취소하고 마지막 요청 결과만 사용
   // (검색 · 페이지 번호를 빠르게 여러 번 누르면 늦게 도착한 이전 결과가 화면을 덮어쓰는 것을 막음 — 가이드 3-4)
   const load = useCallback(async (filter: LogFilter, pageToLoad: number) => {
     lastRequest.current?.abort();               // 1. 진행 중인 이전 요청 취소

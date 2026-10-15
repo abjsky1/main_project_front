@@ -5,7 +5,7 @@ import ChatWindow from './ChatWindow';
 // 회원용 고객센터 채팅 상담 (마이페이지 오른쪽)
 // [고객센터 채팅상담] 버튼
 //   - 상담 중이면 → 채팅창을 바로 엶
-//   - 처음이거나 지난 상담이 종료됐으면 → 상담 시작(POST /api/chat/my-room/open) 후 엶
+//   - 처음이거나 지난 상담이 종료됐으면 → 상담 시작(POST /api/chat/rooms/me/open) 후 엶
 // 메시지는 웹소켓으로 실시간 전달 (useSupportChat) — 어느 회원인지는 서버가 로그인 쿠키로 확인
 export default function SupportChat() {
   const { room, messages, loading, connected, error, startChat, sendMessage, endChat, markAsRead } = useSupportChat();
