@@ -167,11 +167,8 @@ function validateFilters(
   filters: Filters,
   options: Options,
 ): string | null {
-  if (
-    filters.countryIds.length < 1
-    || filters.countryIds.length > 3
-  ) {
-    return '국가를 1~3개 선택해 주세요.';
+  if (filters.countryIds.length !== 1) {
+    return '분석할 국가를 1개 선택해 주세요.';
   }
 
   if (
@@ -1043,74 +1040,30 @@ function Workspace() {
               </div>
 
               <div className="pi-country-section">
-                <p className="pi-label">
-                  분석 국가 · 최대 3개
-                </p>
-
-                <div className="pi-countries">
-                  {filters.countryIds.map(id => {
-                    const country = options.countries.find(
-                      item => item.id === id,
-                    );
-
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        aria-label={`${country?.name ?? id} 제외`}
-                        onClick={() =>
-                          change({
-                            countryIds:
-                              filters.countryIds.filter(
-                                value => value !== id,
-                              ),
-                            conditionId: null,
-                          })
-                        }
-                      >
-                        {country?.name ?? id} ×
-                      </button>
-                    );
-                  })}
+                <label>
+                  분석 국가
 
                   <select
-                    aria-label="분석 국가 추가"
-                    value=""
-                    disabled={
-                      filters.countryIds.length >= 3
-                    }
+                    required
+                    value={filters.countryIds[0] ?? ''}
                     onChange={event => {
-                      if (!event.target.value) return;
-
-                      const id = Number(
-                        event.target.value,
-                      );
-
-                      if (
-                        filters.countryIds.includes(id)
-                        || filters.countryIds.length >= 3
-                      ) {
-                        return;
-                      }
+                      const value = event.target.value;
 
                       change({
-                        countryIds: [
-                          ...filters.countryIds,
-                          id,
-                        ],
+                        countryIds: value === ''
+                          ? []
+                          : [Number(value)],
                         conditionId: null,
                       });
                     }}
                   >
                     <option value="">
-                      국가 선택
+                      국가를 선택해 주세요
                     </option>
 
-                    {options.countries
-                      .filter(country =>
-                        !filters.countryIds.includes(
-                          country.id,
-                        ),
+                    {[...options.countries]
+                      .sort((a, b) =>
+                        a.name.localeCompare(b.name, 'ko'),
                       )
                       .map(country => (
                         <option
@@ -1121,7 +1074,7 @@ function Workspace() {
                         </option>
                       ))}
                   </select>
-                </div>
+                </label>
               </div>
 
               <label>
