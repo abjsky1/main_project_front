@@ -125,6 +125,8 @@ export interface InsightResult {
   itemName: string;
   generatedAt: string;
   aiStatus: 'ready' | 'unavailable' | 'not_requested';
+  // 예전 분석 기록에는 없을 수 있으므로 선택 속성
+  businessConditions?: Condition[];
   series: Series[];
   metrics: Metric[];
   trends: Trend[];
@@ -210,4 +212,59 @@ export function formatNumber(
   return new Intl.NumberFormat('ko-KR', {
     maximumFractionDigits: 1,
   }).format(value);
+}
+
+export const detailLabels: Record<string, string> = {
+  transport: '운송 방식',
+  departureId: '출발지 코드',
+  arrivalId: '도착지 코드',
+  requestWeight: '요청 물량',
+  desiredDate: '희망일',
+  availableCapacity: '가용 물량',
+  availableDate: '가용일',
+  averageTransitDays: '평균 운송일',
+  experienceCount: '등록 경험 횟수',
+  regularRoute: '정기 노선',
+  directRoute: '직항 노선',
+  generalContainer: '일반 컨테이너',
+  refrigerated: '냉장·냉동',
+  dangerous: '위험물',
+  heavyCargo: '중량 화물',
+  specialCargo: '특수 화물',
+};
+
+export function detailText(
+  key: string,
+  value: string | number | boolean,
+  details: Condition['details'],
+): string {
+  if (
+    key === 'requestWeight'
+    || key === 'availableCapacity'
+  ) {
+    const amount = typeof value === 'number'
+      ? new Intl.NumberFormat('ko-KR', {
+          maximumFractionDigits: 20,
+        }).format(value)
+      : String(value);
+
+    return details[`${key}Unit`] === 't'
+      ? `${amount} t`
+      : `${amount} (단위 미확인)`;
+  }
+
+  if (key === 'averageTransitDays') {
+    return `${value}일`;
+  }
+
+  if (typeof value === 'boolean') {
+    return value ? '예' : '아니요';
+  }
+
+  if (key === 'transport') {
+    if (value === 'SEA') return '해상';
+    if (value === 'AIR') return '항공';
+  }
+
+  return String(value);
 }

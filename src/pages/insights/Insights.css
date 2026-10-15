@@ -460,3 +460,154 @@
     font-size: 25px;
   }
 }
+
+/* 전체 배경과 기본 톤 */
+.personalized-insights {
+  background: #f5f7fb;
+  color: #202a3d;
+  border-radius: 20px;
+}
+
+.personalized-insights .pi-page-header {
+  padding: 18px 4px;
+}
+
+.personalized-insights .pi-panel {
+  border-color: #e2e7ef;
+  box-shadow: 0 3px 14px rgb(24 39 65 / 3%);
+}
+
+.personalized-insights .pi-eyebrow {
+  color: #4a5d88;
+}
+
+/* 등록 업무 선택 */
+.personalized-insights .pi-business-picker {
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #e2e7ef;
+}
+
+.personalized-insights .pi-business-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.personalized-insights .pi-business-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #dce2ec;
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.personalized-insights .pi-business-card strong {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.personalized-insights .pi-business-card span {
+  color: #596579;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.personalized-insights .pi-business-card[aria-pressed="true"] {
+  padding: 19px;
+  border: 2px solid #6255bd;
+  background: #f5f3ff;
+}
+
+.personalized-insights
+  .pi-business-card[aria-pressed="true"]
+  strong::before {
+  content: "✓ ";
+  color: #6255bd;
+}
+
+/* 선택 업무 상세 */
+.personalized-insights .pi-condition-details {
+  padding: 18px;
+  border-radius: 10px;
+  background: #f5f7fb;
+}
+
+.personalized-insights .pi-detail > div {
+  min-width: 0;
+}
+
+.personalized-insights .pi-detail dt {
+  flex-shrink: 0;
+  min-width: 90px;
+}
+
+.personalized-insights .pi-detail dd {
+  min-width: 0;
+}
+
+/* 개인화 해석과 추천 행동 */
+.personalized-insights .pi-personal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  align-items: start;
+}
+
+.personalized-insights .pi-personal-grid > section {
+  min-width: 0;
+}
+
+/* 핵심 요약 */
+.personalized-insights .pi-summary {
+  padding: 30px;
+  border-left: 5px solid #6255bd;
+  background: #f4f2fc;
+}
+
+.personalized-insights .pi-summary h3 {
+  font-size: 24px;
+}
+
+.personalized-insights .pi-summary > p {
+  max-width: 85ch;
+  font-size: 16px;
+}
+
+.personalized-insights .pi-condition-evidence {
+  display: block;
+  margin-top: 8px;
+}
+
+/* 주요 버튼 */
+.personalized-insights .pi-primary {
+  border-color: #6255bd;
+  background: #6255bd;
+}
+
+.personalized-insights .pi-primary:hover:not(:disabled) {
+  background: #5144a6;
+}
+
+/* 기록 접기 */
+.personalized-insights [hidden] {
+  display: none !important;
+}
+
+/* 모바일 */
+@media (max-width: 800px) {
+  .personalized-insights .pi-business-cards,
+  .personalized-insights .pi-personal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .personalized-insights .pi-summary {
+    padding: 22px;
+  }
+}

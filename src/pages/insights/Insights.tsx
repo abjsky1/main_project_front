@@ -49,7 +49,12 @@ interface DisplayResult {
   history: HistoryDetail | null;
 }
 
-type BusyAction = '' | 'generate' | 'view' | 'delete' | 'prepare';
+type BusyAction =
+  | ''
+  | 'generate'
+  | 'view'
+  | 'delete'
+  | 'prepare';
 
 const EMPTY_FILTERS: Filters = {
   countryIds: [],
@@ -74,10 +79,29 @@ const detailLabels: Record<string, string> = {
   regularRoute: '정기 노선',
   directRoute: '직항 노선',
   generalContainer: '일반 컨테이너',
-  refrigerated: '냉장',
+  refrigerated: '냉장·냉동',
   dangerous: '위험물',
-  heavyCargo: '중량화물',
-  specialCargo: '특수화물',
+  heavyCargo: '중량 화물',
+  specialCargo: '특수 화물',
+};
+
+const cardDetailKeys = [
+  'transport',
+  'requestWeight',
+  'availableCapacity',
+  'desiredDate',
+  'availableDate',
+];
+
+const busyMessages: Record<
+  Exclude<BusyAction, ''>,
+  string
+> = {
+  generate:
+    '무역 통계를 조회하고 맞춤 분석을 작성하고 있습니다. 자료량에 따라 시간이 걸릴 수 있습니다.',
+  view: '분석 기록을 불러오고 있습니다…',
+  delete: '기록을 삭제하고 있습니다…',
+  prepare: '현재 업무 조건을 확인하고 있습니다…',
 };
 
 function validCondition(
@@ -87,7 +111,10 @@ function validCondition(
   return Boolean(
     condition.hsCode
     && /^[0-9]{10}$/.test(condition.hsCode)
-    && condition.direction
+    && (
+      condition.direction === 'EXPORT'
+      || condition.direction === 'IMPORT'
+    )
     && options.countries.some(
       country => country.id === condition.countryId,
     ),
@@ -132,6 +159,7 @@ function detailText(
 
 function monthNumber(value: string): number {
   const [year, month] = value.split('-').map(Number);
+
   return year * 12 + month - 1;
 }
 
@@ -147,9 +175,12 @@ function validateFilters(
   }
 
   if (
-    new Set(filters.countryIds).size !== filters.countryIds.length
+    new Set(filters.countryIds).size
+      !== filters.countryIds.length
     || filters.countryIds.some(id =>
-      !options.countries.some(country => country.id === id),
+      !options.countries.some(
+        country => country.id === id,
+      ),
     )
   ) {
     return '국가 선택값을 확인해 주세요.';
@@ -160,6 +191,13 @@ function validateFilters(
   }
 
   if (
+    filters.direction !== 'EXPORT'
+    && filters.direction !== 'IMPORT'
+  ) {
+    return '수출 또는 수입을 선택해 주세요.';
+  }
+
+  if (
     !/^[0-9]{4}-(0[1-9]|1[0-2])$/.test(filters.start)
     || !/^[0-9]{4}-(0[1-9]|1[0-2])$/.test(filters.end)
   ) {
@@ -167,20 +205,46 @@ function validateFilters(
   }
 
   const months =
-    monthNumber(filters.end) - monthNumber(filters.start) + 1;
+    monthNumber(filters.end)
+    - monthNumber(filters.start)
+    + 1;
+
+  const minMonth = options.minMonth || '2000-01';
 
   if (
     months < 1
     || months > 60
-    || filters.start < '2000-01'
+    || filters.start < minMonth
     || !options.maxMonth
     || filters.end > options.maxMonth
   ) {
-    return '기간은 2000년 이후 최대 60개월이며 실제 자료의 최신 월 이내여야 합니다.';
+    return `${minMonth}부터 ${options.maxMonth || '최신 자료 월'}까지의 범위에서 최대 60개월을 선택해 주세요.`;
   }
 
   if (!options.objectives.includes(filters.objective)) {
     return '분석 목표를 선택해 주세요.';
+  }
+
+  if (filters.conditionId != null) {
+    const condition = options.conditions.find(
+      item => item.id === filters.conditionId,
+    );
+
+    if (
+      !condition
+      || !validCondition(condition, options)
+    ) {
+      return '선택한 업무를 사용할 수 없습니다. 업무를 다시 선택해 주세요.';
+    }
+
+    if (
+      filters.countryIds.length !== 1
+      || filters.countryIds[0] !== condition.countryId
+      || filters.hsCode !== condition.hsCode
+      || filters.direction !== condition.direction
+    ) {
+      return '선택한 업무와 분석 조건이 다릅니다. 업무를 다시 선택하거나 직접 조건으로 분석해 주세요.';
+    }
   }
 
   return null;
@@ -201,7 +265,10 @@ export default function Insights({
     );
   }
 
-  if (user.role === 'admin') {
+  if (
+    user.role === 'admin'
+    || user.role === 'ROLE_ADMIN'
+  ) {
     return (
       <main className="personalized-insights">
         <h1>맞춤 인사이트</h1>
@@ -220,7 +287,7 @@ export default function Insights({
 
         <div className="pi-panel">
           회원 정보를 확인할 수 없습니다.
-          로그인 정보에 memberId가 포함되어 있는지 확인해 주세요.
+          다시 로그인해 주세요.
         </div>
       </main>
     );
@@ -251,12 +318,13 @@ function Workspace() {
 
   const [optionReload, setOptionReload] = useState(0);
   const [historyReload, setHistoryReload] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
 
   const actionRef = useRef<AbortController | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
   const resultRef = useRef<HTMLDivElement | null>(null);
 
-  // [1] 초기 선택지
+  // [1] 로그인 회원의 업무 목록과 분석 선택지 조회
   useEffect(() => {
     const controller = new AbortController();
 
@@ -275,6 +343,10 @@ function Workspace() {
           end: data.end,
           objective: data.objectives[0] ?? '',
         });
+
+        setQuery('');
+        setItems([]);
+        setDisplay(null);
       })
       .catch(error => {
         if (!controller.signal.aborted) {
@@ -301,15 +373,19 @@ function Workspace() {
     }
 
     const controller = new AbortController();
+
     setSearching(true);
 
     const timer = window.setTimeout(() => {
-      searchInsightItems(query.trim(), controller.signal)
+      searchInsightItems(
+        query.trim(),
+        controller.signal,
+      )
         .then(data => {
-          if (!controller.signal.aborted) {
-            setItems(data);
-            setSearchDone(true);
-          }
+          if (controller.signal.aborted) return;
+
+          setItems(data);
+          setSearchDone(true);
         })
         .catch(error => {
           if (!controller.signal.aborted) {
@@ -329,17 +405,21 @@ function Workspace() {
     };
   }, [query, filters.hsCode]);
 
-  // 결과가 표시되면 결과 위치로 이동
+  // 분석 결과 또는 과거 기록을 표시하면 결과 위치로 이동
   useEffect(() => {
-    if (display) {
-      resultRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    }
+    if (!display) return;
+
+    resultRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
   }, [display]);
 
   function change(patch: Partial<Filters>) {
+    const conditionCleared =
+      filters.conditionId != null
+      && patch.conditionId === null;
+
     setFilters(current => ({
       ...current,
       ...patch,
@@ -347,11 +427,17 @@ function Workspace() {
 
     setDisplay(null);
     setError('');
-    setNotice('');
+
+    setNotice(
+      conditionCleared
+        ? '업무 선택이 해제되었습니다. 현재 입력된 조건으로 시장을 분석하며, 등록 업무의 물량·일정·화물 특성은 반영하지 않습니다.'
+        : '',
+    );
   }
 
+  // 등록 업무 선택 → 국가·품목·방향 자동 입력
   function selectCondition(value: string) {
-    if (!options) return;
+    if (!options || busy || actionRef.current) return;
 
     const condition = options.conditions.find(
       item => String(item.id) === value,
@@ -368,7 +454,7 @@ function Workspace() {
       || !condition.direction
     ) {
       setError(
-        '저장 조건의 국가·품목·방향을 확인할 수 없습니다. 직접 설정으로 분석해 주세요.',
+        '업무의 국가·품목·방향을 확인할 수 없습니다. 등록 정보를 확인하거나 직접 조건으로 분석해 주세요.',
       );
       return;
     }
@@ -382,6 +468,7 @@ function Workspace() {
 
     setQuery(condition.hsCode);
     setItems([]);
+    setSearchDone(false);
     setSearchError('');
   }
 
@@ -391,6 +478,7 @@ function Workspace() {
     const controller = new AbortController();
 
     actionRef.current = controller;
+
     setBusy(type);
     setError('');
     setNotice('');
@@ -405,13 +493,16 @@ function Workspace() {
     }
   }
 
-  // [3] 분석 생성
+  // [3] 분석 생성 및 서버의 저장 결과 확인
   async function submit(event: FormEvent) {
     event.preventDefault();
 
     if (!options || busy || actionRef.current) return;
 
-    const validation = validateFilters(filters, options);
+    const validation = validateFilters(
+      filters,
+      options,
+    );
 
     if (validation) {
       setError(validation);
@@ -419,7 +510,9 @@ function Workspace() {
     }
 
     const controller = startAction('generate');
+
     setDisplay(null);
+    setShowHistory(false);
 
     try {
       const response = await generateInsights(
@@ -438,23 +531,28 @@ function Workspace() {
         history: null,
       });
 
-      setNotice(response.saveMessage);
+      setNotice(
+        response.saveMessage
+        || (
+          response.saved
+            ? '분석 조건과 결과를 저장했습니다.'
+            : '분석 결과는 생성되었지만 기록을 저장하지 못했습니다.'
+        ),
+      );
 
       if (response.saved) {
         setHistoryReload(value => value + 1);
       }
-
     } catch (error) {
       if (!controller.signal.aborted) {
         setError(getErrorMessage(error));
       }
-
     } finally {
       finishAction(controller);
     }
   }
 
-  // [4] 기록 상세
+  // [4] 저장된 결과 조회
   async function openHistory(id: number) {
     if (busy || actionRef.current) return;
 
@@ -474,15 +572,15 @@ function Workspace() {
         history: detail,
       });
 
+      setShowHistory(false);
+
       setNotice(
         '저장된 당시 결과입니다. 현재 입력 중인 조건과 다를 수 있습니다.',
       );
-
     } catch (error) {
       if (!controller.signal.aborted) {
         setError(getErrorMessage(error));
       }
-
     } finally {
       finishAction(controller);
     }
@@ -516,12 +614,10 @@ function Workspace() {
 
       setNotice('분석 기록을 삭제했습니다.');
       setHistoryReload(value => value + 1);
-
     } catch (error) {
       if (!controller.signal.aborted) {
         setError(getErrorMessage(error));
       }
-
     } finally {
       finishAction(controller);
     }
@@ -560,7 +656,7 @@ function Workspace() {
       };
 
       let message =
-        '과거 분석 조건을 불러왔습니다. 조건과 기간을 확인한 뒤 생성 버튼을 누르세요.';
+        '과거 분석 조건을 불러왔습니다. 조건과 기간을 확인한 뒤 분석 버튼을 누르세요.';
 
       if (previous.conditionId != null) {
         const sameMemberType =
@@ -575,7 +671,10 @@ function Workspace() {
 
         if (
           currentCondition
-          && validCondition(currentCondition, currentOptions)
+          && validCondition(
+            currentCondition,
+            currentOptions,
+          )
           && currentCondition.hsCode
           && currentCondition.direction
         ) {
@@ -585,30 +684,33 @@ function Workspace() {
           next.direction = currentCondition.direction;
 
           message =
-            '업무 조건은 현재 DB의 값으로 불러왔습니다. 과거와 다를 수 있으므로 물량·일정 등을 확인한 뒤 생성해 주세요.';
+            '업무 조건은 현재 DB의 값으로 불러왔습니다. 과거와 다를 수 있으므로 물량·일정을 확인한 뒤 분석해 주세요.';
         } else {
           message =
-            '이전 업무 조건을 현재 사용할 수 없어 직접 설정으로 불러왔습니다. 국가·품목·기간을 확인해 주세요.';
+            '이전 업무를 현재 사용할 수 없어 직접 조건으로 불러왔습니다. 국가·품목·기간을 확인해 주세요.';
         }
       }
 
       setOptions(currentOptions);
       setFilters(next);
+
       setQuery(next.hsCode);
       setItems([]);
+      setSearchDone(false);
+      setSearchError('');
+
       setDisplay(null);
+      setShowHistory(false);
       setNotice(message);
 
       formRef.current?.scrollIntoView({
         behavior: 'smooth',
         block: 'start',
       });
-
     } catch (error) {
       if (!controller.signal.aborted) {
         setError(getErrorMessage(error));
       }
-
     } finally {
       finishAction(controller);
     }
@@ -618,13 +720,11 @@ function Workspace() {
     item => item.id === filters.conditionId,
   );
 
-  const busyMessage = {
-    generate:
-      '무역 통계를 조회하고 맞춤 분석을 작성하고 있습니다. 자료량에 따라 시간이 걸릴 수 있습니다.',
-    view: '분석 기록을 불러오고 있습니다…',
-    delete: '기록을 삭제하고 있습니다…',
-    prepare: '현재 업무 조건을 확인하고 있습니다…',
-  };
+  // 현재 입력 중인 업무가 아니라 분석 당시 업무를 사용
+  const resultBusinessConditions =
+    display?.result.businessConditions
+    ?? display?.history?.condition.businessConditions
+    ?? [];
 
   return (
     <main className="personalized-insights">
@@ -633,10 +733,25 @@ function Workspace() {
           Personalized insights
         </p>
 
-        <h1>나의 맞춤 인사이트</h1>
+        <div className="pi-section-title">
+          <h1>내 업무 맞춤 인사이트</h1>
+
+          <button
+            type="button"
+            disabled={!options}
+            aria-expanded={showHistory}
+            aria-controls="insight-history"
+            onClick={() =>
+              setShowHistory(value => !value)
+            }
+          >
+            분석 기록 {showHistory ? '닫기' : '보기'}
+          </button>
+        </div>
 
         <p>
-          업무 조건에 맞는 시장 변화와 다음 행동을 확인하세요.
+          등록한 업무와 무역 통계를 함께 살펴보고,
+          내 업무에 필요한 다음 행동을 확인하세요.
         </p>
       </header>
 
@@ -657,7 +772,7 @@ function Workspace() {
           <p role="status">
             {error
               ? '초기 정보를 불러오지 못했습니다.'
-              : '회원 유형과 업무 조건을 확인하고 있습니다…'}
+              : '회원 유형과 업무 정보를 확인하고 있습니다…'}
           </p>
 
           {error && (
@@ -673,13 +788,34 @@ function Workspace() {
         </section>
       ) : (
         <>
+          <div
+            id="insight-history"
+            hidden={!showHistory}
+          >
+            {showHistory && (
+              <HistoryList
+                reload={historyReload}
+                disabled={Boolean(busy)}
+                onView={openHistory}
+                onDelete={removeHistory}
+              />
+            )}
+          </div>
+
           <form
             ref={formRef}
             className="pi-panel pi-form"
             onSubmit={submit}
           >
             <div className="pi-section-title">
-              <h2>분석 조건</h2>
+              <div>
+                <h2>분석할 업무 선택</h2>
+
+                <p className="pi-muted">
+                  등록한 업무를 선택하면 국가·품목·방향을
+                  자동으로 불러옵니다.
+                </p>
+              </div>
 
               <span className="pi-badge">
                 {options.memberType === 'SHIPPER'
@@ -690,43 +826,198 @@ function Workspace() {
 
             <fieldset disabled={Boolean(busy)}>
               <legend className="pi-sr-only">
-                분석 조건 설정
+                업무 선택과 분석 조건 설정
               </legend>
 
-              <div className="pi-fields">
-                <label>
-                  저장된 업무 조건
+              <section
+                className="pi-business-picker"
+                aria-label="내 업무 선택"
+              >
+                <p className="pi-eyebrow">
+                  01 · 내 업무
+                </p>
 
-                  <select
-                    value={filters.conditionId ?? ''}
-                    onChange={event =>
-                      selectCondition(event.target.value)
-                    }
-                  >
-                    <option value="">
-                      직접 설정 · 시장 분석
-                    </option>
+                <h3>
+                  {options.memberType === 'SHIPPER'
+                    ? '어떤 운송 요청을 분석할까요?'
+                    : '어떤 운송 노선을 분석할까요?'}
+                </h3>
 
-                    {options.conditions.map(condition => {
-                      const valid = validCondition(
-                        condition,
-                        options,
-                      );
+                <div className="pi-business-cards">
+                  {options.conditions.map(condition => {
+                    const valid = validCondition(
+                      condition,
+                      options,
+                    );
 
-                      return (
-                        <option
-                          key={condition.id}
-                          value={condition.id}
-                          disabled={!valid}
-                        >
+                    const selected =
+                      filters.conditionId === condition.id;
+
+                    const summary = Object.entries(
+                      condition.details,
+                    )
+                      .filter(([key]) =>
+                        cardDetailKeys.includes(key),
+                      )
+                      .map(([key, value]) =>
+                        `${detailLabels[key]} ${
+                          detailText(
+                            key,
+                            value,
+                            condition.details,
+                          )
+                        }`,
+                      )
+                      .join(' · ');
+
+                    return (
+                      <button
+                        type="button"
+                        key={condition.id}
+                        className="pi-business-card"
+                        aria-pressed={selected}
+                        disabled={!valid}
+                        onClick={() =>
+                          selectCondition(
+                            String(condition.id),
+                          )
+                        }
+                      >
+                        <strong>
                           {condition.label}
-                          {!valid ? ' · 정보 확인 필요' : ''}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </label>
+                        </strong>
 
+                        {summary && (
+                          <span>{summary}</span>
+                        )}
+
+                        {selected && (
+                          <small>분석할 업무로 선택됨</small>
+                        )}
+
+                        {!valid && (
+                          <small>
+                            국가·품목·방향 정보 확인 필요
+                          </small>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {options.conditions.length === 0 && (
+                  <p className="pi-notice">
+                    등록한 업무가 없습니다.
+                    매칭 조건을 등록하거나 직접 조건으로
+                    시장을 분석해 보세요.
+                  </p>
+                )}
+
+                {selectedCondition ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => selectCondition('')}
+                    >
+                      업무 선택 해제
+                    </button>
+
+                    <p className="pi-muted">
+                      선택한 업무의 물량·일정·화물 특성을 분석에 반영합니다.
+                      국가·품목·방향을 변경하면 업무 선택이 해제됩니다.
+                      분석 기간과 목표를 변경하면 선택은 유지됩니다.
+                    </p>
+                  </>
+                ) : (
+                  <p className="pi-muted">
+                    등록 업무를 선택하거나, 아래에서 분석 조건을 직접 입력하세요.
+                    업무를 선택하지 않으면 등록 업무의 물량·일정·화물 특성은
+                    분석에 반영되지 않습니다.
+                  </p>
+                )}
+
+                {selectedCondition && (
+                  <details
+                    className="pi-condition-details"
+                    open
+                  >
+                    <summary>
+                      선택한 업무 정보
+                    </summary>
+
+                    <dl className="pi-detail">
+                      <div>
+                        <dt>국가</dt>
+
+                        <dd>
+                          {options.countries.find(
+                            country =>
+                              country.id
+                              === selectedCondition.countryId,
+                          )?.name ?? '미확인'}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>HS 코드</dt>
+
+                        <dd>
+                          {selectedCondition.hsCode
+                            || '미확인'}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>거래 방향</dt>
+
+                        <dd>
+                          {selectedCondition.direction
+                            === 'EXPORT'
+                            ? '수출'
+                            : selectedCondition.direction
+                                === 'IMPORT'
+                              ? '수입'
+                              : '미확인'}
+                        </dd>
+                      </div>
+
+                      {Object.entries(
+                        selectedCondition.details,
+                      )
+                        .filter(([key]) =>
+                          !key.endsWith('Unit'),
+                        )
+                        .map(([key, value]) => (
+                          <div key={key}>
+                            <dt>
+                              {detailLabels[key] ?? key}
+                            </dt>
+
+                            <dd>
+                              {detailText(
+                                key,
+                                value,
+                                selectedCondition.details,
+                              )}
+                            </dd>
+                          </div>
+                        ))}
+                    </dl>
+
+                    <p className="pi-muted">
+                      등록된 물량과 일정이 현재도 유효한지
+                      확인해 주세요.
+                      분석 기간과 목표를 바꿔도 업무 선택은 유지됩니다.
+                    </p>
+                  </details>
+                )}
+              </section>
+
+              <p className="pi-eyebrow">
+                02 · 분석 범위와 목표
+              </p>
+
+              <div className="pi-fields">
                 <label>
                   분석 목표
 
@@ -743,7 +1034,8 @@ function Workspace() {
                         key={objective}
                         value={objective}
                       >
-                        {objectiveLabels[objective] ?? objective}
+                        {objectiveLabels[objective]
+                          ?? objective}
                       </option>
                     ))}
                   </select>
@@ -790,10 +1082,21 @@ function Workspace() {
                     onChange={event => {
                       if (!event.target.value) return;
 
+                      const id = Number(
+                        event.target.value,
+                      );
+
+                      if (
+                        filters.countryIds.includes(id)
+                        || filters.countryIds.length >= 3
+                      ) {
+                        return;
+                      }
+
                       change({
                         countryIds: [
                           ...filters.countryIds,
-                          Number(event.target.value),
+                          id,
                         ],
                         conditionId: null,
                       });
@@ -843,13 +1146,19 @@ function Workspace() {
               </label>
 
               {searching && (
-                <p className="pi-muted" role="status">
+                <p
+                  className="pi-muted"
+                  role="status"
+                >
                   품목 검색 중…
                 </p>
               )}
 
               {searchError && (
-                <p className="pi-alert" role="alert">
+                <p
+                  className="pi-alert"
+                  role="alert"
+                >
                   {searchError}
                 </p>
               )}
@@ -906,14 +1215,18 @@ function Workspace() {
                     value={filters.direction}
                     onChange={event =>
                       change({
-                        direction:
-                          event.target.value as Filters['direction'],
+                        direction: event.target.value as Filters['direction'],
                         conditionId: null,
                       })
                     }
                   >
-                    <option value="EXPORT">수출</option>
-                    <option value="IMPORT">수입</option>
+                    <option value="EXPORT">
+                      수출
+                    </option>
+
+                    <option value="IMPORT">
+                      수입
+                    </option>
                   </select>
                 </label>
 
@@ -923,7 +1236,7 @@ function Workspace() {
                   <input
                     type="month"
                     required
-                    min={options.minMonth}
+                    min={options.minMonth || '2000-01'}
                     max={
                       filters.end
                       || options.maxMonth
@@ -947,8 +1260,11 @@ function Workspace() {
                     min={
                       filters.start
                       || options.minMonth
+                      || '2000-01'
                     }
-                    max={options.maxMonth || undefined}
+                    max={
+                      options.maxMonth || undefined
+                    }
                     value={filters.end}
                     onChange={event =>
                       change({
@@ -965,59 +1281,20 @@ function Workspace() {
                 최신 자료: {options.maxMonth || '자료 없음'}
               </p>
 
-              {selectedCondition && (
-                <details className="pi-condition-details">
-                  <summary>
-                    반영할 업무 조건 확인
-                  </summary>
-
-                  <dl className="pi-detail">
-                    <div>
-                      <dt>거래 방향</dt>
-                      <dd>
-                        {selectedCondition.direction === 'EXPORT'
-                          ? '수출'
-                          : selectedCondition.direction === 'IMPORT'
-                            ? '수입'
-                            : '미확인'}
-                      </dd>
-                    </div>
-
-                    {Object.entries(
-                      selectedCondition.details,
-                    )
-                      .filter(([key]) =>
-                        !key.endsWith('Unit'),
-                      )
-                      .map(([key, value]) => (
-                        <div key={key}>
-                          <dt>
-                            {detailLabels[key] ?? key}
-                          </dt>
-
-                          <dd>
-                            {detailText(
-                              key,
-                              value,
-                              selectedCondition.details,
-                            )}
-                          </dd>
-                        </div>
-                      ))}
-                  </dl>
-
-                  <p className="pi-muted">
-                    물량 단위는 톤(t)입니다.
-                    등록된 물량과 일정이 현재도 유효한지 확인해 주세요.
-                    국가·품목·방향을 바꾸면 저장 조건 선택이 해제됩니다.
-                  </p>
-                </details>
+              {!options.maxMonth && (
+                <p
+                  className="pi-alert"
+                  role="status"
+                >
+                  분석 가능한 통계 기간을 확인할 수 없습니다.
+                  현재는 분석을 실행할 수 없습니다.
+                </p>
               )}
 
               <div className="pi-form-footer">
                 <p className="pi-muted">
-                  분석 조건과 결과는 생성 후 자동 저장됩니다.
-                  기존 업무 조건은 수정하지 않습니다.
+                  분석 실행 후 사용한 조건과 결과를 함께 저장합니다.
+                  저장 여부는 완료 메시지에서 확인할 수 있습니다.
                 </p>
 
                 <button
@@ -1028,11 +1305,14 @@ function Workspace() {
                     || !options.maxMonth
                     || !filters.hsCode
                     || filters.countryIds.length === 0
+                    || !filters.objective
                   }
                 >
                   {busy === 'generate'
                     ? '분석 중…'
-                    : '맞춤 인사이트 생성'}
+                    : selectedCondition
+                      ? '이 업무로 분석하기'
+                      : '선택 조건으로 분석하기'}
                 </button>
               </div>
             </fieldset>
@@ -1044,16 +1324,9 @@ function Workspace() {
               role="status"
               aria-live="polite"
             >
-              {busyMessage[busy]}
+              {busyMessages[busy]}
             </p>
           )}
-
-          <HistoryList
-            reload={historyReload}
-            disabled={Boolean(busy)}
-            onView={openHistory}
-            onDelete={removeHistory}
-          />
 
           <div ref={resultRef}>
             {display ? (
@@ -1084,15 +1357,36 @@ function Workspace() {
                   )}
                 </div>
 
-                <InsightSet result={display.result} />
+                {!display.history
+                  && display.historyId == null && (
+                    <p
+                      className="pi-alert"
+                      role="status"
+                    >
+                      분석 결과는 생성되었지만 기록은 저장되지
+                      않았습니다. 새로고침하거나 조건을 변경하기
+                      전에 필요한 결과를 복사해 주세요.
+                    </p>
+                  )}
+
+                <InsightSet
+                  result={display.result}
+                  businessConditions={
+                    resultBusinessConditions
+                  }
+                />
               </>
             ) : (
               !busy && (
                 <section className="pi-panel pi-empty">
-                  <h2>내 조건으로 시장을 살펴보세요</h2>
+                  <h2>
+                    내 업무를 선택하고 분석을 시작하세요
+                  </h2>
+
                   <p>
-                    조건을 설정해 분석하거나,
-                    기록의 ‘보기’를 눌러 과거 결과를 확인하세요.
+                    등록한 업무와 시장 통계를 함께 분석합니다.
+                    이전 결과는 상단의 ‘분석 기록 보기’에서
+                    확인할 수 있습니다.
                   </p>
                 </section>
               )
@@ -1111,7 +1405,7 @@ interface HistoryListProps {
   onDelete: (id: number) => Promise<void>;
 }
 
-// 기록 목록은 같은 파일에서 관리
+// 기록을 펼쳤을 때 목록 조회
 function HistoryList({
   reload,
   disabled,
@@ -1124,7 +1418,7 @@ function HistoryList({
   const [data, setData] =
     useState<HistoryPage | null>(null);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -1151,6 +1445,7 @@ function HistoryList({
       })
       .catch(error => {
         if (!controller.signal.aborted) {
+          setData(null);
           setError(getErrorMessage(error));
         }
       })
@@ -1170,8 +1465,8 @@ function HistoryList({
           <h2>분석 기록</h2>
 
           <p className="pi-muted">
-            본인의 기록만 표시합니다.
-            과거 결과 조회에는 AI를 다시 호출하지 않습니다.
+            저장한 조건과 분석 결과를 다시 확인할 수 있습니다.
+            기록을 조회할 때는 새 분석을 실행하지 않습니다.
           </p>
         </div>
 
@@ -1188,7 +1483,10 @@ function HistoryList({
       </div>
 
       {error && (
-        <p className="pi-alert" role="alert">
+        <p
+          className="pi-alert"
+          role="alert"
+        >
           {error}
         </p>
       )}
@@ -1229,8 +1527,13 @@ function HistoryList({
                       </td>
 
                       <td>
-                        <strong>{item.itemName}</strong>
-                        <small>{item.hsCode}</small>
+                        <strong>
+                          {item.itemName}
+                        </strong>
+
+                        <small>
+                          {item.hsCode}
+                        </small>
                       </td>
 
                       <td>
