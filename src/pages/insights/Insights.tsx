@@ -33,6 +33,8 @@ import type {
 } from './insightsData';
 
 import InsightSet from './components/InsightSet';
+import PageHeader from '../../components/common/PageHeader';
+import AccessGuard from '../../components/common/AccessGuard';
 
 import './Insights.css';
 
@@ -253,15 +255,13 @@ function validateFilters(
 export default function Insights({
   user,
 }: InsightsProps) {
+  // 들어올 수 없는 경우 : 다른 페이지와 같은 안내 화면 (PageHeader + AccessGuard)
   if (!user) {
     return (
-      <main className="personalized-insights">
-        <h1>맞춤 인사이트</h1>
-
-        <div className="pi-panel">
-          로그인 후 이용해 주세요.
-        </div>
-      </main>
+      <div className="page-container">
+        <PageHeader eyebrow="Personalized Insights" title="맞춤 인사이트" className="page-header--compact" />
+        <AccessGuard icon="lock" short description="맞춤 인사이트는 로그인한 기업 회원만 이용할 수 있습니다." />
+      </div>
     );
   }
 
@@ -270,26 +270,19 @@ export default function Insights({
     || user.role === 'ROLE_ADMIN'
   ) {
     return (
-      <main className="personalized-insights">
-        <h1>맞춤 인사이트</h1>
-
-        <div className="pi-panel">
-          수출입기업·물류업체 회원을 위한 기능입니다.
-        </div>
-      </main>
+      <div className="page-container">
+        <PageHeader eyebrow="Personalized Insights" title="맞춤 인사이트" className="page-header--compact" />
+        <AccessGuard icon="users" short description="맞춤 인사이트는 기업 회원(수출입기업·물류업체)만 이용할 수 있습니다." />
+      </div>
     );
   }
 
   if (!user.memberId) {
     return (
-      <main className="personalized-insights">
-        <h1>맞춤 인사이트</h1>
-
-        <div className="pi-panel">
-          회원 정보를 확인할 수 없습니다.
-          다시 로그인해 주세요.
-        </div>
-      </main>
+      <div className="page-container">
+        <PageHeader eyebrow="Personalized Insights" title="맞춤 인사이트" className="page-header--compact" />
+        <AccessGuard icon="lock" short description="회원 정보를 확인할 수 없습니다. 다시 로그인해 주세요." />
+      </div>
     );
   }
 
@@ -730,7 +723,7 @@ function Workspace() {
     <main className="personalized-insights">
       <header className="pi-page-header">
         <p className="pi-eyebrow">
-          Personalized insights
+          Personalized Insights
         </p>
 
         <div className="pi-section-title">

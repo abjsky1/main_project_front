@@ -1,8 +1,24 @@
+/* =====================================================================
+   맞춤 인사이트 (Insights.tsx 와 components/InsightSet.tsx)
+   - 다른 페이지와 같은 틀 · 색을 씀 (색 · 글자 크기 변수는 src/index.css 의 :root , 공통 클래스는 styles/common.css)
+       페이지 틀   : .page-container 와 같은 폭 1280px · 흰 바탕
+       제목 영역   : .eyebrow / .page-title / .page-subtitle 과 같은 모양
+       카드        : .card-clean · 무역 데이터 분석의 검색 카드와 같은 테두리 · 그림자
+       입력칸      : 무역 데이터 분석의 .trade-input 과 같은 모양
+       주요 버튼   : 보라→청록 그라데이션 알약 (무역 검색 [검색] 버튼과 같음)
+       보조 버튼   : .filter-btn 과 같은 모양
+       배지        : 내 매칭의 .mm-badge 와 같은 모양
+       표          : 시스템 관리의 .admin-table 과 같은 머리글
+   - 이 화면의 JSX 는 h1 · p · button · input 같은 태그를 클래스 없이 쓰는 곳이 많아서 ,
+     모든 선택자를 .personalized-insights 안으로 묶음 (다른 페이지에 번지지 않게)
+   ===================================================================== */
+
+/* ---------- 페이지 틀 (.page-container 와 같음) ---------- */
 .personalized-insights {
-  max-width: 1440px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 32px 24px 60px;
-  color: #292538;
+  padding: 40px 24px;
+  color: var(--text-primary);
 }
 
 .personalized-insights *,
@@ -11,62 +27,85 @@
   box-sizing: border-box;
 }
 
-.personalized-insights .pi-page-header {
-  margin-bottom: 28px;
-}
-
+/* ---------- 글자 단계 ---------- */
+/* 페이지 제목 (.page-title 과 같음) */
 .personalized-insights h1 {
-  margin: 6px 0 12px;
-  font-size: 30px;
-  font-weight: 750;
-}
-
-.personalized-insights h2 {
-  margin: 0 0 10px;
-  font-size: 21px;
+  margin: 0;
+  font-size: 28px;
   font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
 }
 
+/* 카드 제목 */
+.personalized-insights h2 {
+  margin: 0;
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+/* 카드 안 소제목 */
 .personalized-insights h3 {
   margin: 0 0 12px;
-  font-size: 18px;
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
   font-weight: 700;
+  color: var(--text-primary);
 }
 
+/* 항목 제목 (변화 · 추천 행동 · 트렌드 한 줄) */
 .personalized-insights h4 {
-  margin: 10px 0;
-  font-size: 15px;
+  margin: 8px 0 4px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
   font-weight: 700;
+  color: var(--text-primary);
 }
 
+/* 본문 */
 .personalized-insights p {
-  margin: 8px 0;
-  line-height: 1.75;
+  margin: 6px 0;
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+  color: var(--text-secondary);
 }
 
-.personalized-insights .pi-panel {
-  padding: 24px;
-  margin-bottom: 22px;
-  border: 1px solid #e5e0ee;
-  border-radius: 16px;
-  background: #fff;
-}
-
+/* 작은 라벨 (.eyebrow 와 같음 — 제목 위 영문 · 카드 안 구역 이름) */
 .personalized-insights .pi-eyebrow {
-  color: #7440bd;
+  margin: 0 0 4px;
   font-size: 11px;
-  font-weight: 700;
+  line-height: 16px;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  color: var(--text-muted);
 }
 
+/* 보조 설명 */
 .personalized-insights .pi-muted,
 .personalized-insights small {
-  color: #6d657a;
-  font-size: 12px;
-  line-height: 1.65;
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  color: var(--text-muted);
 }
 
+/* ---------- 페이지 제목 영역 (.page-header 와 같음) ---------- */
+.personalized-insights .pi-page-header {
+  margin-bottom: 32px;
+}
+
+/* 제목 아래 설명 (.page-subtitle 과 같음) */
+.personalized-insights .pi-page-header > p:not(.pi-eyebrow) {
+  margin: 6px 0 0;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+
+/* 제목 + 오른쪽 버튼 , 카드 제목 + 배지 같은 "왼쪽 글자 · 오른쪽 버튼" 줄 */
 .personalized-insights .pi-section-title,
 .personalized-insights .pi-form-footer,
 .personalized-insights .pi-result-heading,
@@ -76,15 +115,31 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 12px;
 }
 
 .personalized-insights .pi-section-title,
 .personalized-insights .pi-result-heading,
 .personalized-insights .pi-record-heading {
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
+.personalized-insights .pi-section-title > div,
+.personalized-insights .pi-result-heading > div {
+  min-width: 0;
+}
+
+/* ---------- 카드 (.card-clean · 무역 검색 카드와 같음) ---------- */
+.personalized-insights .pi-panel {
+  margin-bottom: 24px;
+  padding: 24px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--clean-border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* ---------- 입력 (무역 데이터 분석의 입력칸과 같음) ---------- */
 .personalized-insights fieldset {
   min-width: 0;
   margin: 0;
@@ -96,86 +151,262 @@
 .personalized-insights .pi-label {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .personalized-insights .pi-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-  margin-bottom: 18px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .personalized-insights .pi-fields-three {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 18px;
+  margin-top: 16px;
 }
 
 .personalized-insights input,
 .personalized-insights select {
   width: 100%;
   min-width: 0;
-  min-height: 43px;
-  padding: 9px 12px;
-  border: 1px solid #d9d2e5;
-  border-radius: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--clean-border);
   background: #fff;
-  color: #292538;
-  font: inherit;
-}
-
-.personalized-insights button {
-  padding: 9px 13px;
-  border: 1px solid #d9d2e5;
-  border-radius: 8px;
-  background: #faf8fd;
-  color: #393044;
   font: inherit;
   font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 150ms var(--ease);
+}
+
+.personalized-insights input:focus,
+.personalized-insights select:focus {
+  border-color: rgba(100, 50, 220, 0.35);
+}
+
+.personalized-insights input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ---------- 버튼 ---------- */
+/* 보조 버튼 (.filter-btn 과 같음) — 분석 기록 보기 · 다시 불러오기 · 기록 열기 · 국가 칩 등 */
+.personalized-insights button {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--input-bg);
+  border: 1px solid var(--clean-border);
   cursor: pointer;
+  transition: all 150ms var(--ease);
 }
 
 .personalized-insights button:hover:not(:disabled) {
-  background: #f0e9fa;
+  color: var(--brand-purple);
+  background: rgba(100, 50, 220, 0.06);
+  border-color: rgba(100, 50, 220, 0.2);
 }
 
 .personalized-insights button:disabled,
 .personalized-insights input:disabled,
 .personalized-insights select:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
-  opacity: 0.6;
 }
 
+/* 주요 버튼 : [인사이트 생성] (무역 검색 [검색] 버튼과 같은 그라데이션 알약) */
 .personalized-insights .pi-primary {
   min-width: 180px;
-  border-color: #7440c7;
-  background: #7440c7;
+  height: 40px;
+  padding: 0 28px;
+  border: none;
+  border-radius: 9999px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 600;
   color: #fff;
-  font-weight: 700;
+  background: var(--brand-gradient);
 }
 
 .personalized-insights .pi-primary:hover:not(:disabled) {
-  background: #6232ad;
+  color: #fff;
+  background: var(--brand-gradient);
+  border: none;
+  opacity: 0.9;
 }
 
+/* 삭제 버튼 (.filter-reset-btn 과 같은 빨강) */
 .personalized-insights .pi-danger {
-  color: #a23e39;
+  color: var(--danger);
+  background: rgba(217, 48, 37, 0.06);
+  border-color: rgba(217, 48, 37, 0.15);
 }
 
-.personalized-insights :is(
-  button,
-  input,
-  select,
-  summary
-):focus-visible {
-  outline: 3px solid #bda2ed;
-  outline-offset: 3px;
+.personalized-insights .pi-danger:hover:not(:disabled) {
+  color: var(--danger);
+  background: rgba(217, 48, 37, 0.1);
+  border-color: rgba(217, 48, 37, 0.25);
 }
 
+/* 키보드로 이동할 때 보이는 테두리 */
+.personalized-insights :is(button, input, select, summary):focus-visible {
+  outline: 2px solid rgba(147, 51, 234, 0.45);
+  outline-offset: 2px;
+}
+
+/* ---------- 배지 (내 매칭 .mm-badge 와 같음) ---------- */
+.personalized-insights .pi-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 700;
+  white-space: nowrap;
+  color: #7c3aed;
+  background: rgba(100, 50, 220, 0.08);
+}
+
+/* ---------- 알림 문구 ---------- */
+.personalized-insights .pi-alert,
+.personalized-insights .pi-notice {
+  margin: 12px 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* 오류 (빨강 — 필터 초기화 버튼과 같은 색) */
+.personalized-insights .pi-alert {
+  color: var(--danger);
+  background: rgba(217, 48, 37, 0.06);
+  border: 1px solid rgba(217, 48, 37, 0.15);
+}
+
+/* 안내 (연보라 — .notice-panel 과 같은 색) */
+.personalized-insights .pi-notice {
+  color: var(--text-secondary);
+  background: var(--tint-bg);
+  border: 1px solid var(--tint-border);
+}
+
+/* ---------- 업무 선택 (등록한 매칭 조건 카드) ---------- */
+.personalized-insights .pi-business-picker {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.personalized-insights .pi-business-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+/* 업무 카드 한 장 (버튼) — 기본 버튼 모양을 덮어씀 */
+.personalized-insights .pi-business-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 18px 20px;
+  border-radius: 12px;
+  text-align: left;
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  color: var(--text-primary);
+  background: #fff;
+  border: 1px solid var(--clean-border);
+  overflow-wrap: anywhere;
+}
+
+.personalized-insights .pi-business-card:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--tint-bg);
+  border-color: var(--tint-border);
+}
+
+.personalized-insights .pi-business-card strong {
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+.personalized-insights .pi-business-card span {
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* 고른 업무 (선택 상태 — 정렬 버튼 is-active 와 같은 보라) */
+.personalized-insights .pi-business-card[aria-pressed="true"],
+.personalized-insights .pi-business-card[aria-pressed="true"]:hover:not(:disabled) {
+  background: rgba(100, 50, 220, 0.06);
+  border-color: rgba(100, 50, 220, 0.35);
+  box-shadow: 0 0 0 1px rgba(100, 50, 220, 0.35);
+}
+
+.personalized-insights .pi-business-card[aria-pressed="true"] strong {
+  color: var(--brand-purple);
+}
+
+.personalized-insights .pi-business-card[aria-pressed="true"] strong::before {
+  content: "✓ ";
+  color: var(--brand-purple);
+}
+
+/* 고른 업무의 상세 조건 */
+.personalized-insights .pi-condition-details {
+  margin-top: 16px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--divider);
+}
+
+.personalized-insights .pi-detail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 24px;
+  margin: 12px 0;
+}
+
+.personalized-insights .pi-detail > div {
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.personalized-insights .pi-detail dt {
+  flex-shrink: 0;
+  min-width: 90px;
+  color: var(--text-muted);
+}
+
+.personalized-insights .pi-detail dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 국가 선택 · 품목 검색 ---------- */
 .personalized-insights .pi-country-section {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .personalized-insights .pi-countries,
@@ -192,14 +423,17 @@
   max-width: 100%;
 }
 
+/* 품목 검색 결과 목록 (무역 검색의 HS 코드 추천 목록과 같은 모양) */
 .personalized-insights .pi-search-results {
   max-height: 260px;
-  overflow-y: auto;
-  margin: 10px 0;
+  margin: 8px 0;
   padding: 6px;
-  border: 1px solid #e2d8f1;
-  border-radius: 10px;
+  overflow-y: auto;
   list-style: none;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--clean-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .personalized-insights .pi-search-results li {
@@ -208,53 +442,37 @@
 
 .personalized-insights .pi-search-results button {
   width: 100%;
-  border: 0;
-  background: #fff;
+  padding: 8px 10px;
+  border: none;
   text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.personalized-insights .pi-search-results button:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--tint-bg-hover);
+  border: none;
 }
 
 .personalized-insights .pi-search-results small {
   display: block;
+  font-weight: 400;
 }
 
+/* [인사이트 생성] 버튼 줄 */
 .personalized-insights .pi-form-footer {
-  margin-top: 22px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--divider);
 }
 
-.personalized-insights .pi-badge {
-  display: inline-block;
-  padding: 4px 9px;
-  border-radius: 16px;
-  background: #f0e8fb;
-  color: #6333a2;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.personalized-insights .pi-alert,
-.personalized-insights .pi-notice {
-  padding: 14px 18px;
-  margin: 14px 0;
-  border-radius: 10px;
-  overflow-wrap: anywhere;
-}
-
-.personalized-insights .pi-alert {
-  border: 1px solid #efcbb4;
-  background: #fff4ed;
-  color: #8c4226;
-}
-
-.personalized-insights .pi-notice {
-  border: 1px solid #d9cfed;
-  background: #f6f2fd;
-  color: #55416f;
-}
-
+/* ---------- 분석 결과 ---------- */
 .personalized-insights .pi-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
-  gap: 22px;
+  gap: 24px;
   align-items: start;
 }
 
@@ -263,132 +481,187 @@
   min-width: 0;
 }
 
+/* 핵심 결론 (마이페이지 고객센터 소개 카드와 같은 연한 그라데이션) */
+.personalized-insights .pi-summary {
+  padding: 28px;
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.05), rgba(6, 182, 212, 0.04)), #fff;
+  border-color: var(--tint-border);
+}
+
+.personalized-insights .pi-summary h3 {
+  margin-bottom: 8px;
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+}
+
+.personalized-insights .pi-summary > p {
+  max-width: 85ch;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+/* 핵심 결론 안의 "지금 할 일" 한 줄 */
+.personalized-insights .pi-summary-action {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: #fff;
+  border: 1px solid var(--clean-border);
+}
+
+/* 내 업무 영향 · 추천 행동 (두 칸) */
+.personalized-insights .pi-personal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.personalized-insights .pi-personal-grid > section {
+  min-width: 0;
+}
+
+/* 항목 한 줄 (변화 · 행동 · 트렌드) */
+.personalized-insights .pi-entry {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--row-sep);
+  overflow-wrap: anywhere;
+}
+
+.personalized-insights .pi-entry:first-of-type {
+  padding-top: 4px;
+}
+
+.personalized-insights .pi-entry:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+/* "내 업무 기준" 해석 문장 — 연보라 상자 */
+.personalized-insights .pi-personal {
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: var(--text-primary);
+  background: var(--tint-bg);
+}
+
+/* 근거 (어느 조건 · 지표에서 나온 해석인지) */
+.personalized-insights .pi-condition-evidence {
+  display: block;
+  margin-top: 6px;
+}
+
+/* 시장 지표 (무역 데이터 분석의 요약 띠와 같은 숫자 모양) */
 .personalized-insights .pi-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 16px;
 }
 
 .personalized-insights .pi-metric {
-  padding: 15px 12px;
-  border-radius: 11px;
-  background: #f6f3fa;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--clean-border);
   overflow-wrap: anywhere;
 }
 
 .personalized-insights .pi-metric p {
-  color: #6a6078;
-  font-size: 12px;
+  margin: 0;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-secondary);
 }
 
 .personalized-insights .pi-metric strong {
   display: block;
-  margin: 8px 0 4px;
-  font-size: 21px;
+  margin: 6px 0 2px;
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
 }
 
 .personalized-insights .pi-metric span {
-  color: #70627f;
   font-size: 11px;
+  color: var(--text-muted);
 }
 
+/* 그래프 칸 */
 .personalized-insights .pi-chart {
   height: 290px;
-  margin: 14px 0;
-}
-
-.personalized-insights .pi-entry {
-  padding: 18px 0;
-  border-bottom: 1px solid #eee8f5;
-  overflow-wrap: anywhere;
-}
-
-.personalized-insights .pi-entry:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
-}
-
-.personalized-insights .pi-entry p {
-  font-size: 14px;
-}
-
-.personalized-insights .pi-personal {
-  padding-left: 12px;
-  border-left: 3px solid #ad88dd;
-}
-
-.personalized-insights .pi-summary {
-  background: #f6f0fd;
-  border-color: #ddcff0;
-}
-
-.personalized-insights .pi-summary-action {
-  padding: 12px;
-  border-radius: 9px;
-  background: #fff;
-  font-weight: 600;
-}
-
-.personalized-insights summary {
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.personalized-insights .pi-condition-details {
-  margin-top: 18px;
-}
-
-.personalized-insights .pi-detail {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
   margin: 16px 0;
 }
 
-.personalized-insights .pi-detail > div {
-  display: flex;
-  gap: 12px;
+/* 접히는 상자 (조건 원문 · 계산 방법) */
+.personalized-insights summary {
   font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
 }
 
-.personalized-insights .pi-detail dt {
-  color: #70667b;
+.personalized-insights summary:hover {
+  color: var(--brand-purple);
 }
 
-.personalized-insights .pi-detail dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
+/* ---------- 표 (시스템 관리 .admin-table 과 같은 머리글) ---------- */
 .personalized-insights .pi-table-wrap {
   width: 100%;
+  margin-top: 12px;
   overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--clean-border);
 }
 
 .personalized-insights table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 12px;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .personalized-insights caption {
   padding: 8px 0;
-  color: #6d657a;
   text-align: left;
+  color: var(--text-muted);
 }
 
-.personalized-insights th,
+.personalized-insights thead tr {
+  background: rgba(100, 50, 220, 0.02);
+}
+
+.personalized-insights th {
+  padding: 12px 16px;
+  text-align: right;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--clean-border);
+}
+
 .personalized-insights td {
-  padding: 12px 10px;
-  border-bottom: 1px solid #eee8f5;
+  padding: 12px 16px;
   text-align: right;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--row-sep);
 }
 
+.personalized-insights tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* 분석 기록 표는 글자 위주라 왼쪽 정렬 */
 .personalized-insights .pi-history-table th,
 .personalized-insights .pi-history-table td {
   text-align: left;
@@ -402,22 +675,35 @@
   margin-top: 16px;
 }
 
+/* ---------- 목록 ---------- */
 .personalized-insights ul {
+  margin: 8px 0;
   padding-left: 20px;
+  list-style: disc;
 }
 
 .personalized-insights li {
   margin: 6px 0;
-  line-height: 1.7;
   font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
 }
 
+/* ---------- 빈 상태 (무역 검색 전 안내 상자와 같음) ---------- */
 .personalized-insights .pi-empty {
-  padding: 36px 20px;
-  color: #75677e;
+  padding: 32px 24px;
   text-align: center;
+  color: var(--text-secondary);
 }
 
+.personalized-insights .pi-panel.pi-empty {
+  background: var(--tint-bg);
+  border: 1px dashed var(--tint-border);
+  box-shadow: none;
+}
+
+/* ---------- 기타 ---------- */
+/* 화면에는 안 보이고 화면 읽기 프로그램만 읽는 글자 */
 .personalized-insights .pi-sr-only {
   position: absolute;
   width: 1px;
@@ -430,15 +716,32 @@
   border: 0;
 }
 
+/* 분석 기록 접기 (hidden 속성) */
+.personalized-insights [hidden] {
+  display: none !important;
+}
+
+/* ---------- 좁은 화면 ---------- */
 @media (max-width: 1000px) {
   .personalized-insights .pi-layout {
     grid-template-columns: 1fr;
   }
 }
 
+@media (max-width: 800px) {
+  .personalized-insights .pi-business-cards,
+  .personalized-insights .pi-personal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .personalized-insights .pi-summary {
+    padding: 20px;
+  }
+}
+
 @media (max-width: 600px) {
   .personalized-insights {
-    padding: 22px 14px 40px;
+    padding: 24px 16px;
   }
 
   .personalized-insights .pi-panel {
@@ -457,157 +760,6 @@
   }
 
   .personalized-insights h1 {
-    font-size: 25px;
-  }
-}
-
-/* 전체 배경과 기본 톤 */
-.personalized-insights {
-  background: #f5f7fb;
-  color: #202a3d;
-  border-radius: 20px;
-}
-
-.personalized-insights .pi-page-header {
-  padding: 18px 4px;
-}
-
-.personalized-insights .pi-panel {
-  border-color: #e2e7ef;
-  box-shadow: 0 3px 14px rgb(24 39 65 / 3%);
-}
-
-.personalized-insights .pi-eyebrow {
-  color: #4a5d88;
-}
-
-/* 등록 업무 선택 */
-.personalized-insights .pi-business-picker {
-  padding-bottom: 24px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid #e2e7ef;
-}
-
-.personalized-insights .pi-business-cards {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin: 18px 0;
-}
-
-.personalized-insights .pi-business-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-  padding: 20px;
-  border: 1px solid #dce2ec;
-  border-radius: 12px;
-  background: #fff;
-  text-align: left;
-  overflow-wrap: anywhere;
-}
-
-.personalized-insights .pi-business-card strong {
-  font-size: 15px;
-  line-height: 1.6;
-}
-
-.personalized-insights .pi-business-card span {
-  color: #596579;
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-.personalized-insights .pi-business-card[aria-pressed="true"] {
-  padding: 19px;
-  border: 2px solid #6255bd;
-  background: #f5f3ff;
-}
-
-.personalized-insights
-  .pi-business-card[aria-pressed="true"]
-  strong::before {
-  content: "✓ ";
-  color: #6255bd;
-}
-
-/* 선택 업무 상세 */
-.personalized-insights .pi-condition-details {
-  padding: 18px;
-  border-radius: 10px;
-  background: #f5f7fb;
-}
-
-.personalized-insights .pi-detail > div {
-  min-width: 0;
-}
-
-.personalized-insights .pi-detail dt {
-  flex-shrink: 0;
-  min-width: 90px;
-}
-
-.personalized-insights .pi-detail dd {
-  min-width: 0;
-}
-
-/* 개인화 해석과 추천 행동 */
-.personalized-insights .pi-personal-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px;
-  align-items: start;
-}
-
-.personalized-insights .pi-personal-grid > section {
-  min-width: 0;
-}
-
-/* 핵심 요약 */
-.personalized-insights .pi-summary {
-  padding: 30px;
-  border-left: 5px solid #6255bd;
-  background: #f4f2fc;
-}
-
-.personalized-insights .pi-summary h3 {
-  font-size: 24px;
-}
-
-.personalized-insights .pi-summary > p {
-  max-width: 85ch;
-  font-size: 16px;
-}
-
-.personalized-insights .pi-condition-evidence {
-  display: block;
-  margin-top: 8px;
-}
-
-/* 주요 버튼 */
-.personalized-insights .pi-primary {
-  border-color: #6255bd;
-  background: #6255bd;
-}
-
-.personalized-insights .pi-primary:hover:not(:disabled) {
-  background: #5144a6;
-}
-
-/* 기록 접기 */
-.personalized-insights [hidden] {
-  display: none !important;
-}
-
-/* 모바일 */
-@media (max-width: 800px) {
-  .personalized-insights .pi-business-cards,
-  .personalized-insights .pi-personal-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .personalized-insights .pi-summary {
-    padding: 22px;
+    font-size: 24px;
   }
 }
